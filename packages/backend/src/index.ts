@@ -1,31 +1,45 @@
-import { type DefineAPI, type DefineEvents, type SDK } from "caido:plugin";
-import {
-  type Finding,
-  ScanRunner,
-  ScanStrength,
-  type ScanTarget,
-} from "engine";
+import type { DefineAPI } from "caido:plugin";
+import { type Finding, ScanRunner, type ScanTarget } from "engine";
 
 import exposedEnvScan from "./checks/exposed-env";
 import jsonHtmlResponse from "./checks/json-html-response";
 import openRedirectScan from "./checks/open-redirect";
-import { ScanRegistry } from "./registry";
+import { getChecks } from "./services/checks";
+import { getUserConfig, updateUserConfig } from "./services/config";
+import { startActiveScan } from "./services/scanner";
+import { ChecksStore } from "./stores/checks";
+import { ConfigStore } from "./stores/config";
+import { type BackendSDK } from "./types";
 
-export type API = DefineAPI<BackendEvents>;
-export type BackendEvents = DefineEvents<{}>;
+export type API = DefineAPI<{
+  getChecks: typeof getChecks;
+  getUserConfig: typeof getUserConfig;
+  updateUserConfig: typeof updateUserConfig;
+  startActiveScan: typeof startActiveScan;
+}>;
 
-const scanRegistry = new ScanRegistry();
+export function init(sdk: BackendSDK) {
+  sdk.api.register("getChecks", getChecks);
+  sdk.api.register("getUserConfig", getUserConfig);
+  sdk.api.register("updateUserConfig", updateUserConfig);
+  sdk.api.register("startActiveScan", startActiveScan);
 
-export function init(sdk: SDK<API>) {
-  scanRegistry.register([exposedEnvScan, openRedirectScan, jsonHtmlResponse]);
+  const checksStore = ChecksStore.get();
+  checksStore.register(exposedEnvScan, openRedirectScan, jsonHtmlResponse);
 
   sdk.events.onInterceptResponse(async (sdk, request, response) => {
-    const passiveScans = scanRegistry.select({});
+    const configStore = ConfigStore.get();
+    const config = configStore.getUserConfig();
+
+    if (!config.passive.enabled) return;
+
+    const passiveScans = checksStore.select({ type: "passive" });
     if (passiveScans.length === 0) {
       return;
     }
 
-    const runner = new ScanRunner(passiveScans);
+    const runner = new ScanRunner();
+    runner.register(...passiveScans);
 
     const target: ScanTarget = {
       request,
@@ -33,7 +47,7 @@ export function init(sdk: SDK<API>) {
     };
 
     const findings: Finding[] = await runner.run(sdk, [target], {
-      strength: ScanStrength.MEDIUM,
+      strength: config.passive.strength,
     });
 
     for (const finding of findings) {
@@ -43,7 +57,7 @@ export function init(sdk: SDK<API>) {
       if (!request) return;
 
       sdk.findings.create({
-        reporter: "scanner-engine",
+        reporter: "Scanner: Passive",
         request: request.request,
         title: finding.name,
         description: finding.description,
