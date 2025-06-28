@@ -2,63 +2,85 @@ import { type SDK } from "caido:plugin";
 import { Graph, topologicalSort } from "graph-data-structure";
 
 import {
+  type CheckDefinition,
+  type CheckTarget,
   type Finding,
-  type ScanCallbacks,
   type ScanConfig,
-  type ScanDefinition,
-  type ScanTarget,
+  type ScanResult,
 } from "../../types";
 import { DependencyStore, HtmlCache } from "../runtime";
 
 import { TargetProcessor } from "./processor";
+import { type ScanRunner } from "./runner";
 
 /**
  * ScanOrchestrator is responsible for managing the lifecycle and shared state of a single scan run.
  * It coordinates the processing of multiple targets and holds shared data like the dependency store,
  */
 export class ScanOrchestrator {
-  public readonly batches: ScanDefinition[][];
+  public readonly batches: CheckDefinition[][];
   public readonly dependencyStore = new DependencyStore();
   public readonly htmlCache = new HtmlCache();
   public readonly dedupeKeysCache = new Map<string, Set<string>>();
+  public readonly runner: ScanRunner;
+  public readonly sdk: SDK;
+  public readonly config: ScanConfig;
 
-  constructor(
-    private readonly scans: ScanDefinition[],
-    public readonly sdk: SDK,
-    public readonly config: ScanConfig,
-  ) {
-    this.batches = this.getScanBatches(this.scans);
+  constructor(runner: ScanRunner, sdk: SDK, config: ScanConfig) {
+    this.runner = runner;
+    this.sdk = sdk;
+    this.config = config;
+    this.batches = this.getCheckBatches(runner.checks);
   }
 
-  public async execute(
-    targets: ScanTarget[],
-    callbacks?: ScanCallbacks,
-  ): Promise<Finding[]> {
+  public async execute(targets: CheckTarget[]): Promise<ScanResult> {
     const allFindings: Finding[] = [];
 
-    for (const target of targets) {
-      const processor = new TargetProcessor(target, this);
-      const newFindings = await processor.process(callbacks);
-      allFindings.push(...newFindings);
-    }
+    try {
+      for (const target of targets) {
+        if (this.runner.state === "Interrupted") {
+          return {
+            kind: "Interrupted",
+            reason: "Cancelled",
+          };
+        }
 
-    return allFindings;
+        const processor = new TargetProcessor(target, this);
+        const result = await processor.process();
+        if (result.kind !== "Finished") {
+          return result;
+        }
+
+        allFindings.push(...result.findings);
+      }
+
+      return {
+        kind: "Finished",
+        findings: allFindings,
+      };
+    } catch (error) {
+      return {
+        kind: "Error",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
   }
 
-  private getScanBatches(scans: ScanDefinition[]): ScanDefinition[][] {
+  private getCheckBatches(checks: CheckDefinition[]): CheckDefinition[][] {
     const graph = new Graph();
-    const map = new Map(scans.map((s) => [s.metadata.id, s]));
+    const map = new Map(checks.map((check) => [check.metadata.id, check]));
 
-    scans.forEach((s) => graph.addNode(s.metadata.id));
+    checks.forEach((check) => graph.addNode(check.metadata.id));
 
-    scans.forEach((scan) => {
-      scan.metadata.dependsOn?.forEach((dependencyId) => {
+    checks.forEach((check) => {
+      check.metadata.dependsOn?.forEach((dependencyId) => {
         if (!map.has(dependencyId)) {
           throw new Error(
-            `Scan '${scan.metadata.id}' has unknown dependency '${dependencyId}'`,
+            `Check '${check.metadata.id}' has unknown dependency '${dependencyId}'`,
           );
         }
-        graph.addEdge(dependencyId, scan.metadata.id);
+        graph.addEdge(dependencyId, check.metadata.id);
       });
     });
 
@@ -66,7 +88,7 @@ export class ScanOrchestrator {
       const order = topologicalSort(graph);
       return order.map((id) => [map.get(id)!]);
     } catch (e) {
-      throw new Error("Circular dependency detected in scans");
+      throw new Error("Circular dependency detected in checks");
     }
   }
 }

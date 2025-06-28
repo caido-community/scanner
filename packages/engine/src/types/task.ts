@@ -1,5 +1,5 @@
 import type { Finding } from "./finding";
-import type { ScanContext } from "./runner";
+import type { CheckContext } from "./runner";
 import type { JSONSerializable } from "./utils";
 
 export type DefineUtils<T> = {
@@ -23,7 +23,7 @@ export type StepResult<T> =
 
 export type StepAction<T> = (
   state: T,
-  context: ScanContext,
+  context: CheckContext,
 ) => Promise<StepResult<T>> | StepResult<T>;
 
 export type Step<T> = {

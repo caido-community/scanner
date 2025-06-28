@@ -1,11 +1,10 @@
-import { defineStore } from "pinia";
 import { type SessionState } from "shared";
 import { reactive } from "vue";
 
-import { type ScannerSessionsState } from "@/types/scanner";
+import { type SessionsState } from "@/types/scanner";
 
 type Context = {
-  state: ScannerSessionsState;
+  state: SessionsState;
 };
 
 type Message =
@@ -16,7 +15,7 @@ type Message =
   | { type: "UpdateSession"; session: SessionState }
   | { type: "Clear" };
 
-export const useScannerStore = defineStore("stores.scanner", () => {
+export const useSessionsState = () => {
   const context: Context = reactive({
     state: { type: "Idle" },
   });
@@ -43,12 +42,12 @@ export const useScannerStore = defineStore("stores.scanner", () => {
   };
 
   return { getState, send };
-});
+};
 
 const processIdle = (
-  state: ScannerSessionsState & { type: "Idle" },
+  state: SessionsState & { type: "Idle" },
   message: Message,
-): ScannerSessionsState => {
+): SessionsState => {
   switch (message.type) {
     case "Start":
       return { type: "Loading" };
@@ -62,9 +61,9 @@ const processIdle = (
 };
 
 const processError = (
-  state: ScannerSessionsState & { type: "Error" },
+  state: SessionsState & { type: "Error" },
   message: Message,
-): ScannerSessionsState => {
+): SessionsState => {
   switch (message.type) {
     case "Start":
       return { type: "Loading" };
@@ -79,9 +78,9 @@ const processError = (
 };
 
 const processSuccess = (
-  state: ScannerSessionsState & { type: "Success" },
+  state: SessionsState & { type: "Success" },
   message: Message,
-): ScannerSessionsState => {
+): SessionsState => {
   switch (message.type) {
     case "AddSession":
       return {
@@ -105,9 +104,9 @@ const processSuccess = (
 };
 
 const processLoading = (
-  state: ScannerSessionsState & { type: "Loading" },
+  state: SessionsState & { type: "Loading" },
   message: Message,
-): ScannerSessionsState => {
+): SessionsState => {
   switch (message.type) {
     case "Error":
       return { type: "Error", error: message.error };

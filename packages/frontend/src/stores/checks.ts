@@ -1,4 +1,4 @@
-import { type ScanMetadata } from "engine";
+import { type CheckMetadata } from "engine";
 import { defineStore } from "pinia";
 import { reactive } from "vue";
 
@@ -11,7 +11,7 @@ type Context = {
 type Message =
   | { type: "Start" }
   | { type: "Error"; error: string }
-  | { type: "Success"; checks: ScanMetadata[] };
+  | { type: "Success"; checks: CheckMetadata[] };
 
 export const useChecksStore = defineStore("stores.checks", () => {
   const context: Context = reactive({

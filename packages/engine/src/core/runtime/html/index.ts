@@ -1,11 +1,11 @@
-import { type ScanTarget } from "../../../types";
+import { type CheckTarget } from "../../../types";
 import { parseHtml } from "../../../utils/html";
 import { type ParsedHtml } from "../../../utils/html/types";
 
 export class HtmlCache {
   private cache = new Map<string, ParsedHtml>();
 
-  get(target: ScanTarget): ParsedHtml | undefined {
+  get(target: CheckTarget): ParsedHtml | undefined {
     const response = target.response;
     if (response) {
       const responseId = response.getId();

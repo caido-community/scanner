@@ -1,11 +1,11 @@
 import { type SDK } from "caido:plugin";
 
 import {
-  type Finding,
-  type ScanCallbacks,
+  type CheckDefinition,
+  type CheckTarget,
   type ScanConfig,
-  type ScanDefinition,
-  type ScanTarget,
+  type ScanResult,
+  type ScanState,
 } from "../../types";
 
 import { ScanOrchestrator } from "./orchestrator";
@@ -15,27 +15,64 @@ import { ScanOrchestrator } from "./orchestrator";
  * It acts as the public API for the scanning engine.
  */
 export class ScanRunner {
-  public readonly scans: ScanDefinition[] = [];
+  public readonly checks: CheckDefinition[] = [];
+  public state: ScanState = "Idle";
+  private orchestrator: ScanOrchestrator | undefined;
 
-  public register(...scans: ScanDefinition[]): void {
-    for (const scan of scans) {
-      if (this.scans.some((s) => s.metadata.id === scan.metadata.id)) {
+  public register(...checks: CheckDefinition[]): void {
+    if (this.state !== "Idle") {
+      throw new Error("Cannot register checks while scan is running");
+    }
+
+    for (const check of checks) {
+      if (this.checks.some((s) => s.metadata.id === check.metadata.id)) {
         throw new Error(
-          `Scan with id '${scan.metadata.id}' already registered`,
+          `Scan with id '${check.metadata.id}' already registered`,
         );
       }
-      this.scans.push(scan);
+      this.checks.push(check);
     }
   }
 
-  public async run(
+  public stop(): void {
+    if (this.state !== "Running") {
+      throw new Error("Scan not running");
+    }
+
+    this.state = "Interrupted";
+  }
+
+  public async start(
     sdk: SDK,
-    targets: ScanTarget[],
+    targets: CheckTarget[],
     config: ScanConfig,
-    callbacks?: ScanCallbacks,
-  ): Promise<Finding[]> {
-    const orchestrator = new ScanOrchestrator(this.scans, sdk, config);
-    const findings = await orchestrator.execute(targets, callbacks);
-    return findings;
+  ): Promise<ScanResult> {
+    if (this.state !== "Idle") {
+      throw new Error("Scan already running");
+    }
+
+    if (this.checks.length === 0) {
+      throw new Error("No checks registered");
+    }
+
+    if (targets.length === 0) {
+      throw new Error("No targets provided");
+    }
+
+    this.state = "Running";
+
+    try {
+      this.orchestrator = new ScanOrchestrator(this, sdk, config);
+      const result = await this.orchestrator.execute(targets);
+
+      this.state = result.kind === "Finished" ? "Finished" : "Interrupted";
+      return result;
+    } catch (error) {
+      this.state = "Error";
+      return {
+        kind: "Error",
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
   }
 }

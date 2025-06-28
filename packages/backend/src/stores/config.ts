@@ -13,6 +13,9 @@ export class ConfigStore {
         strength: ScanStrength.HIGH,
         overrides: {},
       },
+      active: {
+        overrides: {},
+      },
     };
   }
 

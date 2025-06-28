@@ -7,21 +7,22 @@ import {
   createScanTarget,
 } from "../../tests/factories";
 import {
+  type CheckDefinition,
+  type CheckTarget,
   type ScanConfig,
-  type ScanDefinition,
   ScanStrength,
-  type ScanTarget,
 } from "../../types";
 
 import { ScanOrchestrator } from "./orchestrator";
 import { TargetProcessor } from "./processor";
+import { ScanRunner } from "./runner";
 
 vi.mock("./processor");
 
 describe("ScanOrchestrator", () => {
   let sdk: ReturnType<typeof createMockSDK>;
   let config: ScanConfig;
-  let scans: ScanDefinition[];
+  let scans: CheckDefinition[];
 
   beforeEach(() => {
     sdk = createMockSDK();
@@ -40,11 +41,11 @@ describe("ScanOrchestrator", () => {
         metadata: { id: "C", dependsOn: ["B"] },
       });
 
-      const orchestrator = new ScanOrchestrator(
-        [scanC, scanA, scanB],
-        sdk,
-        config,
-      );
+      const runner = new ScanRunner();
+      runner.register(scanC, scanA, scanB);
+      runner.state = "Running";
+
+      const orchestrator = new ScanOrchestrator(runner, sdk, config);
       const batchIds = orchestrator.batches.flat().map((s) => s.metadata.id);
 
       expect(batchIds).toEqual(["A", "B", "C"]);
@@ -54,8 +55,11 @@ describe("ScanOrchestrator", () => {
       const scanA = createMockScanDefinition({
         metadata: { id: "A", dependsOn: ["UNKNOWN"] },
       });
-      expect(() => new ScanOrchestrator([scanA], sdk, config)).toThrow(
-        "Scan 'A' has unknown dependency 'UNKNOWN'",
+      const runner = new ScanRunner();
+      runner.register(scanA);
+
+      expect(() => new ScanOrchestrator(runner, sdk, config)).toThrow(
+        "Check 'A' has unknown dependency 'UNKNOWN'",
       );
     });
 
@@ -67,42 +71,58 @@ describe("ScanOrchestrator", () => {
         metadata: { id: "B", dependsOn: ["A"] },
       });
 
-      expect(() => new ScanOrchestrator([scanA, scanB], sdk, config)).toThrow(
-        "Circular dependency detected in scans",
+      const runner = new ScanRunner();
+      runner.register(scanA, scanB);
+
+      expect(() => new ScanOrchestrator(runner, sdk, config)).toThrow(
+        "Circular dependency detected in checks",
       );
     });
   });
 
   describe("execute", () => {
     it("should process each target and aggregate findings", async () => {
-      const targets: ScanTarget[] = [createScanTarget(), createScanTarget()];
+      const targets: CheckTarget[] = [createScanTarget(), createScanTarget()];
       const finding1 = createBaseFinding({ name: "finding-1" });
       const finding2 = createBaseFinding({ name: "finding-2" });
 
       const mockProcess = vi
         .fn()
-        .mockResolvedValueOnce([finding1])
-        .mockResolvedValueOnce([finding2]);
+        .mockResolvedValueOnce({ kind: "Finished", findings: [finding1] })
+        .mockResolvedValueOnce({ kind: "Finished", findings: [finding2] });
 
       vi.mocked(TargetProcessor).mockImplementation(
         () => ({ process: mockProcess }) as unknown as TargetProcessor,
       );
 
-      const orchestrator = new ScanOrchestrator(scans, sdk, config);
-      const allFindings = await orchestrator.execute(targets);
+      const runner = new ScanRunner();
+      runner.register(...scans);
+      runner.state = "Running";
+
+      const orchestrator = new ScanOrchestrator(runner, sdk, config);
+      const result = await orchestrator.execute(targets);
 
       expect(TargetProcessor).toHaveBeenCalledTimes(2);
       expect(mockProcess).toHaveBeenCalledTimes(2);
-      expect(allFindings).toHaveLength(2);
-      expect(allFindings).toEqual([finding1, finding2]);
+      expect(result.kind).toBe("Finished");
+      if (result.kind === "Finished") {
+        expect(result.findings).toHaveLength(2);
+        expect(result.findings).toEqual([finding1, finding2]);
+      }
     });
 
     it("should return an empty array if no targets are provided", async () => {
-      const orchestrator = new ScanOrchestrator(scans, sdk, config);
-      const allFindings = await orchestrator.execute([]);
+      const runner = new ScanRunner();
+      runner.register(...scans);
+
+      const orchestrator = new ScanOrchestrator(runner, sdk, config);
+      const result = await orchestrator.execute([]);
 
       expect(TargetProcessor).not.toHaveBeenCalled();
-      expect(allFindings).toEqual([]);
+      expect(result.kind).toBe("Finished");
+      if (result.kind === "Finished") {
+        expect(result.findings).toEqual([]);
+      }
     });
   });
 });

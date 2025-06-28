@@ -4,13 +4,14 @@ import { vi } from "vitest";
 
 import { type ScanOrchestrator } from "../core/runner/orchestrator";
 import {
+  type CheckContext,
+  type CheckDefinition,
+  type CheckMetadata,
+  type CheckTarget,
   defineScan,
   type Finding,
-  type ScanContext,
-  type ScanDefinition,
-  type ScanMetadata,
+  type ScanRunner,
   ScanStrength,
-  type ScanTarget,
   Severity,
 } from "../index";
 import type { ScanRuntime } from "../types/runtime";
@@ -28,8 +29,8 @@ export const createBaseFinding = (
 });
 
 export const createBaseMetadata = (
-  overrides: Partial<ScanMetadata> = {},
-): ScanMetadata => ({
+  overrides: Partial<CheckMetadata> = {},
+): CheckMetadata => ({
   id: "test-scan",
   name: "Test Scan",
   description: "Test scan description",
@@ -56,16 +57,16 @@ export const createMockResponse = ({ id = "resp-123" } = {}): Response =>
   }) as unknown as Response;
 
 export const createScanTarget = (
-  overrides: Partial<ScanTarget> = {},
-): ScanTarget => ({
+  overrides: Partial<CheckTarget> = {},
+): CheckTarget => ({
   request: createMockRequest(),
   response: createMockResponse(),
   ...overrides,
 });
 
 export const createScanContext = (
-  overrides: Partial<ScanContext> = {},
-): ScanContext => ({
+  overrides: Partial<CheckContext> = {},
+): CheckContext => ({
   request: createMockRequest(),
   response: createMockResponse(),
   sdk: createMockSDK(),
@@ -82,10 +83,10 @@ export const createScanContext = (
 });
 
 export const createMockScanDefinition = (
-  overrides: Partial<Omit<ScanDefinition, "metadata">> & {
-    metadata?: Partial<ScanMetadata>;
+  overrides: Partial<Omit<CheckDefinition, "metadata">> & {
+    metadata?: Partial<CheckMetadata>;
   } = {},
-): ScanDefinition => {
+): CheckDefinition => {
   const { metadata: metadataOverrides, ...restOverrides } = overrides;
   const metadata = createBaseMetadata(metadataOverrides);
 
@@ -96,11 +97,14 @@ export const createMockScanDefinition = (
 };
 
 export const createMockOrchestrator = (
-  batches: ScanDefinition[][],
+  batches: CheckDefinition[][],
 ): ScanOrchestrator => {
   return {
     batches,
     sdk: {} as SDK,
+    runner: {
+      state: "Running",
+    } as unknown as ScanRunner,
     config: { strength: ScanStrength.HIGH },
     dependencyStore: {
       set: vi.fn(),

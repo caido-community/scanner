@@ -44,5 +44,24 @@ export const useScannerService = defineStore("services.scanner", () => {
     }
   };
 
-  return { getState, initialize, startActiveScan };
+  const selectSession = async (sessionId: string) => {
+    store.selectionState.send({ type: "Start", sessionId });
+    const result = await repository.getScanSession(sessionId);
+
+    if (result.kind === "Success") {
+      store.selectionState.send({
+        type: "Success",
+        sessionId,
+        session: result.value,
+      });
+    } else {
+      store.selectionState.send({
+        type: "Error",
+        sessionId,
+        error: result.error,
+      });
+    }
+  };
+
+  return { getState, initialize, startActiveScan, selectSession };
 });

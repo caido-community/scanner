@@ -1,5 +1,5 @@
 import type { DefineAPI } from "caido:plugin";
-import { type Finding, ScanRunner, type ScanTarget } from "engine";
+import { type CheckTarget, ScanRunner } from "engine";
 
 import exposedEnvScan from "./checks/exposed-env";
 import jsonHtmlResponse from "./checks/json-html-response";
@@ -48,31 +48,36 @@ export function init(sdk: BackendSDK) {
 
     if (!config.passive.enabled) return;
 
-    const passiveScans = checksStore.select({ type: "passive" });
-    if (passiveScans.length === 0) {
+    const passiveChecks = checksStore.select({
+      type: "passive",
+      overrides: config.passive.overrides,
+    });
+    if (passiveChecks.length === 0) {
       return;
     }
 
     const runner = new ScanRunner();
-    runner.register(...passiveScans);
+    runner.register(...passiveChecks);
 
-    const target: ScanTarget = {
+    const target: CheckTarget = {
       request,
       response,
     };
 
-    const findings: Finding[] = await runner.run(sdk, [target], {
+    const result = await runner.start(sdk, [target], {
       strength: config.passive.strength,
     });
 
-    for (const finding of findings) {
+    if (result.kind !== "Finished") return;
+
+    for (const finding of result.findings) {
       if (finding.requestID === undefined) return;
 
       const request = await sdk.requests.get(finding.requestID);
       if (!request) return;
 
       sdk.findings.create({
-        reporter: "session: Passive",
+        reporter: "Scanner: Passive",
         request: request.request,
         title: finding.name,
         description: finding.description,

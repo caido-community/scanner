@@ -1,27 +1,26 @@
-import type { ScanContext, ScanStrength, ScanTarget } from "./runner";
-import type { ScanTask } from "./task";
+import type { CheckContext, CheckTarget, ScanStrength } from "./runner";
+import type { ScanTask as CheckTask } from "./task";
 
-export type Aggressivity = {
+export type CheckAggressivity = {
   minRequests: number;
   maxRequests: number | "Infinity";
 };
 
-export type ScanType = "passive" | "active";
-
-export type ScanMetadata = {
+export type CheckType = "passive" | "active";
+export type CheckMetadata = {
   id: string;
   name: string;
   description: string;
   tags: string[];
-  aggressivity: Aggressivity;
-  type: ScanType;
+  aggressivity: CheckAggressivity;
+  type: CheckType;
   dependsOn?: string[];
   minStrength?: ScanStrength;
 };
 
-export type ScanDefinition = {
-  metadata: ScanMetadata;
-  dedupeKey?: (context: ScanTarget) => string;
-  when?: (context: ScanContext) => boolean;
-  create: (context: ScanContext) => ScanTask;
+export type CheckDefinition = {
+  metadata: CheckMetadata;
+  dedupeKey?: (context: CheckTarget) => string;
+  when?: (context: CheckContext) => boolean;
+  create: (context: CheckContext) => CheckTask;
 };

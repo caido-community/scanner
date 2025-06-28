@@ -1,21 +1,21 @@
 import { type Response } from "caido:utils";
 
-import { type ScanContext } from "../types";
+import { type CheckContext } from "../types";
 
 /**
  * A type guard that checks if the context includes a response.
  * Narrows the type of `context.response` to `Response`.
  */
 export const hasResponse = (
-  context: ScanContext,
-): context is ScanContext & { response: Response } => {
+  context: CheckContext,
+): context is CheckContext & { response: Response } => {
   return context.response !== undefined;
 };
 
 /**
  * Checks if the request has any query parameters.
  */
-export const hasQueryParameters = (context: ScanContext): boolean => {
+export const hasQueryParameters = (context: CheckContext): boolean => {
   return context.request.getQuery().length > 0;
 };
 
@@ -23,7 +23,7 @@ export const hasQueryParameters = (context: ScanContext): boolean => {
  * Returns a function that checks if the request method is a specific value (case-insensitive).
  */
 export const requestMethodIs =
-  (method: string): ((context: ScanContext) => boolean) =>
+  (method: string): ((context: CheckContext) => boolean) =>
   (context) => {
     return context.request.getMethod().toLowerCase() === method.toLowerCase();
   };
@@ -32,7 +32,7 @@ export const requestMethodIs =
  * Returns a function that checks if the request path matches a regular expression.
  */
 export const requestPathMatches =
-  (pattern: RegExp): ((context: ScanContext) => boolean) =>
+  (pattern: RegExp): ((context: CheckContext) => boolean) =>
   (context) => {
     return pattern.test(context.request.getPath());
   };
@@ -42,7 +42,7 @@ export const requestPathMatches =
  * The name can be a string for an exact match or a regex for a pattern match.
  */
 export const hasQueryParam =
-  (name: string | RegExp): ((context: ScanContext) => boolean) =>
+  (name: string | RegExp): ((context: CheckContext) => boolean) =>
   (context) => {
     const params = new URLSearchParams(context.request.getQuery());
 
@@ -60,7 +60,7 @@ export const requestHeaderMatches =
   (
     headerName: string,
     pattern: string | RegExp,
-  ): ((context: ScanContext) => boolean) =>
+  ): ((context: CheckContext) => boolean) =>
   (context) => {
     const headerValues = context.request.getHeader(headerName);
     if (!headerValues) return false;
@@ -77,7 +77,7 @@ export const requestHeaderMatches =
  * Returns a function that checks if the request body contains a given string or matches a regex.
  */
 export const requestBodyContains =
-  (pattern: string | RegExp): ((context: ScanContext) => boolean) =>
+  (pattern: string | RegExp): ((context: CheckContext) => boolean) =>
   (context) => {
     const body = context.request.getBody();
     if (!body) return false;
@@ -94,7 +94,7 @@ export const requestBodyContains =
 export const responseStatusCodeIs =
   (
     code: number | { min: number; max: number },
-  ): ((context: ScanContext) => boolean) =>
+  ): ((context: CheckContext) => boolean) =>
   (context) => {
     if (!hasResponse(context)) return false;
 
@@ -112,7 +112,7 @@ export const responseHeaderMatches =
   (
     headerName: string,
     pattern: string | RegExp,
-  ): ((context: ScanContext) => boolean) =>
+  ): ((context: CheckContext) => boolean) =>
   (context) => {
     if (!hasResponse(context)) return false;
 
@@ -131,7 +131,7 @@ export const responseHeaderMatches =
  * Returns a function that checks if the response body contains a given string or matches a regex.
  */
 export const responseBodyContains =
-  (pattern: string | RegExp): ((context: ScanContext) => boolean) =>
+  (pattern: string | RegExp): ((context: CheckContext) => boolean) =>
   (context) => {
     if (!hasResponse(context)) return false;
 
@@ -149,6 +149,6 @@ export const responseBodyContains =
  */
 export const responseMimeTypeIs = (
   mimeType: string | RegExp,
-): ((context: ScanContext) => boolean) => {
+): ((context: CheckContext) => boolean) => {
   return responseHeaderMatches("Content-Type", mimeType);
 };

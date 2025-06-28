@@ -1,12 +1,52 @@
 <script setup lang="ts">
-import Card from "primevue/card";
-import Panel from "primevue/panel";
-import Tag from "primevue/tag";
-import { computed, onMounted } from "vue";
+import Button from "primevue/button";
+import MenuBar from "primevue/menubar";
+import { computed, onMounted, ref } from "vue";
 
 import { useChecksService } from "@/services/checks";
 import { useConfigService } from "@/services/config";
 import { useScannerService } from "@/services/scanner";
+import Checks from "@/views/Checks.vue";
+import Dashboard from "@/views/Dashboard.vue";
+import Settings from "@/views/Settings.vue";
+
+const page = ref<"Dashboard" | "Checks" | "Settings">("Dashboard");
+const items = [
+  {
+    label: "Dashboard",
+    isActive: () => page.value === "Dashboard",
+    command: () => {
+      page.value = "Dashboard";
+    },
+  },
+  {
+    label: "Checks",
+    isActive: () => page.value === "Checks",
+    command: () => {
+      page.value = "Checks";
+    },
+  },
+  {
+    label: "Settings",
+    isActive: () => page.value === "Settings",
+    command: () => {
+      page.value = "Settings";
+    },
+  },
+];
+
+const component = computed(() => {
+  switch (page.value) {
+    case "Dashboard":
+      return Dashboard;
+    case "Checks":
+      return Checks;
+    case "Settings":
+      return Settings;
+    default:
+      return undefined;
+  }
+});
 
 const scannerService = useScannerService();
 const checksService = useChecksService();
@@ -17,54 +57,34 @@ onMounted(() => {
   checksService.initialize();
   configService.initialize();
 });
-
-const scannerStateForDisplay = computed(() => {
-  const state = scannerService.getState();
-  if ("sessions" in state && state.sessions !== undefined) {
-    return {
-      ...state,
-      sessions: Object.fromEntries(state.sessions.entries()),
-    };
-  }
-  return state;
-});
 </script>
+
 <template>
-  <Card
-    class="h-full"
-    :pt="{
-      body: { class: 'h-full overflow-y-auto' },
-      content: { class: 'flex-1 min-h-0 p-2' },
-    }"
-  >
-    <template #header> </template>
+  <div class="h-full flex flex-col gap-1">
+    <MenuBar :model="items" class="h-12">
+      <template #start>
+        <div class="px-4 font-bold">Scanner</div>
+      </template>
 
-    <template #content>
-      <div class="flex flex-col gap-4 h-full min-h-0">
-        <Panel header="Scanner Service" toggleable>
-          <div class="flex items-center gap-2 mb-3">
-            <span class="font-semibold">Status:</span>
-            <Tag :value="scannerStateForDisplay.type" />
-          </div>
-          <pre class="text-sm p-3 rounded">{{ scannerStateForDisplay }}</pre>
-        </Panel>
-
-        <Panel header="Config Service" toggleable>
-          <div class="flex items-center gap-2 mb-3">
-            <span class="font-semibold">Status:</span>
-            <Tag :value="configService.getState().type" />
-          </div>
-          <pre class="text-sm p-3 rounded">{{ configService.getState() }}</pre>
-        </Panel>
-
-        <Panel header="Checks Service" toggleable>
-          <div class="flex items-center gap-2 mb-3">
-            <span class="font-semibold">Status:</span>
-            <Tag :value="checksService.getState().type" />
-          </div>
-          <pre class="text-sm p-3 rounded">{{ checksService.getState() }}</pre>
-        </Panel>
-      </div>
-    </template>
-  </Card>
+      <template #item="{ item }">
+        <Button
+          size="small"
+          :severity="item.isActive() ? 'secondary' : 'contrast'"
+          :outlined="item.isActive()"
+          :text="!item.isActive()"
+          :label="item.label"
+          @click="item.command"
+        />
+      </template>
+    </MenuBar>
+    <div class="flex-1 min-h-0">
+      <component :is="component" />
+    </div>
+  </div>
 </template>
+
+<style scoped>
+#plugin--scanner {
+  height: 100%;
+}
+</style>

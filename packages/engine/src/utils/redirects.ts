@@ -1,4 +1,4 @@
-import { type ScanContext } from "../types";
+import { type CheckContext } from "../types";
 
 export type RedirectionType =
   | "http"
@@ -17,7 +17,7 @@ export type RedirectionInfo =
  * https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections
  * https://code.google.com/archive/p/html5security/wikis/RedirectionMethods.wiki
  */
-export function findRedirection(context: ScanContext): RedirectionInfo {
+export function findRedirection(context: CheckContext): RedirectionInfo {
   if (!context.response) {
     return { hasRedirection: false };
   }

@@ -7,22 +7,22 @@ import {
   createScanTarget,
 } from "../../tests/factories";
 import {
+  type CheckDefinition,
+  type CheckMetadata,
+  type CheckTarget,
   type Finding,
   type JSONSerializable,
-  type ScanDefinition,
-  type ScanMetadata,
   ScanStrength,
-  type ScanTarget,
   type ScanTask,
 } from "../../types";
 
 import { TargetProcessor } from "./processor";
 
 const createMockScanDefinition = (
-  overrides: Partial<Omit<ScanDefinition, "metadata">> & {
-    metadata?: Partial<ScanMetadata>;
+  overrides: Partial<Omit<CheckDefinition, "metadata">> & {
+    metadata?: Partial<CheckMetadata>;
   } = {},
-): ScanDefinition => {
+): CheckDefinition => {
   return {
     metadata: {
       id: "test-scan",
@@ -62,7 +62,7 @@ const createMockTask = (
 };
 
 describe("TargetProcessor", () => {
-  let target: ScanTarget;
+  let target: CheckTarget;
   let context: ReturnType<typeof createScanContext>;
 
   beforeEach(() => {
@@ -88,10 +88,12 @@ describe("TargetProcessor", () => {
       const orchestrator = createMockOrchestrator([[scan1], [scan2]]);
       const processor = new TargetProcessor(target, orchestrator);
 
-      const findings = await processor.process();
+      const result = await processor.process();
 
-      expect(findings).toHaveLength(2);
-      expect(findings).toEqual([finding1, finding2]);
+      expect(result.kind).toBe("Finished");
+      if (result.kind === "Finished") {
+        expect(result.findings).toEqual([finding1, finding2]);
+      }
       expect(task1.tick).toHaveBeenCalledTimes(1);
       expect(task2.tick).toHaveBeenCalledTimes(1);
     });
@@ -107,9 +109,12 @@ describe("TargetProcessor", () => {
       const orchestrator = createMockOrchestrator([[scan]]);
       const processor = new TargetProcessor(target, orchestrator);
 
-      const findings = await processor.process();
+      const result = await processor.process();
 
-      expect(findings).toEqual([finding]);
+      expect(result.kind).toBe("Finished");
+      if (result.kind === "Finished") {
+        expect(result.findings).toEqual([finding]);
+      }
       expect(task.tick).toHaveBeenCalledOnce();
     });
 

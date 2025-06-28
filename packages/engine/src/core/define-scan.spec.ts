@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  type CheckContext,
+  type CheckMetadata,
   continueWith,
   defineScan,
   done,
   type Finding,
-  type ScanContext,
-  type ScanMetadata,
 } from "../index";
 import {
   createBaseFinding,
@@ -15,8 +15,8 @@ import {
 } from "../tests/factories";
 
 describe("defineScan", () => {
-  let baseMetadata: ScanMetadata;
-  let context: ScanContext;
+  let baseMetadata: CheckMetadata;
+  let context: CheckContext;
   let baseFinding: Finding;
 
   beforeEach(() => {

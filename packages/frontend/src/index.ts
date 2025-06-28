@@ -33,12 +33,17 @@ export const init = (sdk: FrontendSDK) => {
 
   sdk.navigation.addPage("/scanner", {
     body: root,
+    onEnter: () => {
+      sidebarCount = 0;
+      sidebarItem.setCount(sidebarCount);
+    },
   });
 
-  sdk.sidebar.registerItem("Scanner", "/scanner", {
+  const sidebarItem = sdk.sidebar.registerItem("Scanner", "/scanner", {
     icon: "fas fa-shield-alt",
   });
 
+  let sidebarCount = 0;
   sdk.commands.register("run-active-scanner", {
     name: "Run Active Scanner",
     run: async (context) => {
@@ -65,6 +70,10 @@ export const init = (sdk: FrontendSDK) => {
         });
         return;
       }
+
+      sdk.window.showToast("Active scan started", { variant: "success" });
+      sidebarCount++;
+      sidebarItem.setCount(sidebarCount);
     },
     group: "Scanner",
     when: (context) => {

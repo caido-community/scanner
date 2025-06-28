@@ -1,11 +1,11 @@
 import {
+  type CheckContext,
+  type CheckDefinition,
+  type CheckMetadata,
+  type CheckTarget,
   type DefineUtils,
   type JSONSerializable,
   type RunState,
-  type ScanContext,
-  type ScanDefinition,
-  type ScanMetadata,
-  type ScanTarget,
   type ScanTask,
   type Step,
   type StepAction,
@@ -15,13 +15,13 @@ import {
 
 export const defineScan = <T>(
   definition: (utils: DefineUtils<T>) => {
-    metadata: ScanMetadata;
+    metadata: CheckMetadata;
     initState?: () => T;
-    dedupeKey?: (target: ScanTarget) => string;
-    when?: (context: ScanContext) => boolean;
+    dedupeKey?: (target: CheckTarget) => string;
+    when?: (context: CheckContext) => boolean;
     output?: (state: T) => JSONSerializable;
   },
-): ScanDefinition => {
+): CheckDefinition => {
   const steps: Map<StepName, Step<T>> = new Map();
 
   const step = (name: StepName, action: StepAction<T>) => {
@@ -30,7 +30,7 @@ export const defineScan = <T>(
 
   const { metadata, dedupeKey, initState, when, output } = definition({ step });
 
-  const create = (context: ScanContext): ScanTask => {
+  const create = (context: CheckContext): ScanTask => {
     if (steps.size === 0) {
       throw new Error("No steps defined for scan");
     }
