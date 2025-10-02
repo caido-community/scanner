@@ -10,3 +10,4 @@ export {
 export { keyStrategy } from "./key";
 export { bodyMatchesAny } from "./body";
 export { getSetCookieHeaders, type SetCookieHeader } from "./cookie";
+export { defineResponseRegexCheck } from "./check";
