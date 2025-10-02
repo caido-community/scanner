@@ -1,7 +1,6 @@
-import { defineCheck, done, Severity } from "engine";
+import { Severity } from "engine";
 
-import { extractBodyMatches } from "../../utils/body";
-import { keyStrategy } from "../../utils/key";
+import { defineResponseRegexCheck } from "../../utils/check";
 
 // Credit card regex patterns based on Valibot implementation
 const CREDIT_CARD_PATTERNS = [
@@ -14,53 +13,32 @@ const CREDIT_CARD_PATTERNS = [
   /\b4\d{12}(?:\d{3,6})?\b/g, // Visa
 ];
 
-export default defineCheck(({ step }) => {
-  step("scanResponse", (state, context) => {
-    const response = context.target.response;
-
-    if (response === undefined || response.getCode() !== 200) {
-      return done({ state });
-    }
-
-    const matches = extractBodyMatches(response, CREDIT_CARD_PATTERNS);
-
-    if (matches.length > 0) {
-      const matchedCards = matches.map((card) => `- ${card}`).join("\n");
-
-      return done({
-        findings: [
-          {
-            name: "Credit Card Number Disclosed",
-            description: `Credit card numbers have been detected in the response. This could be a false positive and should be always manually verified.\n\nDiscovered credit card numbers:\n\`\`\`\n${matchedCards}\n\`\`\``,
-            severity: Severity.INFO,
-            correlation: {
-              requestID: context.target.request.getId(),
-              locations: [],
-            },
-          },
-        ],
-        state,
-      });
-    }
-
-    return done({ state });
-  });
-
-  return {
-    metadata: {
-      id: "credit-card-disclosure",
-      name: "Credit Card Number Disclosed",
-      description: "Detects credit card numbers in HTTP responses",
-      type: "passive",
-      tags: ["information-disclosure", "sensitive-data"],
-      severities: [Severity.INFO],
-      aggressivity: {
-        minRequests: 0,
-        maxRequests: 0,
+export default defineResponseRegexCheck({
+  patterns: CREDIT_CARD_PATTERNS,
+  toFindings: (matches, context) => {
+    const matchedCards = matches.map((card) => `- ${card}`).join("\n");
+    return [
+      {
+        name: "Credit Card Number Disclosed",
+        description: `Credit card numbers have been detected in the response. This could be a false positive and should be always manually verified.\n\nDiscovered credit card numbers:\n\`\`\`\n${matchedCards}\n\`\`\``,
+        severity: Severity.INFO,
+        correlation: {
+          requestID: context.target.request.getId(),
+          locations: [],
+        },
       },
+    ];
+  },
+  metadata: {
+    id: "credit-card-disclosure",
+    name: "Credit Card Number Disclosed",
+    description: "Detects credit card numbers in HTTP responses",
+    type: "passive",
+    tags: ["information-disclosure", "sensitive-data"],
+    severities: [Severity.INFO],
+    aggressivity: {
+      minRequests: 0,
+      maxRequests: 0,
     },
-
-    initState: () => ({}),
-    dedupeKey: keyStrategy().withHost().withPort().withPath().build(),
-  };
+  },
 });

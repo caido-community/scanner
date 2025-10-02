@@ -1,7 +1,6 @@
-import { defineCheck, done, Severity } from "engine";
+import { Severity } from "engine";
 
-import { extractBodyMatches } from "../../utils/body";
-import { keyStrategy } from "../../utils/key";
+import { defineResponseRegexCheck } from "../../utils/check";
 
 // Private key regex patterns
 const PRIVATE_KEY_PATTERNS = [
@@ -31,54 +30,33 @@ const PRIVATE_KEY_PATTERNS = [
   /ssh-rsa AAAA[0-9A-Za-z+/]+=*[\s\S]*?-----END OPENSSH PRIVATE KEY-----/g,
 ];
 
-export default defineCheck(({ step }) => {
-  step("scanResponse", (state, context) => {
-    const response = context.target.response;
-
-    if (response === undefined || response.getCode() !== 200) {
-      return done({ state });
-    }
-
-    const matches = extractBodyMatches(response, PRIVATE_KEY_PATTERNS);
-
-    if (matches.length > 0) {
-      const matchedKeys = matches.map((key) => `- ${key}`).join("\n");
-
-      return done({
-        findings: [
-          {
-            name: "Private Key Disclosed",
-            description: `Private keys have been detected in the response.\n\nDiscovered private keys:\n\`\`\`\n${matchedKeys}\n\`\`\``,
-            severity: Severity.INFO,
-            correlation: {
-              requestID: context.target.request.getId(),
-              locations: [],
-            },
-          },
-        ],
-        state,
-      });
-    }
-
-    return done({ state });
-  });
-
-  return {
-    metadata: {
-      id: "private-key-disclosure",
-      name: "Private Key Disclosed",
-      description:
-        "Detects private keys in HTTP responses that could lead to complete system compromise",
-      type: "passive",
-      tags: ["information-disclosure", "sensitive-data"],
-      severities: [Severity.INFO],
-      aggressivity: {
-        minRequests: 0,
-        maxRequests: 0,
+export default defineResponseRegexCheck({
+  patterns: PRIVATE_KEY_PATTERNS,
+  toFindings: (matches, context) => {
+    const matchedKeys = matches.map((key) => `- ${key}`).join("\n");
+    return [
+      {
+        name: "Private Key Disclosed",
+        description: `Private keys have been detected in the response.\n\nDiscovered private keys:\n\`\`\`\n${matchedKeys}\n\`\`\``,
+        severity: Severity.INFO,
+        correlation: {
+          requestID: context.target.request.getId(),
+          locations: [],
+        },
       },
+    ];
+  },
+  metadata: {
+    id: "private-key-disclosure",
+    name: "Private Key Disclosed",
+    description:
+      "Detects private keys in HTTP responses that could lead to complete system compromise",
+    type: "passive",
+    tags: ["information-disclosure", "sensitive-data"],
+    severities: [Severity.INFO],
+    aggressivity: {
+      minRequests: 0,
+      maxRequests: 0,
     },
-
-    initState: () => ({}),
-    dedupeKey: keyStrategy().withHost().withPort().withPath().build(),
-  };
+  },
 });

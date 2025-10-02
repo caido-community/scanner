@@ -1,7 +1,6 @@
-import { defineCheck, done, Severity } from "engine";
+import { Severity } from "engine";
 
-import { extractBodyMatches } from "../../utils/body";
-import { keyStrategy } from "../../utils/key";
+import { defineResponseRegexCheck } from "../../utils/check";
 
 // Database connection string regex patterns
 const DB_CONNECTION_PATTERNS = [
@@ -46,54 +45,33 @@ const DB_CONNECTION_PATTERNS = [
   /jdbc:[^:]+:[^;]+;password=[^;]+;user=[^;]+/gi,
 ];
 
-export default defineCheck(({ step }) => {
-  step("scanResponse", (state, context) => {
-    const response = context.target.response;
-
-    if (response === undefined || response.getCode() !== 200) {
-      return done({ state });
-    }
-
-    const matches = extractBodyMatches(response, DB_CONNECTION_PATTERNS);
-
-    if (matches.length > 0) {
-      const matchedConnections = matches.map((conn) => `- ${conn}`).join("\n");
-
-      return done({
-        findings: [
-          {
-            name: "Database Connection String Disclosed",
-            description: `Database connection strings have been detected in the response. Exposed database credentials can lead to unauthorized database access.\n\nDiscovered connection strings:\n\`\`\`\n${matchedConnections}\n\`\`\``,
-            severity: Severity.INFO,
-            correlation: {
-              requestID: context.target.request.getId(),
-              locations: [],
-            },
-          },
-        ],
-        state,
-      });
-    }
-
-    return done({ state });
-  });
-
-  return {
-    metadata: {
-      id: "db-connection-disclosure",
-      name: "Database Connection String Disclosed",
-      description:
-        "Detects database connection strings in HTTP responses that could lead to unauthorized database access",
-      type: "passive",
-      tags: ["information-disclosure", "sensitive-data"],
-      severities: [Severity.INFO],
-      aggressivity: {
-        minRequests: 0,
-        maxRequests: 0,
+export default defineResponseRegexCheck({
+  patterns: DB_CONNECTION_PATTERNS,
+  toFindings: (matches, context) => {
+    const matchedConnections = matches.map((conn) => `- ${conn}`).join("\n");
+    return [
+      {
+        name: "Database Connection String Disclosed",
+        description: `Database connection strings have been detected in the response. Exposed database credentials can lead to unauthorized database access.\n\nDiscovered connection strings:\n\`\`\`\n${matchedConnections}\n\`\`\``,
+        severity: Severity.INFO,
+        correlation: {
+          requestID: context.target.request.getId(),
+          locations: [],
+        },
       },
+    ];
+  },
+  metadata: {
+    id: "db-connection-disclosure",
+    name: "Database Connection String Disclosed",
+    description:
+      "Detects database connection strings in HTTP responses that could lead to unauthorized database access",
+    type: "passive",
+    tags: ["information-disclosure", "sensitive-data"],
+    severities: [Severity.INFO],
+    aggressivity: {
+      minRequests: 0,
+      maxRequests: 0,
     },
-
-    initState: () => ({}),
-    dedupeKey: keyStrategy().withHost().withPort().withPath().build(),
-  };
+  },
 });

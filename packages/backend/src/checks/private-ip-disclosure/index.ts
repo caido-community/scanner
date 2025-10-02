@@ -1,7 +1,6 @@
-import { defineCheck, done, Severity } from "engine";
+import { Severity } from "engine";
 
-import { bodyMatchesAny } from "../../utils/body";
-import { keyStrategy } from "../../utils/key";
+import { defineResponseRegexCheck } from "../../utils/check";
 
 // Private IP address regex patterns
 const PRIVATE_IP_PATTERNS = [
@@ -22,52 +21,30 @@ const PRIVATE_IP_PATTERNS = [
   /\b127\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/g,
 ];
 
-export default defineCheck(({ step }) => {
-  step("scanResponse", (state, context) => {
-    const response = context.target.response;
-
-    if (response === undefined || response.getCode() !== 200) {
-      return done({ state });
-    }
-
-    // Check if the response body contains private IP patterns
-    if (bodyMatchesAny(response, PRIVATE_IP_PATTERNS)) {
-      return done({
-        findings: [
-          {
-            name: "Private IP Address Disclosed",
-            description:
-              "Private IP addresses have been detected in the response.",
-            severity: Severity.INFO,
-            correlation: {
-              requestID: context.target.request.getId(),
-              locations: [],
-            },
-          },
-        ],
-        state,
-      });
-    }
-
-    return done({ state });
-  });
-
-  return {
-    metadata: {
-      id: "private-ip-disclosure",
+export default defineResponseRegexCheck({
+  patterns: PRIVATE_IP_PATTERNS,
+  toFindings: (matches, context) => [
+    {
       name: "Private IP Address Disclosed",
-      description:
-        "Detects private IP addresses in HTTP responses that could reveal internal network infrastructure",
-      type: "passive",
-      tags: ["information-disclosure", "sensitive-data"],
-      severities: [Severity.INFO],
-      aggressivity: {
-        minRequests: 0,
-        maxRequests: 0,
+      description: "Private IP addresses have been detected in the response.",
+      severity: Severity.INFO,
+      correlation: {
+        requestID: context.target.request.getId(),
+        locations: [],
       },
     },
-
-    initState: () => ({}),
-    dedupeKey: keyStrategy().withHost().withPort().withPath().build(),
-  };
+  ],
+  metadata: {
+    id: "private-ip-disclosure",
+    name: "Private IP Address Disclosed",
+    description:
+      "Detects private IP addresses in HTTP responses that could reveal internal network infrastructure",
+    type: "passive",
+    tags: ["information-disclosure", "sensitive-data"],
+    severities: [Severity.INFO],
+    aggressivity: {
+      minRequests: 0,
+      maxRequests: 0,
+    },
+  },
 });
