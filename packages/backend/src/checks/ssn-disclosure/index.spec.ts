@@ -205,8 +205,6 @@ describe("SSN Disclosure Check", () => {
       },
     );
 
-    // With the when clause, the check should be skipped entirely for non-200 responses
-    // When skipped, the check doesn't appear in execution history at all
     expect(executionHistory).toEqual([]);
   });
 
