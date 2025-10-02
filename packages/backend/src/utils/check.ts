@@ -36,6 +36,8 @@ export const defineResponseRegexCheck = (options: {
       metadata: options.metadata,
       initState: () => ({}),
       dedupeKey: keyStrategy().withHost().withPort().withPath().build(),
+      when: (context) =>
+        context.response !== undefined && context.response.getCode() === 200,
     };
   });
 };

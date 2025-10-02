@@ -279,7 +279,7 @@ describe("Private Key Disclosure Check", () => {
     ]);
   });
 
-  it("should not trigger on non-200 responses", async () => {
+  it("should not run on non-200 responses due to when clause", async () => {
     const request = createMockRequest({
       id: "7",
       host: "example.com",
@@ -303,17 +303,9 @@ describe("Private Key Disclosure Check", () => {
       },
     );
 
-    expect(executionHistory).toMatchObject([
-      {
-        checkId: "private-key-disclosure",
-        targetRequestId: "7",
-        status: "completed",
-      },
-    ]);
-
-    const allFindings =
-      executionHistory[0]?.steps.flatMap((step) => step.findings) ?? [];
-    expect(allFindings).toEqual([]);
+    // With the when clause, the check should be skipped entirely for non-200 responses
+    // When skipped, the check doesn't appear in execution history at all
+    expect(executionHistory).toEqual([]);
   });
 
   it("should not trigger on content without private keys", async () => {
