@@ -5,7 +5,8 @@
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate:parsers": "bash scripts/generate-parsers.sh"
   },
   "devDependencies": {
     "@caido/sdk-backend": "^0.48.1",
@@ -16,6 +17,8 @@
     "engine": "workspace:*",
     "mitt": "^3.0.1",
     "mutative": "^1.2.0",
-    "zod": "^4.0.5"
+    "zod": "^4.0.5",
+    "@lezer/lr": "1.4.2",
+    "@lezer/generator": "1.8.0"
   }
 }

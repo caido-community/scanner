@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CSPParser } from "./csp";
+import { CSPParser } from ".";
 
 describe("CSPParser", () => {
   describe("parse", () => {
