@@ -11,7 +11,8 @@
     "watch": "caido-dev watch",
     "lint": "eslint --fix packages/*/src",
     "test": "vitest run",
-    "validate": "pnpm run typecheck && pnpm run lint && pnpm run test"
+    "validate": "pnpm run typecheck && pnpm run lint && pnpm run test",
+    "generate:parsers": "pnpm -r run generate:parsers"
   },
   "devDependencies": {
     "@caido-community/dev": "^0.1.6",

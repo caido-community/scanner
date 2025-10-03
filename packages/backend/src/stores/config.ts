@@ -152,6 +152,34 @@ export class ConfigStore {
               checkID: Checks.SSN_DISCLOSURE,
               enabled: false,
             },
+            {
+              checkID: Checks.CSP_NOT_ENFORCED,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_MALFORMED_SYNTAX,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_UNTRUSTED_STYLE,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_UNTRUSTED_SCRIPT,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_FORM_HIJACKING,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_CLICKJACKING,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_ALLOWLISTED_SCRIPTS,
+              enabled: true,
+            },
           ],
         },
         {
@@ -297,6 +325,34 @@ export class ConfigStore {
             },
             {
               checkID: Checks.SSN_DISCLOSURE,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_NOT_ENFORCED,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_MALFORMED_SYNTAX,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_UNTRUSTED_STYLE,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_UNTRUSTED_SCRIPT,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_FORM_HIJACKING,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_CLICKJACKING,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_ALLOWLISTED_SCRIPTS,
               enabled: true,
             },
           ],
@@ -468,6 +524,34 @@ export class ConfigStore {
             },
             {
               checkID: Checks.SSN_DISCLOSURE,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_NOT_ENFORCED,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_MALFORMED_SYNTAX,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_UNTRUSTED_STYLE,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_UNTRUSTED_SCRIPT,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_FORM_HIJACKING,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_CLICKJACKING,
+              enabled: true,
+            },
+            {
+              checkID: Checks.CSP_ALLOWLISTED_SCRIPTS,
               enabled: true,
             },
           ],

@@ -1,0 +1,36 @@
+@top CSP {
+  Directive*
+}
+
+Directive {
+  DirectiveName SourceList? ";"
+}
+
+DirectiveName { directiveName }
+
+SourceList {
+  SourceValue+
+}
+
+SourceValue {
+  keyword
+}
+
+@tokens {
+  directiveName { "default-src" | "script-src" | "style-src" | "img-src" | "font-src" | 
+                  "connect-src" | "media-src" | "object-src" | "child-src" | "frame-src" | 
+                  "worker-src" | "frame-ancestors" | "form-action" | "base-uri" | "plugin-types" |
+                  "manifest-src" | "prefetch-src" | "navigate-to" | "require-trusted-types-for" |
+                  "trusted-types" | "upgrade-insecure-requests" | "block-all-mixed-content" |
+                  "referrer" | "require-sri-for" | "sandbox" | "report-uri" | "report-to" }
+
+  keyword { "'self'" | "'unsafe-inline'" | "'unsafe-eval'" | "'unsafe-hashes'" | 
+            "'unsafe-allow-redirects'" | "'strict-dynamic'" | "'report-sample'" | 
+            "'none'" | "'wasm-unsafe-eval'" }
+  
+  
+  Whitespace { $[ \t\n\r]+ }
+  ";"
+}
+
+@skip { Whitespace }
