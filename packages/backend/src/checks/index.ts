@@ -6,6 +6,13 @@ import cookieHttpOnlyScan from "./cookie-httponly";
 import cookieSecureScan from "./cookie-secure";
 import corsMisconfigScan from "./cors-misconfig";
 import creditCardDisclosureScan from "./credit-card-disclosure";
+import cspAllowlistedScriptsScan from "./csp-allowlisted-scripts";
+import cspClickjackingScan from "./csp-clickjacking";
+import cspFormHijackingScan from "./csp-form-hijacking";
+import cspMalformedSyntaxScan from "./csp-malformed-syntax";
+import cspNotEnforcedScan from "./csp-not-enforced";
+import cspUntrustedScriptScan from "./csp-untrusted-script";
+import cspUntrustedStyleScan from "./csp-untrusted-style";
 import dbConnectionDisclosureScan from "./db-connection-disclosure";
 import debugErrorsScan from "./debug-errors";
 import directoryListingScan from "./directory-listing";
@@ -36,6 +43,13 @@ export const Checks = {
   COOKIE_SECURE: "cookie-secure",
   CORS_MISCONFIG: "cors-misconfig",
   CREDIT_CARD_DISCLOSURE: "credit-card-disclosure",
+  CSP_ALLOWLISTED_SCRIPTS: "csp-allowlisted-scripts",
+  CSP_CLICKJACKING: "csp-clickjacking",
+  CSP_FORM_HIJACKING: "csp-form-hijacking",
+  CSP_MALFORMED_SYNTAX: "csp-malformed-syntax",
+  CSP_NOT_ENFORCED: "csp-not-enforced",
+  CSP_UNTRUSTED_SCRIPT: "csp-untrusted-script",
+  CSP_UNTRUSTED_STYLE: "csp-untrusted-style",
   DB_CONNECTION_DISCLOSURE: "db-connection-disclosure",
   DEBUG_ERRORS: "debug-errors",
   DIRECTORY_LISTING: "directory-listing",
@@ -67,6 +81,13 @@ export const checks = [
   cookieSecureScan,
   corsMisconfigScan,
   creditCardDisclosureScan,
+  cspAllowlistedScriptsScan,
+  cspClickjackingScan,
+  cspFormHijackingScan,
+  cspMalformedSyntaxScan,
+  cspNotEnforcedScan,
+  cspUntrustedScriptScan,
+  cspUntrustedStyleScan,
   dbConnectionDisclosureScan,
   debugErrorsScan,
   directoryListingScan,
