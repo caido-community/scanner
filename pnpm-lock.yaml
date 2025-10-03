@@ -56,6 +56,9 @@ importers:
 
   packages/backend:
     dependencies:
+      '@lezer/common':
+        specifier: 1.2.3
+        version: 1.2.3
       '@lezer/generator':
         specifier: 1.8.0
         version: 1.8.0

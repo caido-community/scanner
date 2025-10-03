@@ -13,7 +13,7 @@ SourceList {
 }
 
 SourceValue {
-  keyword | nonce | hash | scheme | host | url | quotedString
+  keyword
 }
 
 @tokens {
@@ -28,15 +28,6 @@ SourceValue {
             "'unsafe-allow-redirects'" | "'strict-dynamic'" | "'report-sample'" | 
             "'none'" | "'wasm-unsafe-eval'" }
   
-  scheme { "data:" | "blob:" | "filesystem:" | "http:" | "https:" | "mediastream:" | 
-           "ms-appx:" | "ms-appx-web:" | "ms-ws:" | "wss:" | "ws:" }
-  
-  nonce { "'nonce-" @digit+ "'" }
-  hash { "'sha256-" @digit+ "'" | "'sha384-" @digit+ "'" | "'sha512-" @digit+ "'" }
-  
-  host { @digit+ }
-  url { @digit+ }
-  quotedString { "'" @digit* "'" | '"' @digit* '"' }
   
   Whitespace { $[ \t\n\r]+ }
   ";"

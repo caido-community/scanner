@@ -19,6 +19,7 @@
     "mutative": "^1.2.0",
     "zod": "^4.0.5",
     "@lezer/lr": "1.4.2",
-    "@lezer/generator": "1.8.0"
+    "@lezer/generator": "1.8.0",
+    "@lezer/common": "1.2.3"
   }
 }

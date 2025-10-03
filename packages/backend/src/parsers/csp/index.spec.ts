@@ -8,15 +8,19 @@ describe("CSPParser", () => {
       const cspHeader = "default-src 'self'; script-src 'self' 'unsafe-inline'";
       const result = CSPParser.parse(cspHeader);
 
-      expect(result.raw).toBe(cspHeader);
-      expect(result.directives).toHaveLength(2);
-      expect(result.directives[0]).toEqual({
-        name: "default-src",
-        values: ["'self'"],
-      });
-      expect(result.directives[1]).toEqual({
-        name: "script-src",
-        values: ["'self'", "'unsafe-inline'"],
+      expect(result).toMatchObject({
+        kind: "Success",
+        raw: cspHeader,
+        directives: [
+          {
+            name: "default-src",
+            values: ["'self'"],
+          },
+          {
+            name: "script-src",
+            values: ["'self'", "'unsafe-inline'"],
+          },
+        ],
       });
     });
 
@@ -24,32 +28,45 @@ describe("CSPParser", () => {
       const cspHeader = "script-src 'self' https://example.com 'unsafe-inline'";
       const result = CSPParser.parse(cspHeader);
 
-      expect(result.directives).toHaveLength(1);
-      expect(result.directives[0]).toEqual({
-        name: "script-src",
-        values: ["'self'", "https://example.com", "'unsafe-inline'"],
+      expect(result).toMatchObject({
+        kind: "Success",
+        raw: cspHeader,
+        directives: [
+          {
+            name: "script-src",
+            values: ["'self'", "https://example.com", "'unsafe-inline'"],
+          },
+        ],
       });
     });
 
     it("should handle empty CSP header", () => {
       const result = CSPParser.parse("");
-      expect(result.directives).toHaveLength(0);
-      expect(result.raw).toBe("");
+      expect(result).toMatchObject({
+        kind: "Success",
+        raw: "",
+        directives: [],
+      });
     });
 
     it("should handle CSP header with only whitespace", () => {
       const result = CSPParser.parse("   ");
-      expect(result.directives).toHaveLength(0);
-      expect(result.raw).toBe("   ");
+      expect(result).toMatchObject({
+        kind: "Success",
+        raw: "   ",
+        directives: [],
+      });
     });
 
     it("should handle CSP header with extra semicolons", () => {
       const cspHeader = "default-src 'self';; script-src 'self';;";
       const result = CSPParser.parse(cspHeader);
 
-      expect(result.directives).toHaveLength(2);
-      expect(result.directives[0]?.name).toBe("default-src");
-      expect(result.directives[1]?.name).toBe("script-src");
+      expect(result).toMatchObject({
+        kind: "Success",
+        raw: cspHeader,
+        directives: [{ name: "default-src" }, { name: "script-src" }],
+      });
     });
 
     it("should handle CSP header with spaces around semicolons", () => {
@@ -57,24 +74,34 @@ describe("CSPParser", () => {
         "default-src 'self' ; script-src 'self' ; style-src 'self'";
       const result = CSPParser.parse(cspHeader);
 
-      expect(result.directives).toHaveLength(3);
-      expect(result.directives[0]?.name).toBe("default-src");
-      expect(result.directives[1]?.name).toBe("script-src");
-      expect(result.directives[2]?.name).toBe("style-src");
+      expect(result).toMatchObject({
+        kind: "Success",
+        raw: cspHeader,
+        directives: [
+          { name: "default-src" },
+          { name: "script-src" },
+          { name: "style-src" },
+        ],
+      });
     });
 
     it("should handle directive with no values", () => {
       const cspHeader = "default-src 'self'; object-src";
       const result = CSPParser.parse(cspHeader);
 
-      expect(result.directives).toHaveLength(2);
-      expect(result.directives[0]).toEqual({
-        name: "default-src",
-        values: ["'self'"],
-      });
-      expect(result.directives[1]).toEqual({
-        name: "object-src",
-        values: [],
+      expect(result).toMatchObject({
+        kind: "Success",
+        raw: cspHeader,
+        directives: [
+          {
+            name: "default-src",
+            values: ["'self'"],
+          },
+          {
+            name: "object-src",
+            values: [],
+          },
+        ],
       });
     });
   });
