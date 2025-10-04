@@ -57,7 +57,7 @@ describe("Credit Card Disclosure Check", () => {
     expect(finding?.description).toContain("4111111111111111");
   });
 
-  it("should not trigger on non-200 responses", async () => {
+  it("should not run on non-200 responses due to when clause", async () => {
     const request = createMockRequest({
       id: "2",
       host: "example.com",
@@ -81,17 +81,7 @@ describe("Credit Card Disclosure Check", () => {
       },
     );
 
-    expect(executionHistory).toMatchObject([
-      {
-        checkId: "credit-card-disclosure",
-        targetRequestId: "2",
-        status: "completed",
-      },
-    ]);
-
-    const allFindings =
-      executionHistory[0]?.steps.flatMap((step) => step.findings) ?? [];
-    expect(allFindings).toEqual([]);
+    expect(executionHistory).toEqual([]);
   });
 
   it("should not trigger on normal content", async () => {

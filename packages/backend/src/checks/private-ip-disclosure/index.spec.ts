@@ -234,7 +234,7 @@ describe("Private IP Disclosure Check", () => {
     ]);
   });
 
-  it("should not trigger on non-200 responses", async () => {
+  it("should not run on non-200 responses due to when clause", async () => {
     const request = createMockRequest({
       id: "6",
       host: "example.com",
@@ -258,17 +258,7 @@ describe("Private IP Disclosure Check", () => {
       },
     );
 
-    expect(executionHistory).toMatchObject([
-      {
-        checkId: "private-ip-disclosure",
-        targetRequestId: "6",
-        status: "completed",
-      },
-    ]);
-
-    const allFindings =
-      executionHistory[0]?.steps.flatMap((step) => step.findings) ?? [];
-    expect(allFindings).toEqual([]);
+    expect(executionHistory).toEqual([]);
   });
 
   it("should not trigger on content without private IPs", async () => {
