@@ -4,6 +4,7 @@ import { Tags } from "../../../types";
 import {
   createRequestWithParameter,
   extractParameters,
+  findingBuilder,
   hasParameters,
   type Parameter,
 } from "../../../utils";
@@ -15,7 +16,15 @@ type State = {
   currentParamIndex: number;
 };
 
-const SQLITE_ERROR_PAYLOADS = ["'", '"', "\\"];
+const SQLITE_ERROR_PAYLOADS = ["a'", 'a"', "a\\"];
+
+// Finding constants
+const FINDING_DESCRIPTION =
+  "The application is vulnerable to SQLite error-based SQL injection. The application returned a SQLite error message, indicating that user input is not properly sanitized.";
+const FINDING_IMPACT =
+  "This vulnerability allows attackers to extract sensitive information from the database, including user credentials, personal data, and other confidential information. Attackers can also potentially manipulate database operations.";
+const FINDING_RECOMMENDATION =
+  "Use parameterized queries or prepared statements to prevent SQL injection. Never concatenate user input directly into SQL queries. Implement proper input validation and sanitization.";
 
 // SQLite-specific error messages from the source code (exact string matches)
 const SQLITE_ERROR_SIGNATURES = [
@@ -55,16 +64,7 @@ const SQLITE_ERROR_SIGNATURES = [
 ];
 
 // SQLite-specific error patterns (regex patterns for flexible matching)
-const SQLITE_ERROR_REGEX_PATTERNS = [
-  /near\s+".+":\s+syntax\s+error/i,
-  /no\s+such\s+(table|column|index|function|trigger|module|window|view|savepoint|rowid):\s*"?[^"]*"?/i,
-  /FOREIGN\s+KEY\s+constraint\s+failed/i,
-  /CHECK\s+constraint\s+failed\s+in/i,
-  /database\s+(disk\s+image\s+is\s+malformed|schema\s+has\s+changed|corruption)/i,
-  /syntax\s+error\s+(near|after)/i,
-  /SELECTs\s+to\s+the\s+left\s+and\s+right\s+of\s+UNION\s+do\s+not\s+have\s+the\s+same\s+number\s+of\s+result\s+columns/i,
-  /all\s+VALUES\s+must\s+have\s+the\s+same\s+number\s+of\s+terms/i,
-];
+const SQLITE_ERROR_REGEX_PATTERNS = [/near ".+?": syntax error/i];
 
 export default defineCheck<State>(({ step }) => {
   step("findParameters", (state, context) => {
@@ -134,21 +134,22 @@ export default defineCheck<State>(({ step }) => {
         // Check exact string matches
         for (const signature of SQLITE_ERROR_SIGNATURES) {
           if (responseBody.includes(signature)) {
+            const finding = findingBuilder({
+              name: "SQLite Error-Based SQL Injection",
+              severity: Severity.CRITICAL,
+              request: testRequest,
+            })
+              .withDescription(FINDING_DESCRIPTION)
+              .withImpact(FINDING_IMPACT)
+              .withRecommendation(FINDING_RECOMMENDATION)
+              .withArtifacts("Payload and Error Details", [
+                `Payload used: ${testValue}`,
+                `Error signature detected: ${signature}`,
+              ])
+              .build();
+
             return done({
-              findings: [
-                {
-                  name:
-                    "SQLite Error-Based SQL Injection in parameter '" +
-                    currentParam.name +
-                    "'",
-                  description: `Parameter \`${currentParam.name}\` in ${currentParam.source} is vulnerable to SQLite error-based SQL injection. The application returned a SQLite error message, indicating that user input is not properly sanitized.\n\n**Payload used:**\n\`\`\`\n${testValue}\n\`\`\`\n\n**Error signature detected:**\n\`\`\`\n${signature}\n\`\`\``,
-                  severity: Severity.CRITICAL,
-                  correlation: {
-                    requestID: testRequest.getId(),
-                    locations: [],
-                  },
-                },
-              ],
+              findings: [finding],
               state,
             });
           }
@@ -158,21 +159,22 @@ export default defineCheck<State>(({ step }) => {
         for (const pattern of SQLITE_ERROR_REGEX_PATTERNS) {
           const match = responseBody.match(pattern);
           if (match) {
+            const finding = findingBuilder({
+              name: "SQLite Error-Based SQL Injection",
+              severity: Severity.CRITICAL,
+              request: testRequest,
+            })
+              .withDescription(FINDING_DESCRIPTION)
+              .withImpact(FINDING_IMPACT)
+              .withRecommendation(FINDING_RECOMMENDATION)
+              .withArtifacts("Payload and Error Details", [
+                `Payload used: ${testValue}`,
+                `Error signature detected: ${match[0]}`,
+              ])
+              .build();
+
             return done({
-              findings: [
-                {
-                  name:
-                    "SQLite Error-Based SQL Injection in parameter '" +
-                    currentParam.name +
-                    "'",
-                  description: `Parameter \`${currentParam.name}\` in ${currentParam.source} is vulnerable to SQLite error-based SQL injection. The application returned a SQLite error message, indicating that user input is not properly sanitized.\n\n**Payload used:**\n\`\`\`\n${testValue}\n\`\`\`\n\n**Error signature detected:**\n\`\`\`\n${match[0]}\n\`\`\``,
-                  severity: Severity.CRITICAL,
-                  correlation: {
-                    requestID: testRequest.getId(),
-                    locations: [],
-                  },
-                },
-              ],
+              findings: [finding],
               state,
             });
           }
@@ -194,7 +196,7 @@ export default defineCheck<State>(({ step }) => {
       id: "sqlite-error-based-sqli",
       name: "SQLite Error-Based SQL Injection",
       description:
-        "Detects SQLite-specific error-based SQL injection vulnerabilities using actual SQLite error messages from the source code, including database errors, constraint violations, syntax errors, and system errors",
+        "Detects SQLite-specific error-based SQL injection vulnerabilities",
       type: "active",
       tags: [Tags.SQLI],
       severities: [Severity.CRITICAL],
@@ -208,6 +210,7 @@ export default defineCheck<State>(({ step }) => {
       .withHost()
       .withPort()
       .withPath()
+      .withQueryKeys()
       .build(),
     initState: () => ({
       testParams: [],

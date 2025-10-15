@@ -61,7 +61,7 @@ describe("SQLite Error-Based SQL Injection Check", () => {
             stepName: "testPayloads",
             findings: [
               {
-                name: "SQLite Error-Based SQL Injection in parameter 'q'",
+                name: "SQLite Error-Based SQL Injection",
                 severity: "critical",
               },
             ],
@@ -124,7 +124,7 @@ describe("SQLite Error-Based SQL Injection Check", () => {
             stepName: "testPayloads",
             findings: [
               {
-                name: "SQLite Error-Based SQL Injection in parameter 'username'",
+                name: "SQLite Error-Based SQL Injection",
                 severity: "critical",
               },
             ],
@@ -187,7 +187,7 @@ describe("SQLite Error-Based SQL Injection Check", () => {
             stepName: "testPayloads",
             findings: [
               {
-                name: "SQLite Error-Based SQL Injection in parameter 'id'",
+                name: "SQLite Error-Based SQL Injection",
                 severity: "critical",
               },
             ],
@@ -316,7 +316,7 @@ describe("SQLite Error-Based SQL Injection Check", () => {
             stepName: "testPayloads",
             findings: [
               {
-                name: "SQLite Error-Based SQL Injection in parameter 'filter'",
+                name: "SQLite Error-Based SQL Injection",
                 severity: "critical",
               },
             ],
@@ -379,7 +379,7 @@ describe("SQLite Error-Based SQL Injection Check", () => {
             stepName: "testPayloads",
             findings: [
               {
-                name: "SQLite Error-Based SQL Injection in parameter 'term'",
+                name: "SQLite Error-Based SQL Injection",
                 severity: "critical",
               },
             ],
@@ -442,7 +442,7 @@ describe("SQLite Error-Based SQL Injection Check", () => {
             stepName: "testPayloads",
             findings: [
               {
-                name: "SQLite Error-Based SQL Injection in parameter 'id'",
+                name: "SQLite Error-Based SQL Injection",
                 severity: "critical",
               },
             ],
@@ -505,7 +505,7 @@ describe("SQLite Error-Based SQL Injection Check", () => {
             stepName: "testPayloads",
             findings: [
               {
-                name: "SQLite Error-Based SQL Injection in parameter 'field'",
+                name: "SQLite Error-Based SQL Injection",
                 severity: "critical",
               },
             ],
