@@ -188,6 +188,10 @@ export class ConfigStore {
               checkID: Checks.MISSING_CONTENT_TYPE,
               enabled: true,
             },
+            {
+              checkID: Checks.HTML_MISSING_CHARSET,
+              enabled: false,
+            },
           ],
         },
         {
@@ -369,6 +373,10 @@ export class ConfigStore {
             },
             {
               checkID: Checks.MISSING_CONTENT_TYPE,
+              enabled: true,
+            },
+            {
+              checkID: Checks.HTML_MISSING_CHARSET,
               enabled: true,
             },
           ],
