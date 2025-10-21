@@ -1,5 +1,6 @@
 import antiClickjackingScan from "./anti-clickjacking";
 import applicationErrorsScan from "./application-errors";
+import aspNetDebuggingScan from "./aspnet-debugging";
 import bigRedirectsScan from "./big-redirects";
 import commandInjectionScan from "./command-injection";
 import corsMisconfigScan from "./cors-misconfig";
@@ -71,6 +72,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
+  ASPNET_DEBUGGING: "aspnet-debugging",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -111,5 +113,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
+  aspNetDebuggingScan,
   // mysqlTimeBased,
 ] as const;
