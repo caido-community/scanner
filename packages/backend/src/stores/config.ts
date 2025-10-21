@@ -86,6 +86,10 @@ export class ConfigStore {
               checkID: Checks.SUSPECT_TRANSFORM,
               enabled: false,
             },
+            {
+              checkID: Checks.SERVER_SIDE_JS_CODE_INJECTION,
+              enabled: false,
+            },
           ],
           passive: [
             {
@@ -251,6 +255,10 @@ export class ConfigStore {
             },
             {
               checkID: Checks.SUSPECT_TRANSFORM,
+              enabled: true,
+            },
+            {
+              checkID: Checks.SERVER_SIDE_JS_CODE_INJECTION,
               enabled: true,
             },
           ],
