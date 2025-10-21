@@ -27,6 +27,7 @@ import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
+import serverSideJsScan from "./server-side-js";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
@@ -65,6 +66,7 @@ export const Checks = {
   PRIVATE_IP_DISCLOSURE: "private-ip-disclosure",
   PRIVATE_KEY_DISCLOSURE: "private-key-disclosure",
   ROBOTS_TXT: "robots-txt",
+  SERVER_SIDE_JS_CODE_INJECTION: "server-side-js-code-injection",
   BASIC_REFLECTED_XSS: "basic-reflected-xss",
   MYSQL_ERROR_BASED_SQLI: "mysql-error-based-sqli",
   SSTI: "ssti",
@@ -105,6 +107,7 @@ export const checks = [
   privateIpDisclosureScan,
   privateKeyDisclosureScan,
   robotsTxtScan,
+  serverSideJsScan,
   basicReflectedXSSScan,
   mysqlErrorBased,
   sstiScan,
