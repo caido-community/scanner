@@ -1,6 +1,7 @@
 import antiClickjackingScan from "./anti-clickjacking";
 import applicationErrorsScan from "./application-errors";
 import bigRedirectsScan from "./big-redirects";
+import cacheableHttpsResponseScan from "./cacheable-https-response";
 import commandInjectionScan from "./command-injection";
 import corsMisconfigScan from "./cors-misconfig";
 import creditCardDisclosureScan from "./credit-card-disclosure";
@@ -71,6 +72,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
+  CACHEABLE_HTTPS_RESPONSE: "cacheable-https-response",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -111,5 +113,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
+  cacheableHttpsResponseScan,
   // mysqlTimeBased,
 ] as const;

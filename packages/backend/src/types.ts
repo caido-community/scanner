@@ -10,6 +10,7 @@ export const Tags = {
   COOKIES: "cookies",
   CORS: "cors",
   CRYPTOGRAPHY: "cryptography",
+  CACHE: "cache",
   CSP: "csp",
   CSRF: "csrf",
   CSS_INJECTION: "css-injection",
