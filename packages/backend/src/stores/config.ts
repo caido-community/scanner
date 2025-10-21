@@ -188,6 +188,10 @@ export class ConfigStore {
               checkID: Checks.MISSING_CONTENT_TYPE,
               enabled: true,
             },
+            {
+              checkID: Checks.UNENCRYPTED_COMMUNICATIONS,
+              enabled: false,
+            },
           ],
         },
         {
@@ -369,6 +373,10 @@ export class ConfigStore {
             },
             {
               checkID: Checks.MISSING_CONTENT_TYPE,
+              enabled: true,
+            },
+            {
+              checkID: Checks.UNENCRYPTED_COMMUNICATIONS,
               enabled: true,
             },
           ],

@@ -29,6 +29,7 @@ import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
+import unencryptedCommunicationsScan from "./unencrypted-communications";
 import ssnDisclosureScan from "./ssn-disclosure";
 import sstiScan from "./ssti";
 import suspectTransformScan from "./suspect-transform";
@@ -71,6 +72,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
+  UNENCRYPTED_COMMUNICATIONS: "unencrypted-communications",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -111,5 +113,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
+  unencryptedCommunicationsScan,
   // mysqlTimeBased,
 ] as const;
