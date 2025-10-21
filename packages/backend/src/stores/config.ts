@@ -188,6 +188,14 @@ export class ConfigStore {
               checkID: Checks.MISSING_CONTENT_TYPE,
               enabled: true,
             },
+            {
+              checkID: Checks.ASPNET_TRACING,
+              enabled: true,
+            },
+            {
+              checkID: Checks.ASPNET_TRACING,
+              enabled: false,
+            },
           ],
         },
         {
