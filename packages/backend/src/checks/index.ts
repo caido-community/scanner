@@ -18,6 +18,7 @@ import emailDisclosureScan from "./email-disclosure";
 import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
 import hashDisclosureScan from "./hash-disclosure";
+import hstsNotEnforcedScan from "./hsts-not-enforced";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import openRedirectScan from "./open-redirect";
@@ -59,6 +60,7 @@ export const Checks = {
   HASH_DISCLOSURE: "hash-disclosure",
   JSON_HTML_RESPONSE: "json-html-response",
   MISSING_CONTENT_TYPE: "missing-content-type",
+  HSTS_NOT_ENFORCED: "hsts-not-enforced",
   OPEN_REDIRECT: "open-redirect",
   PATH_TRAVERSAL: "path-traversal",
   PHPINFO: "phpinfo",
@@ -99,6 +101,7 @@ export const checks = [
   hashDisclosureScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
+  hstsNotEnforcedScan,
   openRedirectScan,
   pathTraversalScan,
   phpinfoScan,
