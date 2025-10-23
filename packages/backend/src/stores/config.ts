@@ -188,6 +188,10 @@ export class ConfigStore {
               checkID: Checks.MISSING_CONTENT_TYPE,
               enabled: true,
             },
+            {
+              checkID: Checks.PASSWORD_RETURNED_IN_URL,
+              enabled: true,
+            },
           ],
         },
         {

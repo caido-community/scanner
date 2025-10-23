@@ -21,6 +21,7 @@ import hashDisclosureScan from "./hash-disclosure";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import openRedirectScan from "./open-redirect";
+import passwordReturnedInUrlScan from "./password-returned-in-url";
 import pathTraversalScan from "./path-traversal";
 import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
@@ -59,6 +60,7 @@ export const Checks = {
   HASH_DISCLOSURE: "hash-disclosure",
   JSON_HTML_RESPONSE: "json-html-response",
   MISSING_CONTENT_TYPE: "missing-content-type",
+  PASSWORD_RETURNED_IN_URL: "password-returned-in-url",
   OPEN_REDIRECT: "open-redirect",
   PATH_TRAVERSAL: "path-traversal",
   PHPINFO: "phpinfo",
@@ -99,6 +101,7 @@ export const checks = [
   hashDisclosureScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
+  passwordReturnedInUrlScan,
   openRedirectScan,
   pathTraversalScan,
   phpinfoScan,
