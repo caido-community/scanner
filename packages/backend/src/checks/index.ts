@@ -27,6 +27,7 @@ import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
+import sessionTokenUrlScan from "./session-token-url";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
@@ -71,6 +72,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
+  SESSION_TOKEN_IN_URL: "session-token-in-url",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -109,6 +111,7 @@ export const checks = [
   mysqlErrorBased,
   sstiScan,
   sqlStatementInParams,
+  sessionTokenUrlScan,
   ssnDisclosureScan,
   suspectTransformScan,
   // mysqlTimeBased,
