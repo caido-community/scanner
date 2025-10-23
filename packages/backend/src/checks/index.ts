@@ -17,6 +17,7 @@ import directoryListingScan from "./directory-listing";
 import emailDisclosureScan from "./email-disclosure";
 import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
+import graphqlSuggestionsScan from "./graphql-suggestions";
 import hashDisclosureScan from "./hash-disclosure";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
@@ -57,6 +58,7 @@ export const Checks = {
   EXPOSED_ENV: "exposed-env",
   GIT_CONFIG: "git-config",
   HASH_DISCLOSURE: "hash-disclosure",
+  GRAPHQL_SUGGESTIONS_ENABLED: "graphql-suggestions-enabled",
   JSON_HTML_RESPONSE: "json-html-response",
   MISSING_CONTENT_TYPE: "missing-content-type",
   OPEN_REDIRECT: "open-redirect",
@@ -97,6 +99,7 @@ export const checks = [
   exposedEnvScan,
   gitConfigScan,
   hashDisclosureScan,
+  graphqlSuggestionsScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
   openRedirectScan,
