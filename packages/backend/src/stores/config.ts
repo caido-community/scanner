@@ -253,6 +253,10 @@ export class ConfigStore {
               checkID: Checks.SUSPECT_TRANSFORM,
               enabled: true,
             },
+            {
+              checkID: Checks.HTTP_TRACE_ENABLED,
+              enabled: false,
+            },
           ],
           passive: [
             {
