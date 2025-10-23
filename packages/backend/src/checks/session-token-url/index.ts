@@ -3,104 +3,134 @@ import { defineCheck, done, Severity } from "engine";
 import { Tags } from "../../types";
 import { keyStrategy } from "../../utils";
 
-type DetectedToken = {
-  location: string;
-  name?: string;
-  value: string;
+type FlaggedParam = {
+  name: string;
+  valueLength: number;
+  source: "body" | "header";
 };
 
-const PARAMETER_PATTERNS = [
-  /^(?:jsessionid)$/i,
-  /^(?:phpsessid)$/i,
-  /^(?:sessionid|session_id|sessid|sessionkey|session_key)$/i,
-  /^(?:sid)$/i,
-  /^(?:auth_token|authtoken)$/i,
-  /^(?:token|access_token|id_token|bearer)$/i,
+const TOKEN_KEYWORDS = [
+  "token",
+  "session",
+  "sid",
+  "auth",
+  "jwt",
+  "sso",
+  "ticket",
 ];
 
-const PATH_TOKEN_REGEX = /;(?:(?:j|php)?sessionid|sid|token)=([^;/?#]+)/gi;
+const QUERY_PARAM_REGEX = /[?&]([^&?#"'<>=\s]+)=([^&?#"'<>\s]*)/g;
 
-const MIN_TOKEN_LENGTH = 8;
+const sanitize = (value: string): string => {
+  return value
+    .toLowerCase()
+    .replace(/\[|\]/g, "")
+    .replace(/[.\-_]/g, "");
+};
 
-const maskValue = (value: string) => {
-  if (value.length <= 8) {
+const decodeValue = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
     return value;
   }
-
-  return `${value.slice(0, 4)}...${value.slice(-4)}`;
 };
 
-const isSensitiveParameter = (name: string, value: string): boolean => {
-  if (value.length < MIN_TOKEN_LENGTH) {
-    return false;
+const isTokenIndicator = (value: string): boolean => {
+  const normalized = sanitize(value);
+  return TOKEN_KEYWORDS.some((keyword) => normalized.includes(keyword));
+};
+
+const extractTokenParams = (
+  text: string,
+  source: FlaggedParam["source"],
+): FlaggedParam[] => {
+  const flagged: FlaggedParam[] = [];
+
+  for (const match of text.matchAll(QUERY_PARAM_REGEX)) {
+    const paramName = match[1];
+    const paramValue = match[2];
+
+    if (paramName === undefined || paramValue === undefined) {
+      continue;
+    }
+
+    const decodedValue = decodeValue(paramValue);
+
+    if (isTokenIndicator(paramName) || isTokenIndicator(decodedValue)) {
+      flagged.push({
+        name: paramName,
+        valueLength: decodedValue.length,
+        source,
+      });
+    }
   }
 
-  return PARAMETER_PATTERNS.some((pattern) => pattern.test(name));
+  return flagged;
 };
 
-export default defineCheck(({ step }) => {
-  step("detectSessionTokens", (state, context) => {
-    const tokens: DetectedToken[] = [];
-    const { request } = context.target;
+const buildDescription = (params: FlaggedParam[]): string => {
+  const details = params
+    .map((param) => {
+      const lengthText =
+        param.valueLength === 0
+          ? "empty value"
+          : param.valueLength === 1
+            ? "1 character"
+            : `${param.valueLength} characters`;
+      const sourceText =
+        param.source === "header" ? "Location header" : "response body";
+      return `- Parameter \`${param.name}\` appears in the ${sourceText} with session token-like content (${lengthText}).`;
+    })
+    .join("\n");
 
-    const query = request.getQuery() ?? "";
-    if (query !== "") {
-      const params = new URLSearchParams(query);
-      for (const [name, value] of params.entries()) {
-        if (isSensitiveParameter(name, value)) {
-          tokens.push({
-            location: "query",
-            name,
-            value: maskValue(value),
-          });
-        }
-      }
-    }
+  return [
+    "The response exposes session tokens within a URL.",
+    "",
+    details,
+    "",
+    "Session tokens must not be transmitted in URLs because they leak via logs, referrers, and browser history. Move tokens into cookies or authorization headers and ensure they are sent only over HTTPS.",
+  ].join("\n");
+};
 
-    const path = request.getPath();
-    if (path !== undefined && path.length > 0) {
-      for (const match of path.matchAll(PATH_TOKEN_REGEX)) {
-        const rawValue = match[1] ?? "";
-        if (rawValue.length >= MIN_TOKEN_LENGTH) {
-          tokens.push({
-            location: "path",
-            value: maskValue(rawValue),
-          });
-        }
-      }
-    }
+export default defineCheck<Record<never, never>>(({ step }) => {
+  step("inspectResponse", (state, context) => {
+    const { response } = context.target;
 
-    if (tokens.length === 0) {
+    if (response === undefined) {
       return done({ state });
     }
 
-    const details = tokens
-      .map((token) => {
-        if (token.name !== undefined && token.name.length > 0) {
-          return `- Parameter \`${token.name}\` in ${token.location} contains value \`${token.value}\``;
-        }
-        return `- ${token.location} contains session token value \`${token.value}\``;
-      })
-      .join("\n");
+    const flagged: FlaggedParam[] = [];
 
-    const description = [
-      "The request appears to include session credentials in the URL.",
-      "Session identifiers transmitted via the URL may be leaked through logs, browser history, referrer headers, or intermediary caches.",
-      "",
-      details,
-      "",
-      "**Recommendation:** Move session identifiers to secure cookies or headers and avoid propagating them through the URL.",
-    ].join("\n");
+    const body = response.getBody()?.toText();
+    if (body !== undefined && body.length > 0) {
+      flagged.push(...extractTokenParams(body, "body"));
+    }
+
+    const locationHeaders = response.getHeader("location");
+    if (locationHeaders !== undefined) {
+      for (const headerValue of locationHeaders) {
+        if (headerValue === undefined || headerValue.length === 0) {
+          continue;
+        }
+        flagged.push(...extractTokenParams(headerValue, "header"));
+      }
+    }
+
+    if (flagged.length === 0) {
+      return done({ state });
+    }
 
     return done({
       state,
       findings: [
         {
           name: "Session token disclosed in URL",
-          description,
+          description: buildDescription(flagged),
           severity: Severity.HIGH,
           correlation: {
-            requestID: request.getId(),
+            requestID: context.target.request.getId(),
             locations: [],
           },
         },
@@ -110,27 +140,20 @@ export default defineCheck(({ step }) => {
 
   return {
     metadata: {
-      id: "session-token-in-url",
-      name: "Session token in URL",
+      id: "session-token-url",
+      name: "Session token disclosed in URL",
       description:
-        "Detects session identifiers or tokens transmitted via the request URL",
+        "Detects responses that leak session or authentication tokens via URLs.",
       type: "passive",
-      tags: [
-        Tags.SENSITIVE_DATA,
-        Tags.SESSION_MANAGEMENT,
-        Tags.SECURITY_HEADERS,
-      ],
+      tags: [Tags.SECURITY_HEADERS, Tags.INFORMATION_DISCLOSURE],
       severities: [Severity.HIGH],
-      aggressivity: { minRequests: 0, maxRequests: 0 },
+      aggressivity: {
+        minRequests: 0,
+        maxRequests: 0,
+      },
     },
     initState: () => ({}),
-    dedupeKey: keyStrategy()
-      .withMethod()
-      .withHost()
-      .withPort()
-      .withPath()
-      .withQuery()
-      .build(),
-    when: () => true,
+    dedupeKey: keyStrategy().withHost().withPath().build(),
+    when: (target) => target.response !== undefined,
   };
 });

@@ -3,97 +3,69 @@ import { describe, expect, it } from "vitest";
 
 import sessionTokenCheck from "./index";
 
+const buildTarget = (config: {
+  body?: string;
+  location?: string[];
+}): {
+  request: ReturnType<typeof createMockRequest>;
+  response: ReturnType<typeof createMockResponse>;
+} => {
+  const request = createMockRequest({
+    id: "req-session-token",
+    host: "example.com",
+    method: "GET",
+    path: "/",
+    headers: { Host: ["example.com"] },
+  });
+
+  const response = createMockResponse({
+    id: "res-session-token",
+    code: 200,
+    headers: {
+      "content-type": ["text/html"],
+      ...(config.location !== undefined ? { location: config.location } : {}),
+    },
+    body: config.body ?? "",
+  });
+
+  return { request, response };
+};
+
+const executeCheck = async (config: {
+  body?: string;
+  location?: string[];
+}): Promise<unknown[]> => {
+  const target = buildTarget(config);
+  const execution = await runCheck(sessionTokenCheck, [target]);
+  return execution[0]?.steps[execution[0].steps.length - 1]?.findings ?? [];
+};
+
 describe("Session token in URL check", () => {
-  it("detects session identifier in query string", async () => {
-    const request = createMockRequest({
-      id: "req-1",
-      host: "example.com",
-      method: "GET",
-      path: "/app",
-      query: "sessionid=abcdef1234567890&lang=en",
+  it("flags session tokens in response body URLs", async () => {
+    const findings = await executeCheck({
+      body: '<a href="https://example.com/callback?sessionToken=abc123">return</a>',
     });
 
-    const response = createMockResponse({
-      id: "res-1",
-      code: 200,
-      headers: { "content-type": ["text/html"] },
-      body: "OK",
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
+      name: "Session token disclosed in URL",
+      severity: "high",
     });
-
-    const executionHistory = await runCheck(sessionTokenCheck, [
-      { request, response },
-    ]);
-
-    expect(executionHistory).toMatchObject([
-      {
-        checkId: "session-token-in-url",
-        targetRequestId: "req-1",
-        status: "completed",
-        steps: [
-          {
-            stepName: "detectSessionTokens",
-            findings: [
-              {
-                name: "Session token disclosed in URL",
-                severity: "high",
-              },
-            ],
-            result: "done",
-          },
-        ],
-      },
-    ]);
   });
 
-  it("detects tokens embedded in the path", async () => {
-    const request = createMockRequest({
-      id: "req-2",
-      host: "example.com",
-      method: "GET",
-      path: "/app;jsessionid=ABCDEF1234567890/dashboard",
-      query: "",
+  it("flags session tokens in Location header", async () => {
+    const findings = await executeCheck({
+      location: ["https://example.com/callback?token=xyz"],
     });
 
-    const response = createMockResponse({
-      id: "res-2",
-      code: 200,
-      headers: { "content-type": ["text/html"] },
-      body: "OK",
-    });
-
-    const executionHistory = await runCheck(sessionTokenCheck, [
-      { request, response },
-    ]);
-
-    const findings =
-      executionHistory[0]?.steps[executionHistory[0].steps.length - 1]
-        ?.findings ?? [];
-    expect(findings.length).toBeGreaterThan(0);
-    expect(findings[0]?.description).toContain("path");
+    expect(findings).toHaveLength(1);
   });
 
-  it("ignores non-sensitive parameters", async () => {
-    const request = createMockRequest({
-      id: "req-3",
-      host: "example.com",
-      method: "GET",
-      path: "/app",
-      query: "page=home&sid=123", // sid is short, should not trigger
+  it("does not flag unrelated parameters", async () => {
+    const findings = await executeCheck({
+      body: '<a href="https://example.com/callback?state=123">return</a>',
     });
 
-    const response = createMockResponse({
-      id: "res-3",
-      code: 200,
-      headers: { "content-type": ["text/html"] },
-      body: "OK",
-    });
-
-    const executionHistory = await runCheck(sessionTokenCheck, [
-      { request, response },
-    ]);
-
-    const lastStep =
-      executionHistory[0]?.steps[executionHistory[0].steps.length - 1];
-    expect(lastStep?.findings ?? []).toHaveLength(0);
+    expect(findings).toHaveLength(0);
   });
 });
