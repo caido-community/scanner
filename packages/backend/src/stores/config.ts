@@ -379,6 +379,10 @@ export class ConfigStore {
               checkID: Checks.UNENCRYPTED_COMMUNICATIONS,
               enabled: true,
             },
+            {
+              checkID: Checks.GRAPHQL_INTROSPECTION_ENABLED,
+              enabled: true,
+            },
           ],
         },
         {

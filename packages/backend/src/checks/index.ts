@@ -17,6 +17,7 @@ import directoryListingScan from "./directory-listing";
 import emailDisclosureScan from "./email-disclosure";
 import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
+import graphqlIntrospectionScan from "./graphql-introspection";
 import hashDisclosureScan from "./hash-disclosure";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
@@ -29,10 +30,10 @@ import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
-import unencryptedCommunicationsScan from "./unencrypted-communications";
 import ssnDisclosureScan from "./ssn-disclosure";
 import sstiScan from "./ssti";
 import suspectTransformScan from "./suspect-transform";
+import unencryptedCommunicationsScan from "./unencrypted-communications";
 
 export type CheckID = (typeof Checks)[keyof typeof Checks];
 export const Checks = {
@@ -58,6 +59,7 @@ export const Checks = {
   EXPOSED_ENV: "exposed-env",
   GIT_CONFIG: "git-config",
   HASH_DISCLOSURE: "hash-disclosure",
+  GRAPHQL_INTROSPECTION_ENABLED: "graphql-introspection-enabled",
   JSON_HTML_RESPONSE: "json-html-response",
   MISSING_CONTENT_TYPE: "missing-content-type",
   OPEN_REDIRECT: "open-redirect",
@@ -99,6 +101,7 @@ export const checks = [
   exposedEnvScan,
   gitConfigScan,
   hashDisclosureScan,
+  graphqlIntrospectionScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
   openRedirectScan,
