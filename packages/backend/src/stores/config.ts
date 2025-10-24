@@ -340,6 +340,10 @@ export class ConfigStore {
               enabled: true,
             },
             {
+              checkID: Checks.RUBY_CODE_INJECTION,
+              enabled: false,
+            },
+            {
               checkID: Checks.CSP_NOT_ENFORCED,
               enabled: true,
             },
