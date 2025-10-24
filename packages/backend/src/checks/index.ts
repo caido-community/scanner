@@ -26,6 +26,7 @@ import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
 import { basicReflectedXSSScan } from "./reflected-xss";
+import requestUrlOverrideScan from "./request-url-override";
 import robotsTxtScan from "./robots-txt";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
@@ -60,6 +61,7 @@ export const Checks = {
   JSON_HTML_RESPONSE: "json-html-response",
   MISSING_CONTENT_TYPE: "missing-content-type",
   OPEN_REDIRECT: "open-redirect",
+  REQUEST_URL_OVERRIDE: "request-url-override",
   PATH_TRAVERSAL: "path-traversal",
   PHPINFO: "phpinfo",
   PRIVATE_IP_DISCLOSURE: "private-ip-disclosure",
@@ -100,6 +102,7 @@ export const checks = [
   jsonHtmlResponseScan,
   missingContentTypeScan,
   openRedirectScan,
+  requestUrlOverrideScan,
   pathTraversalScan,
   phpinfoScan,
   privateIpDisclosureScan,
