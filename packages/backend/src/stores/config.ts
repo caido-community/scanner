@@ -188,6 +188,10 @@ export class ConfigStore {
               checkID: Checks.MISSING_CONTENT_TYPE,
               enabled: true,
             },
+            {
+              checkID: Checks.SMTP_HEADER_INJECTION,
+              enabled: true,
+            },
           ],
         },
         {
