@@ -27,6 +27,7 @@ import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
+import rubyCodeInjectionScan from "./ruby-code-injection";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
@@ -57,6 +58,7 @@ export const Checks = {
   EXPOSED_ENV: "exposed-env",
   GIT_CONFIG: "git-config",
   HASH_DISCLOSURE: "hash-disclosure",
+  RUBY_CODE_INJECTION: "ruby-code-injection",
   JSON_HTML_RESPONSE: "json-html-response",
   MISSING_CONTENT_TYPE: "missing-content-type",
   OPEN_REDIRECT: "open-redirect",
@@ -105,6 +107,7 @@ export const checks = [
   privateIpDisclosureScan,
   privateKeyDisclosureScan,
   robotsTxtScan,
+  rubyCodeInjectionScan,
   basicReflectedXSSScan,
   mysqlErrorBased,
   sstiScan,
