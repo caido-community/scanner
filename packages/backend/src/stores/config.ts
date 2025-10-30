@@ -257,6 +257,10 @@ export class ConfigStore {
               checkID: Checks.SUSPECT_TRANSFORM,
               enabled: true,
             },
+            {
+              checkID: Checks.REFERER_DEPENDENT_RESPONSE,
+              enabled: false,
+            },
           ],
           passive: [
             {

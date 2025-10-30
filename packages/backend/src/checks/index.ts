@@ -29,6 +29,7 @@ import pathTraversalScan from "./path-traversal";
 import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
+import refererDependentResponseScan from "./referer-dependent-response";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import requestUrlOverrideScan from "./request-url-override";
 import robotsTxtScan from "./robots-txt";
@@ -82,7 +83,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
-  UNENCRYPTED_COMMUNICATIONS: "unencrypted-communications",
+  REFERER_DEPENDENT_RESPONSE: "referer-dependent-response",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -128,6 +129,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
-  unencryptedCommunicationsScan,
+  refererDependentResponseScan,
   // mysqlTimeBased,
 ] as const;
