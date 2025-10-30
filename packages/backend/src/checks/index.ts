@@ -4,6 +4,7 @@ import base64ParameterScan from "./base64-parameter";
 import bigRedirectsScan from "./big-redirects";
 import cacheableHttpsResponseScan from "./cacheable-https-response";
 import commandInjectionScan from "./command-injection";
+import cookieParentDomainScan from "./cookie-parent-domain";
 import corsMisconfigScan from "./cors-misconfig";
 import creditCardDisclosureScan from "./credit-card-disclosure";
 import cspAllowlistedScriptsScan from "./csp-allowlisted-scripts";
@@ -86,7 +87,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
-  DUPLICATE_COOKIES: "duplicate-cookies",
+  COOKIE_PARENT_DOMAIN: "cookie-parent-domain",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -132,6 +133,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
-  duplicateCookiesScan,
+  cookieParentDomainScan,
   // mysqlTimeBased,
 ] as const;

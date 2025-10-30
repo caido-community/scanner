@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.DUPLICATE_COOKIES,
+              checkID: Checks.COOKIE_PARENT_DOMAIN,
               enabled: false,
             },
           ],
@@ -388,7 +388,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.DUPLICATE_COOKIES,
+              checkID: Checks.COOKIE_PARENT_DOMAIN,
               enabled: true,
             },
           ],
