@@ -192,6 +192,10 @@ export class ConfigStore {
               checkID: Checks.SMTP_HEADER_INJECTION,
               enabled: true,
             },
+            {
+              checkID: Checks.REQUEST_URL_OVERRIDE,
+              enabled: true,
+            },
           ],
         },
         {
