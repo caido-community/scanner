@@ -71,6 +71,10 @@ export class ConfigStore {
               enabled: false,
             },
             {
+              checkID: Checks.SQLITE_ERROR_BASED_SQLI,
+              enabled: false,
+            },
+            {
               checkID: Checks.COMMAND_INJECTION,
               enabled: false,
             },
@@ -234,6 +238,10 @@ export class ConfigStore {
               enabled: true,
             },
             {
+              checkID: Checks.SQLITE_ERROR_BASED_SQLI,
+              enabled: true,
+            },
+            {
               checkID: Checks.COMMAND_INJECTION,
               enabled: true,
             },
@@ -285,6 +293,10 @@ export class ConfigStore {
             },
             {
               checkID: Checks.MYSQL_ERROR_BASED_SQLI,
+              enabled: false,
+            },
+            {
+              checkID: Checks.SQLITE_ERROR_BASED_SQLI,
               enabled: false,
             },
             {

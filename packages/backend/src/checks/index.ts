@@ -37,8 +37,7 @@ import refererDependentResponseScan from "./referer-dependent-response";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import requestUrlOverrideScan from "./request-url-override";
 import robotsTxtScan from "./robots-txt";
-import serializedObjectScan from "./serialized-object";
-import { mysqlErrorBased } from "./sql-injection";
+import { mysqlErrorBased, sqliteErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
 import sstiScan from "./ssti";
@@ -84,6 +83,7 @@ export const Checks = {
   SERIALIZED_OBJECT_HTTP_MESSAGE: "serialized-object-http-message",
   BASIC_REFLECTED_XSS: "basic-reflected-xss",
   MYSQL_ERROR_BASED_SQLI: "mysql-error-based-sqli",
+  SQLITE_ERROR_BASED_SQLI: "sqlite-error-based-sqli",
   SSTI: "ssti",
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
@@ -130,6 +130,7 @@ export const checks = [
   serializedObjectScan,
   basicReflectedXSSScan,
   mysqlErrorBased,
+  sqliteErrorBased,
   sstiScan,
   sqlStatementInParams,
   sessionTokenUrlScan,
