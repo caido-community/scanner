@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.GRAPHQL_ENDPOINT_FOUND,
+              checkID: Checks.GRAPHQL_SUGGESTIONS_ENABLED,
               enabled: true,
             },
           ],
