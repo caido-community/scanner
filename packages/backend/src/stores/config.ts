@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.BASE64_PARAMETER,
+              checkID: Checks.XSS_FILTER_DISABLED,
               enabled: false,
             },
           ],
@@ -388,7 +388,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.BASE64_PARAMETER,
+              checkID: Checks.XSS_FILTER_DISABLED,
               enabled: true,
             },
           ],
