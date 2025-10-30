@@ -320,6 +320,10 @@ export class ConfigStore {
               enabled: true,
             },
             {
+              checkID: Checks.PASSWORD_GET_SUBMISSION,
+              enabled: true,
+            },
+            {
               checkID: Checks.CREDIT_CARD_DISCLOSURE,
               enabled: true,
             },

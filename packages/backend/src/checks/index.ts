@@ -24,7 +24,7 @@ import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import multipleContentTypesScan from "./multiple-content-types";
 import openRedirectScan from "./open-redirect";
-import passwordInCookieScan from "./password-in-cookie";
+import passwordGetSubmissionScan from "./password-get-submission";
 import pathTraversalScan from "./path-traversal";
 import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
@@ -83,7 +83,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
-  REFERER_DEPENDENT_RESPONSE: "referer-dependent-response",
+  PASSWORD_GET_SUBMISSION: "password-get-submission",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -129,6 +129,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
-  refererDependentResponseScan,
+  passwordGetSubmissionScan,
   // mysqlTimeBased,
 ] as const;
