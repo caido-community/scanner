@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.PATH_RELATIVE_STYLESHEET_IMPORT,
+              checkID: Checks.PASSWORD_RETURNED_IN_URL,
               enabled: true,
             },
           ],
