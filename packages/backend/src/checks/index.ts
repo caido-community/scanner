@@ -27,6 +27,7 @@ import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
+import smtpHeaderInjectionScan from "./smtp-header-injection";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
@@ -58,6 +59,7 @@ export const Checks = {
   GIT_CONFIG: "git-config",
   HASH_DISCLOSURE: "hash-disclosure",
   JSON_HTML_RESPONSE: "json-html-response",
+  SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
   OPEN_REDIRECT: "open-redirect",
   PATH_TRAVERSAL: "path-traversal",
@@ -104,6 +106,7 @@ export const checks = [
   phpinfoScan,
   privateIpDisclosureScan,
   privateKeyDisclosureScan,
+  smtpHeaderInjectionScan,
   robotsTxtScan,
   basicReflectedXSSScan,
   mysqlErrorBased,
