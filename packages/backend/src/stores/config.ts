@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.PASSWORD_AUTOCOMPLETE,
+              checkID: Checks.PATH_RELATIVE_STYLESHEET_IMPORT,
               enabled: true,
             },
           ],
