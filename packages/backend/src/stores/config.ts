@@ -258,7 +258,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.REFERER_DEPENDENT_RESPONSE,
+              checkID: Checks.HTTP_TRACE_ENABLED,
               enabled: false,
             },
           ],

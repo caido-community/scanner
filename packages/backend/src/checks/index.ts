@@ -19,7 +19,7 @@ import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
 import graphqlIntrospectionScan from "./graphql-introspection";
 import hashDisclosureScan from "./hash-disclosure";
-import hstsNotEnforcedScan from "./hsts-not-enforced";
+import httpTraceEnabledScan from "./http-trace-enabled";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import multipleContentTypesScan from "./multiple-content-types";
@@ -83,7 +83,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
-  PASSWORD_GET_SUBMISSION: "password-get-submission",
+  HTTP_TRACE_ENABLED: "http-trace-enabled",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -129,6 +129,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
-  passwordGetSubmissionScan,
+  httpTraceEnabledScan,
   // mysqlTimeBased,
 ] as const;
