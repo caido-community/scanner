@@ -17,6 +17,7 @@ import directoryListingScan from "./directory-listing";
 import emailDisclosureScan from "./email-disclosure";
 import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
+import graphqlEndpointScan from "./graphql-endpoint";
 import hashDisclosureScan from "./hash-disclosure";
 import inputReflectedScan from "./input-reflected";
 import jsonHtmlResponseScan from "./json-html-response";
@@ -60,7 +61,7 @@ export const Checks = {
   EXPOSED_ENV: "exposed-env",
   GIT_CONFIG: "git-config",
   HASH_DISCLOSURE: "hash-disclosure",
-  INPUT_REFLECTED: "input-reflected",
+  GRAPHQL_ENDPOINT_FOUND: "graphql-endpoint-found",
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
@@ -103,6 +104,7 @@ export const checks = [
   exposedEnvScan,
   gitConfigScan,
   hashDisclosureScan,
+  graphqlEndpointScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
   inputReflectedScan,
