@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.DUPLICATE_COOKIES,
+              checkID: Checks.HTML_UNRECOGNIZED_CHARSET,
               enabled: false,
             },
           ],
@@ -388,7 +388,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.DUPLICATE_COOKIES,
+              checkID: Checks.HTML_UNRECOGNIZED_CHARSET,
               enabled: true,
             },
           ],
