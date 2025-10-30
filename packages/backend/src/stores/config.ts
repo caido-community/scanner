@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.PASSWORD_IN_COOKIE,
+              checkID: Checks.MULTIPLE_CONTENT_TYPES,
               enabled: true,
             },
           ],

@@ -22,7 +22,7 @@ import hashDisclosureScan from "./hash-disclosure";
 import hstsNotEnforcedScan from "./hsts-not-enforced";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
-import mixedContentScan from "./mixed-content";
+import multipleContentTypesScan from "./multiple-content-types";
 import openRedirectScan from "./open-redirect";
 import passwordInCookieScan from "./password-in-cookie";
 import pathTraversalScan from "./path-traversal";
@@ -69,7 +69,7 @@ export const Checks = {
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
-  PASSWORD_IN_COOKIE: "password-in-cookie",
+  MULTIPLE_CONTENT_TYPES: "multiple-content-types",
   OPEN_REDIRECT: "open-redirect",
   REQUEST_URL_OVERRIDE: "request-url-override",
   PATH_TRAVERSAL: "path-traversal",
@@ -113,7 +113,7 @@ export const checks = [
   graphqlIntrospectionScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
-  passwordInCookieScan,
+  multipleContentTypesScan,
   openRedirectScan,
   passwordAutocompleteScan,
   pathTraversalScan,
