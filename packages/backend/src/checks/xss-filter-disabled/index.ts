@@ -27,12 +27,20 @@ export default defineCheck(({ step }) => {
     }
 
     const description = [
-      "The response disables the legacy browser XSS filter via the `X-XSS-Protection` header.",
+      "The response sets the `X-XSS-Protection` header to `0`, disabling the legacy browser XSS filter.",
       "",
       `**Header value:** \`${headerValues?.join(", ") ?? ""}\``,
       "",
-      "While modern browsers ignore this header, disabling the filter can expose older clients to reflected XSS.",
-      "**Recommendation:** Remove the header or set it to `1; mode=block` for legacy compatibility.",
+      "**Note:** This is generally the CORRECT and RECOMMENDED configuration.",
+      "- Modern browsers have removed support for `X-XSS-Protection`",
+      "- Setting it to `0` prevents bugs in legacy XSS filters",
+      "- OWASP and security experts recommend either `0` or omitting the header entirely",
+      "",
+      "**Only consider this an issue if:**",
+      "- You need to support very old browsers (IE8-11, old Chrome/Safari)",
+      "- Your application has specific legacy compatibility requirements",
+      "",
+      "For more information, see: https://owasp.org/www-project-secure-headers/#x-xss-protection",
     ].join("\n");
 
     return done({
@@ -41,7 +49,7 @@ export default defineCheck(({ step }) => {
         {
           name: "Browser XSS filter disabled",
           description,
-          severity: Severity.LOW,
+          severity: Severity.INFO,
           correlation: {
             requestID: request.getId(),
             locations: [],
@@ -56,10 +64,10 @@ export default defineCheck(({ step }) => {
       id: "xss-filter-disabled",
       name: "Browser XSS filter disabled",
       description:
-        "Detects responses that disable the legacy XSS filter using the X-XSS-Protection header.",
+        "Detects responses that disable the legacy XSS filter using X-XSS-Protection: 0 (Note: This is generally correct modern practice).",
       type: "passive",
       tags: [Tags.SECURITY_HEADERS, Tags.XSS],
-      severities: [Severity.LOW],
+      severities: [Severity.INFO],
       aggressivity: { minRequests: 0, maxRequests: 0 },
     },
     initState: () => ({}),
