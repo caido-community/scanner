@@ -101,13 +101,34 @@ export default defineCheck<Record<never, never>>(({ step }) => {
       return done({ state });
     }
 
+    // Skip scanning response bodies for JavaScript, CSS, images, and other non-HTML content
+    // to avoid false positives from code that contains the word "password"
+    const contentType = response.getHeader("content-type")?.toLowerCase() || "";
+    const skipBodyTypes = [
+      "javascript",
+      "css",
+      "image/",
+      "font/",
+      "application/json", // JSON APIs may have field names with "password"
+      "video/",
+      "audio/",
+    ];
+
+    const shouldSkipBody = skipBodyTypes.some((type) =>
+      contentType.includes(type),
+    );
+
     const flaggedParams: FlaggedParam[] = [];
 
-    const bodyText = response.getBody()?.toText();
-    if (bodyText !== undefined && bodyText.length > 0) {
-      flaggedParams.push(...extractPasswordParams(bodyText, "body"));
+    // Only scan response body for HTML content
+    if (!shouldSkipBody) {
+      const bodyText = response.getBody()?.toText();
+      if (bodyText !== undefined && bodyText.length > 0) {
+        flaggedParams.push(...extractPasswordParams(bodyText, "body"));
+      }
     }
 
+    // Always check Location headers (redirects)
     const locationHeader = response.getHeader("location");
     if (locationHeader !== undefined) {
       for (const headerValue of locationHeader) {
