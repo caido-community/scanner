@@ -189,7 +189,15 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.HSTS_NOT_ENFORCED,
+              checkID: Checks.OPENAPI_DEFINITION_FOUND,
+              enabled: true,
+            },
+            {
+              checkID: Checks.MIXED_CONTENT,
+              enabled: true,
+            },
+            {
+              checkID: Checks.OPENAPI_DEFINITION_FOUND,
               enabled: true,
             },
           ],

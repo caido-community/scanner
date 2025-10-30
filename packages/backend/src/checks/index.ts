@@ -22,7 +22,9 @@ import hashDisclosureScan from "./hash-disclosure";
 import hstsNotEnforcedScan from "./hsts-not-enforced";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
+import mixedContentScan from "./mixed-content";
 import openRedirectScan from "./open-redirect";
+import openApiDefinitionScan from "./openapi-definition";
 import pathTraversalScan from "./path-traversal";
 import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
@@ -66,7 +68,8 @@ export const Checks = {
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
-  HSTS_NOT_ENFORCED: "hsts-not-enforced",
+  MIXED_CONTENT: "mixed-content",
+  OPENAPI_DEFINITION_FOUND: "openapi-definition-found",
   OPEN_REDIRECT: "open-redirect",
   REQUEST_URL_OVERRIDE: "request-url-override",
   PATH_TRAVERSAL: "path-traversal",
@@ -110,9 +113,9 @@ export const checks = [
   graphqlIntrospectionScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
-  hstsNotEnforcedScan,
+  mixedContentScan,
   openRedirectScan,
-  requestUrlOverrideScan,
+  openApiDefinitionScan,
   pathTraversalScan,
   phpinfoScan,
   privateIpDisclosureScan,
