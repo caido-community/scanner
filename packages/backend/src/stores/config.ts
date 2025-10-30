@@ -189,7 +189,11 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.HTML_UNRECOGNIZED_CHARSET,
+              checkID: Checks.ASPNET_TRACING,
+              enabled: true,
+            },
+            {
+              checkID: Checks.ASPNET_TRACING,
               enabled: false,
             },
           ],
