@@ -101,13 +101,34 @@ export default defineCheck<Record<never, never>>(({ step }) => {
       return done({ state });
     }
 
+    // Skip scanning response bodies for JavaScript, CSS, images, and other non-HTML content
+    // to avoid false positives from code that contains the word "token" or "session"
+    const contentType = response.getHeader("content-type")?.toLowerCase() || "";
+    const skipBodyTypes = [
+      "javascript",
+      "css",
+      "image/",
+      "font/",
+      "application/json", // JSON APIs often have field names with "token"
+      "video/",
+      "audio/",
+    ];
+
+    const shouldSkipBody = skipBodyTypes.some((type) =>
+      contentType.includes(type),
+    );
+
     const flagged: FlaggedParam[] = [];
 
-    const body = response.getBody()?.toText();
-    if (body !== undefined && body.length > 0) {
-      flagged.push(...extractTokenParams(body, "body"));
+    // Only scan response body for HTML content
+    if (!shouldSkipBody) {
+      const body = response.getBody()?.toText();
+      if (body !== undefined && body.length > 0) {
+        flagged.push(...extractTokenParams(body, "body"));
+      }
     }
 
+    // Always check Location headers (redirects)
     const locationHeaders = response.getHeader("location");
     if (locationHeaders !== undefined) {
       for (const headerValue of locationHeaders) {
