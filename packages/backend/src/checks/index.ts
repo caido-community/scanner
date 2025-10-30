@@ -24,7 +24,7 @@ import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import mixedContentScan from "./mixed-content";
 import openRedirectScan from "./open-redirect";
-import passwordReturnedInUrlScan from "./password-returned-in-url";
+import passwordInCookieScan from "./password-in-cookie";
 import pathTraversalScan from "./path-traversal";
 import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
@@ -68,7 +68,7 @@ export const Checks = {
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
-  PASSWORD_RETURNED_IN_URL: "password-returned-in-url",
+  PASSWORD_IN_COOKIE: "password-in-cookie",
   OPEN_REDIRECT: "open-redirect",
   REQUEST_URL_OVERRIDE: "request-url-override",
   PATH_TRAVERSAL: "path-traversal",
@@ -112,7 +112,7 @@ export const checks = [
   graphqlIntrospectionScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
-  passwordReturnedInUrlScan,
+  passwordInCookieScan,
   openRedirectScan,
   passwordAutocompleteScan,
   pathTraversalScan,
