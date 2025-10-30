@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.CACHEABLE_HTTPS_RESPONSE,
+              checkID: Checks.DUPLICATE_COOKIES,
               enabled: false,
             },
           ],
@@ -388,7 +388,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.CACHEABLE_HTTPS_RESPONSE,
+              checkID: Checks.DUPLICATE_COOKIES,
               enabled: true,
             },
           ],

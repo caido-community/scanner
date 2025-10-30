@@ -86,7 +86,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
-  CACHEABLE_HTTPS_RESPONSE: "cacheable-https-response",
+  DUPLICATE_COOKIES: "duplicate-cookies",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -132,6 +132,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
-  cacheableHttpsResponseScan,
+  duplicateCookiesScan,
   // mysqlTimeBased,
 ] as const;
