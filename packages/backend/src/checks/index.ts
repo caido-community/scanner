@@ -17,7 +17,7 @@ import directoryListingScan from "./directory-listing";
 import emailDisclosureScan from "./email-disclosure";
 import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
-import graphqlSuggestionsScan from "./graphql-suggestions";
+import graphqlIntrospectionScan from "./graphql-introspection";
 import hashDisclosureScan from "./hash-disclosure";
 import inputReflectedScan from "./input-reflected";
 import jsonHtmlResponseScan from "./json-html-response";
@@ -36,6 +36,7 @@ import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
 import sstiScan from "./ssti";
 import suspectTransformScan from "./suspect-transform";
+import unencryptedCommunicationsScan from "./unencrypted-communications";
 
 export type CheckID = (typeof Checks)[keyof typeof Checks];
 export const Checks = {
@@ -61,7 +62,7 @@ export const Checks = {
   EXPOSED_ENV: "exposed-env",
   GIT_CONFIG: "git-config",
   HASH_DISCLOSURE: "hash-disclosure",
-  GRAPHQL_SUGGESTIONS_ENABLED: "graphql-suggestions-enabled",
+  GRAPHQL_INTROSPECTION_ENABLED: "graphql-introspection-enabled",
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
@@ -78,6 +79,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
+  UNENCRYPTED_COMMUNICATIONS: "unencrypted-communications",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -104,7 +106,7 @@ export const checks = [
   exposedEnvScan,
   gitConfigScan,
   hashDisclosureScan,
-  graphqlSuggestionsScan,
+  graphqlIntrospectionScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
   inputReflectedScan,
@@ -123,5 +125,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
+  unencryptedCommunicationsScan,
   // mysqlTimeBased,
 ] as const;

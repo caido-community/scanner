@@ -189,8 +189,8 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.GRAPHQL_SUGGESTIONS_ENABLED,
-              enabled: true,
+              checkID: Checks.UNENCRYPTED_COMMUNICATIONS,
+              enabled: false,
             },
           ],
         },
@@ -377,6 +377,14 @@ export class ConfigStore {
             },
             {
               checkID: Checks.MISSING_CONTENT_TYPE,
+              enabled: true,
+            },
+            {
+              checkID: Checks.UNENCRYPTED_COMMUNICATIONS,
+              enabled: true,
+            },
+            {
+              checkID: Checks.GRAPHQL_INTROSPECTION_ENABLED,
               enabled: true,
             },
           ],
