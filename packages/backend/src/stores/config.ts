@@ -189,8 +189,8 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.MULTIPLE_CONTENT_TYPES,
-              enabled: true,
+              checkID: Checks.DUPLICATE_COOKIES,
+              enabled: false,
             },
           ],
         },
@@ -388,7 +388,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.HSTS_NOT_ENFORCED,
+              checkID: Checks.DUPLICATE_COOKIES,
               enabled: true,
             },
           ],

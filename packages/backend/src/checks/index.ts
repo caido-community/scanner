@@ -14,6 +14,7 @@ import cspUntrustedStyleScan from "./csp-untrusted-style";
 import dbConnectionDisclosureScan from "./db-connection-disclosure";
 import debugErrorsScan from "./debug-errors";
 import directoryListingScan from "./directory-listing";
+import duplicateCookiesScan from "./duplicate-cookies";
 import emailDisclosureScan from "./email-disclosure";
 import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
@@ -83,7 +84,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
-  USER_AGENT_DEPENDENT_RESPONSE: "user-agent-dependent-response",
+  DUPLICATE_COOKIES: "duplicate-cookies",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -129,6 +130,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
-  userAgentDependentResponseScan,
+  duplicateCookiesScan,
   // mysqlTimeBased,
 ] as const;
