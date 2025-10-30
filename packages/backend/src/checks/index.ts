@@ -18,6 +18,7 @@ import emailDisclosureScan from "./email-disclosure";
 import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
 import hashDisclosureScan from "./hash-disclosure";
+import inputReflectedScan from "./input-reflected";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import openRedirectScan from "./open-redirect";
@@ -59,7 +60,7 @@ export const Checks = {
   EXPOSED_ENV: "exposed-env",
   GIT_CONFIG: "git-config",
   HASH_DISCLOSURE: "hash-disclosure",
-  RUBY_CODE_INJECTION: "ruby-code-injection",
+  INPUT_REFLECTED: "input-reflected",
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
@@ -104,6 +105,7 @@ export const checks = [
   hashDisclosureScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
+  inputReflectedScan,
   openRedirectScan,
   requestUrlOverrideScan,
   pathTraversalScan,

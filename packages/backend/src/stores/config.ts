@@ -189,11 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.SMTP_HEADER_INJECTION,
-              enabled: true,
-            },
-            {
-              checkID: Checks.REQUEST_URL_OVERRIDE,
+              checkID: Checks.INPUT_REFLECTED,
               enabled: true,
             },
           ],
