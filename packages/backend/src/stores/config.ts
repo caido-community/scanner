@@ -189,8 +189,8 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.UNENCRYPTED_COMMUNICATIONS,
-              enabled: false,
+              checkID: Checks.HSTS_NOT_ENFORCED,
+              enabled: true,
             },
           ],
         },
@@ -380,11 +380,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.UNENCRYPTED_COMMUNICATIONS,
-              enabled: true,
-            },
-            {
-              checkID: Checks.GRAPHQL_INTROSPECTION_ENABLED,
+              checkID: Checks.HSTS_NOT_ENFORCED,
               enabled: true,
             },
           ],

@@ -19,7 +19,7 @@ import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
 import graphqlIntrospectionScan from "./graphql-introspection";
 import hashDisclosureScan from "./hash-disclosure";
-import inputReflectedScan from "./input-reflected";
+import hstsNotEnforcedScan from "./hsts-not-enforced";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import openRedirectScan from "./open-redirect";
@@ -66,6 +66,7 @@ export const Checks = {
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
+  HSTS_NOT_ENFORCED: "hsts-not-enforced",
   OPEN_REDIRECT: "open-redirect",
   REQUEST_URL_OVERRIDE: "request-url-override",
   PATH_TRAVERSAL: "path-traversal",
@@ -109,7 +110,7 @@ export const checks = [
   graphqlIntrospectionScan,
   jsonHtmlResponseScan,
   missingContentTypeScan,
-  inputReflectedScan,
+  hstsNotEnforcedScan,
   openRedirectScan,
   requestUrlOverrideScan,
   pathTraversalScan,
