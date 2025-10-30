@@ -27,6 +27,26 @@ export default defineCheck<Record<never, never>>(({ step }) => {
       return done({ state });
     }
 
+    // Skip binary content types to avoid false positives
+    const contentType = response.getHeader("content-type")?.toLowerCase() || "";
+    const binaryTypes = [
+      "image/",
+      "font/",
+      "application/x-protobuf",
+      "application/octet-stream",
+      "application/javascript",
+      "text/javascript",
+      "application/pdf",
+      "application/zip",
+      "video/",
+      "audio/",
+      "application/wasm",
+    ];
+
+    if (binaryTypes.some((type) => contentType.includes(type))) {
+      return done({ state });
+    }
+
     const body = response.getBody()?.toText();
     if (body === undefined || body.length === 0) {
       return done({ state });
