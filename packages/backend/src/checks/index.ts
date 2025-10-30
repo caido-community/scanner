@@ -24,7 +24,7 @@ import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import mixedContentScan from "./mixed-content";
 import openRedirectScan from "./open-redirect";
-import openApiDefinitionScan from "./openapi-definition";
+import passwordAutocompleteScan from "./password-autocomplete";
 import pathTraversalScan from "./path-traversal";
 import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
@@ -68,8 +68,7 @@ export const Checks = {
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
-  MIXED_CONTENT: "mixed-content",
-  OPENAPI_DEFINITION_FOUND: "openapi-definition-found",
+  PASSWORD_AUTOCOMPLETE: "password-autocomplete",
   OPEN_REDIRECT: "open-redirect",
   REQUEST_URL_OVERRIDE: "request-url-override",
   PATH_TRAVERSAL: "path-traversal",
@@ -115,7 +114,7 @@ export const checks = [
   missingContentTypeScan,
   mixedContentScan,
   openRedirectScan,
-  openApiDefinitionScan,
+  passwordAutocompleteScan,
   pathTraversalScan,
   phpinfoScan,
   privateIpDisclosureScan,
