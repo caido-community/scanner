@@ -28,6 +28,47 @@ const buildDescription = (
   ].join("\n");
 };
 
+const BENIGN_VALUES = new Set([
+  "true",
+  "false",
+  "null",
+  "undefined",
+  "yes",
+  "no",
+  "on",
+  "off",
+  "1",
+  "0",
+]);
+
+const INTERNAL_PARAM_PATTERNS = [
+  /^_x_/i, // Slack internal params like _x_gantry, _x_num_retries
+  /^fp$/i, // fingerprint param
+  /^_.*_$/i, // params wrapped in underscores
+];
+
+const isBenignReflection = (param: {
+  name: string;
+  value: string;
+}): boolean => {
+  // Ignore single character values (especially numbers like "0")
+  if (param.value.length <= 1) {
+    return true;
+  }
+
+  // Ignore common boolean/null values
+  if (BENIGN_VALUES.has(param.value.toLowerCase())) {
+    return true;
+  }
+
+  // Ignore internal/telemetry parameter names
+  if (INTERNAL_PARAM_PATTERNS.some((pattern) => pattern.test(param.name))) {
+    return true;
+  }
+
+  return false;
+};
+
 export default defineCheck<Record<never, never>>(({ step }) => {
   step("detectReflections", (state, context) => {
     const { response } = context.target;
@@ -36,11 +77,16 @@ export default defineCheck<Record<never, never>>(({ step }) => {
       return done({ state });
     }
 
-    const reflected = extractReflectedParameters(context).map((param) => ({
-      name: param.name,
-      valueLength: param.value.length,
-      source: param.source,
-    }));
+    const allReflected = extractReflectedParameters(context);
+
+    // Filter out benign reflections
+    const reflected = allReflected
+      .filter((param) => !isBenignReflection(param))
+      .map((param) => ({
+        name: param.name,
+        valueLength: param.value.length,
+        source: param.source,
+      }));
 
     if (reflected.length === 0) {
       return done({ state });
