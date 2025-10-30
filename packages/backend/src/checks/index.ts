@@ -23,7 +23,7 @@ import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
 import graphqlIntrospectionScan from "./graphql-introspection";
 import hashDisclosureScan from "./hash-disclosure";
-import httpTraceEnabledScan from "./http-trace-enabled";
+import htmlMissingCharsetScan from "./html-missing-charset";
 import jsonHtmlResponseScan from "./json-html-response";
 import missingContentTypeScan from "./missing-content-type";
 import multipleContentTypesScan from "./multiple-content-types";
@@ -87,7 +87,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
-  COOKIE_PARENT_DOMAIN: "cookie-parent-domain",
+  HTML_MISSING_CHARSET: "html-missing-charset",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -133,6 +133,6 @@ export const checks = [
   sqlStatementInParams,
   ssnDisclosureScan,
   suspectTransformScan,
-  cookieParentDomainScan,
+  htmlMissingCharsetScan,
   // mysqlTimeBased,
 ] as const;
