@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.ASPNET_DEBUGGING,
+              checkID: Checks.BASE64_PARAMETER,
               enabled: false,
             },
           ],
@@ -388,7 +388,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.ASPNET_DEBUGGING,
+              checkID: Checks.BASE64_PARAMETER,
               enabled: true,
             },
           ],
