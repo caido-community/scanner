@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.XSS_FILTER_DISABLED,
+              checkID: Checks.CACHEABLE_HTTPS_RESPONSE,
               enabled: false,
             },
           ],
@@ -388,7 +388,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.XSS_FILTER_DISABLED,
+              checkID: Checks.CACHEABLE_HTTPS_RESPONSE,
               enabled: true,
             },
           ],
