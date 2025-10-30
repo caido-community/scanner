@@ -34,7 +34,7 @@ export const Tags = {
   SECURE: "secure",
   SECURITY_HEADERS: "security-headers",
   SENSITIVE_DATA: "sensitive-data",
-  SESSION_MANAGEMENT: "session-management",
+  SERIALIZATION: "serialization",
   SQLI: "sqli",
   SSTI: "ssti",
   STYLE_SRC: "style-src",

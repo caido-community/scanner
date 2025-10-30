@@ -193,7 +193,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.SESSION_TOKEN_IN_URL,
+              checkID: Checks.SERIALIZED_OBJECT_HTTP_MESSAGE,
               enabled: false,
             },
           ],
@@ -392,7 +392,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.SESSION_TOKEN_IN_URL,
+              checkID: Checks.SERIALIZED_OBJECT_HTTP_MESSAGE,
               enabled: true,
             },
           ],
