@@ -258,7 +258,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.HTTP_TRACE_ENABLED,
+              checkID: Checks.USER_AGENT_DEPENDENT_RESPONSE,
               enabled: false,
             },
           ],
