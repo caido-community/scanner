@@ -37,7 +37,7 @@ import refererDependentResponseScan from "./referer-dependent-response";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import requestUrlOverrideScan from "./request-url-override";
 import robotsTxtScan from "./robots-txt";
-import rubyCodeInjectionScan from "./ruby-code-injection";
+import sessionTokenUrlScan from "./session-token-url";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
@@ -87,7 +87,7 @@ export const Checks = {
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
-  HTML_UNRECOGNIZED_CHARSET: "html-unrecognized-charset",
+  SESSION_TOKEN_IN_URL: "session-token-in-url",
   // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
@@ -131,6 +131,7 @@ export const checks = [
   mysqlErrorBased,
   sstiScan,
   sqlStatementInParams,
+  sessionTokenUrlScan,
   ssnDisclosureScan,
   suspectTransformScan,
   unrecognizedCharsetScan,

@@ -189,7 +189,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.HTML_UNRECOGNIZED_CHARSET,
+              checkID: Checks.SESSION_TOKEN_IN_URL,
               enabled: false,
             },
           ],
@@ -388,7 +388,7 @@ export class ConfigStore {
               enabled: true,
             },
             {
-              checkID: Checks.HTML_UNRECOGNIZED_CHARSET,
+              checkID: Checks.SESSION_TOKEN_IN_URL,
               enabled: true,
             },
           ],
