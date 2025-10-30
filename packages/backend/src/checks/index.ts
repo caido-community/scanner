@@ -28,7 +28,7 @@ import privateKeyDisclosureScan from "./private-key-disclosure";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import requestUrlOverrideScan from "./request-url-override";
 import robotsTxtScan from "./robots-txt";
-import smtpHeaderInjectionScan from "./smtp-header-injection";
+import rubyCodeInjectionScan from "./ruby-code-injection";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
@@ -59,6 +59,7 @@ export const Checks = {
   EXPOSED_ENV: "exposed-env",
   GIT_CONFIG: "git-config",
   HASH_DISCLOSURE: "hash-disclosure",
+  RUBY_CODE_INJECTION: "ruby-code-injection",
   JSON_HTML_RESPONSE: "json-html-response",
   SMTP_HEADER_INJECTION: "smtp-header-injection",
   MISSING_CONTENT_TYPE: "missing-content-type",
@@ -111,6 +112,7 @@ export const checks = [
   privateKeyDisclosureScan,
   smtpHeaderInjectionScan,
   robotsTxtScan,
+  rubyCodeInjectionScan,
   basicReflectedXSSScan,
   mysqlErrorBased,
   sstiScan,
