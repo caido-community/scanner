@@ -71,28 +71,99 @@ const runRefererCheck = async (
 };
 
 describe("Referer dependent response check", () => {
-  it("reports when status codes differ for external referer", async () => {
-    const findings = await runRefererCheck({ statusDifference: true });
+  describe("Detection", () => {
+    it("reports when status codes differ for external referer", async () => {
+      const findings = await runRefererCheck({ statusDifference: true });
 
-    expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({
-      name: "Referer dependent response detected",
-      severity: "medium",
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({
+        name: "Referer dependent response detected",
+        severity: "medium",
+      });
+    });
+
+    it("reports when body length differs significantly", async () => {
+      const findings = await runRefererCheck({ bodyDelta: 150 });
+      expect(findings).toHaveLength(1);
+    });
+
+    it("reports when both status and body differ", async () => {
+      const findings = await runRefererCheck({
+        statusDifference: true,
+        bodyDelta: 150,
+      });
+
+      expect(findings).toHaveLength(1);
+    });
+
+    it("reports body difference at 101 byte threshold", async () => {
+      const findings = await runRefererCheck({ bodyDelta: 101 });
+      expect(findings).toHaveLength(1);
+    });
+
+    it("includes baseline and probe details in description", async () => {
+      const findings = await runRefererCheck({ statusDifference: true });
+
+      expect(findings[0].description).toContain("external");
+      expect(findings[0].description).toContain("attacker.example");
+      expect(findings[0].description).toContain("Baseline response");
     });
   });
 
-  it("reports when body length differs significantly", async () => {
-    const findings = await runRefererCheck({ bodyDelta: 150 });
-    expect(findings).toHaveLength(1);
+  describe("False Positive Prevention", () => {
+    it("does not report when responses are identical", async () => {
+      const findings = await runRefererCheck();
+      expect(findings).toHaveLength(0);
+    });
+
+    it("does not report when body length difference is within tolerance", async () => {
+      const findings = await runRefererCheck({ bodyDelta: 80 });
+      expect(findings).toHaveLength(0);
+    });
+
+    it("does not report at exactly 100 byte threshold", async () => {
+      // baseline is "baseline content" (16 chars)
+      // sendHandler uses "consistent content" (18 chars) + bodyDelta
+      // delta = (18 + bodyDelta) - 16 = 2 + bodyDelta
+      // For exactly 100 byte delta: 2 + 98 = 100
+      const findings = await runRefererCheck({ bodyDelta: 98 });
+      expect(findings).toHaveLength(0);
+    });
   });
 
-  it("does not report when responses are identical", async () => {
-    const findings = await runRefererCheck();
-    expect(findings).toHaveLength(0);
-  });
+  describe("Edge Cases", () => {
+    it("handles baseline response with no body", async () => {
+      const request = createMockRequest({
+        id: "target-req",
+        host: "example.com",
+        method: "GET",
+        path: "/",
+        headers: { Host: ["example.com"] },
+      });
 
-  it("does not report when body length difference is within tolerance", async () => {
-    const findings = await runRefererCheck({ bodyDelta: 80 });
-    expect(findings).toHaveLength(0);
+      const response = createMockResponse({
+        id: "target-res",
+        code: 200,
+        headers: { "content-type": ["text/html"] },
+        body: "",
+      });
+
+      const execution = await runCheck(refererCheck, [{ request, response }], {
+        sendHandler: buildSendHandler({ bodyDelta: 150 }),
+      });
+
+      const findings =
+        execution[0]?.steps[execution[0].steps.length - 1]?.findings ?? [];
+
+      expect(findings).toHaveLength(1);
+    });
+
+    it("includes security guidance about Referer risks", async () => {
+      const findings = await runRefererCheck({ statusDifference: true });
+
+      expect(findings[0].description).toContain("Referer");
+      expect(findings[0].description).toContain("access control bypasses");
+      expect(findings[0].description).toContain("consistent responses");
+    });
   });
 });
