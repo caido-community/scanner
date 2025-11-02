@@ -38,47 +38,158 @@ const extractFindings = async (
 };
 
 describe("Password submitted using GET method check", () => {
-  it("flags GET requests with password query parameter", async () => {
-    const target = buildTarget({
-      method: "GET",
-      query: "username=user&password=secret123",
+  describe("Detection", () => {
+    it("flags GET requests with password query parameter", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "username=user&password=secret123",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({
+        severity: "high",
+        name: "Password submitted using GET method",
+      });
     });
 
-    const findings = await extractFindings(target);
-    expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({
-      severity: "high",
-      name: "Password submitted using GET method",
+    it("flags GET requests with derived password parameter names", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "userPassword=s3cr3t",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(1);
+    });
+
+    it("detects passwd keyword in parameter name", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "user_passwd=hunter2",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(1);
+    });
+
+    it("detects pwd keyword in parameter name", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "usrpwd=secret",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(1);
+    });
+
+    it("detects passcode keyword in parameter name", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "login-passcode=1234",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(1);
+    });
+
+    it("detects password keywords with separators", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "user-password=val1&user_pwd=val2",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].description).toContain("user-password");
+      expect(findings[0].description).toContain("user_pwd");
+    });
+
+    it("detects password keyword in brackets", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "data[password]=secret",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(1);
     });
   });
 
-  it("flags GET requests with derived password parameter names", async () => {
-    const target = buildTarget({
-      method: "GET",
-      query: "userPassword=s3cr3t",
+  describe("False Positive Prevention", () => {
+    it("does not flag when password-like parameters are absent", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "username=user&token=abc",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(0);
     });
 
-    const findings = await extractFindings(target);
-    expect(findings).toHaveLength(1);
+    it("does not flag non-GET requests", async () => {
+      const target = buildTarget({
+        method: "POST",
+        query: "password=secret",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(0);
+    });
+
+    it("does not flag PUT requests with password parameters", async () => {
+      const target = buildTarget({
+        method: "PUT",
+        query: "password=secret",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(0);
+    });
+
+    it("does not flag bypass or passport keywords", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "bypass=1&passport_id=ABC123",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(0);
+    });
   });
 
-  it("does not flag when password-like parameters are absent", async () => {
-    const target = buildTarget({
-      method: "GET",
-      query: "username=user&token=abc",
+  describe("Edge Cases", () => {
+    it("handles empty password parameter value", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "password=",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].description).toContain("empty value");
     });
 
-    const findings = await extractFindings(target);
-    expect(findings).toHaveLength(0);
-  });
+    it("handles GET requests with no query string", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: undefined,
+      });
 
-  it("does not flag non-GET requests", async () => {
-    const target = buildTarget({
-      method: "POST",
-      query: "password=secret",
+      const findings = await extractFindings(target);
+      expect(findings).toHaveLength(0);
     });
 
-    const findings = await extractFindings(target);
-    expect(findings).toHaveLength(0);
+    it("includes security guidance about POST and HTTPS", async () => {
+      const target = buildTarget({
+        method: "GET",
+        query: "password=secret",
+      });
+
+      const findings = await extractFindings(target);
+      expect(findings[0].description).toContain("POST-based submission");
+      expect(findings[0].description).toContain("HTTPS");
+      expect(findings[0].description).toContain("browser history");
+    });
   });
 });
