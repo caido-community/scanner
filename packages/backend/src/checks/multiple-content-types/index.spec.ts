@@ -31,39 +31,119 @@ const collectFindings = async (
 };
 
 describe("Multiple Content-Type headers check", () => {
-  it("reports when multiple distinct content types are present", async () => {
-    const findings = await collectFindings({
-      "content-type": ["text/html", "application/json"],
+  describe("Detection", () => {
+    it("reports when multiple distinct content types are present", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html", "application/json"],
+      });
+
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({
+        name: "Multiple Content-Type headers detected",
+        severity: "medium",
+      });
     });
 
-    expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({
-      name: "Multiple Content-Type headers detected",
-      severity: "medium",
+    it("reports when multiple content types are comma-separated in a single header", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html, application/json"],
+      });
+
+      expect(findings).toHaveLength(1);
+    });
+
+    it("reports three or more distinct content types", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html", "application/json", "text/plain"],
+      });
+
+      expect(findings).toHaveLength(1);
+      expect(findings[0].description).toContain("text/html");
+      expect(findings[0].description).toContain("application/json");
+      expect(findings[0].description).toContain("text/plain");
+    });
+
+    it("reports mixed headers and comma-separated values", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html, application/json", "text/xml"],
+      });
+
+      expect(findings).toHaveLength(1);
+    });
+
+    it("detects conflicting types with charset parameters", async () => {
+      const findings = await collectFindings({
+        "content-type": [
+          "text/html; charset=utf-8",
+          "application/json; charset=utf-8",
+        ],
+      });
+
+      expect(findings).toHaveLength(1);
     });
   });
 
-  it("reports when multiple content types are comma-separated in a single header", async () => {
-    const findings = await collectFindings({
-      "content-type": ["text/html, application/json"],
+  describe("False Positive Prevention", () => {
+    it("does not report when only one content type is present", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html"],
+      });
+
+      expect(findings).toHaveLength(0);
     });
 
-    expect(findings).toHaveLength(1);
+    it("does not report duplicate identical content types", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html", "text/html"],
+      });
+
+      expect(findings).toHaveLength(0);
+    });
+
+    it("does not report case variations of the same type", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html", "TEXT/HTML", "Text/Html"],
+      });
+
+      expect(findings).toHaveLength(0);
+    });
+
+    it("does not report duplicate content types with same parameters", async () => {
+      const findings = await collectFindings({
+        "content-type": [
+          "text/html; charset=utf-8",
+          "text/html; charset=utf-8",
+        ],
+      });
+
+      expect(findings).toHaveLength(0);
+    });
   });
 
-  it("does not report when only one content type is present", async () => {
-    const findings = await collectFindings({
-      "content-type": ["text/html"],
+  describe("Edge Cases", () => {
+    it("handles empty content-type header gracefully", async () => {
+      const findings = await collectFindings({
+        "content-type": [],
+      });
+
+      expect(findings).toHaveLength(0);
     });
 
-    expect(findings).toHaveLength(0);
-  });
+    it("handles whitespace in comma-separated values", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html  ,   application/json  "],
+      });
 
-  it("does not report duplicate identical content types", async () => {
-    const findings = await collectFindings({
-      "content-type": ["text/html", "text/html"],
+      expect(findings).toHaveLength(1);
     });
 
-    expect(findings).toHaveLength(0);
+    it("includes guidance about returning single Content-Type", async () => {
+      const findings = await collectFindings({
+        "content-type": ["text/html", "application/json"],
+      });
+
+      expect(findings[0].description).toContain("single, unambiguous");
+      expect(findings[0].description).toContain("MIME confusion");
+    });
   });
 });
