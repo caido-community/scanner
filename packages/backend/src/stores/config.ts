@@ -188,6 +188,10 @@ export class ConfigStore {
               checkID: Checks.MISSING_CONTENT_TYPE,
               enabled: true,
             },
+            {
+              checkID: Checks.MULTIPLE_CONTENT_TYPES,
+              enabled: true,
+            },
           ],
         },
         {
