@@ -132,7 +132,7 @@ export function init(sdk: BackendSDK) {
           }`;
 
           sdk.findings.create({
-            reporter: "Scanner: Passive",
+            reporter: `Scanner: Passive, ${checkID}`,
             request: request.request,
             title: finding.name,
             description: wrappedDescription,

@@ -93,7 +93,7 @@ export const startActiveScan = (
 
           sdk.findings.create({
             request: result.request,
-            reporter: "Scanner: Active",
+            reporter: `Scanner: Active, ${checkID}`,
             title: finding.name,
             description: wrappedDescription,
           });
