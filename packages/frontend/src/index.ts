@@ -83,7 +83,7 @@ export const init = (sdk: FrontendSDK) => {
         }
       } else if (context.type === "BaseContext") {
         const request = getSelectedRequestFromDOM();
-        if (request) {
+        if (request !== undefined) {
           requests.push(request);
         } else {
           sdk.window.showToast("No request editor active or selected", {

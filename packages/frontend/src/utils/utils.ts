@@ -1,34 +1,36 @@
 export function getSelectedRequestFromDOM() {
   const requestEditor = document.querySelector(
-    "[data-language='http-request']"
-  ) as HTMLElement;
+    "[data-language='http-request']",
+  );
 
-  if (!requestEditor) {
-    return null;
+  if (requestEditor === null) {
+    return undefined;
   }
 
   const rawRequest = requestEditor.innerText;
   const lines = rawRequest.split("\n");
   const firstLine = lines[0]?.trim();
 
-  if (!firstLine) {
-    return null;
+  if (firstLine === undefined || firstLine === "") {
+    return undefined;
   }
 
   const parts = firstLine.split(" ");
-  const pathAndQuery = parts[1] || "/";
-  const [path] = pathAndQuery.includes("?")
-    ? pathAndQuery.split("?")
-    : [pathAndQuery, ""];
+  const pathAndQuery: string = parts[1] ?? "/";
+  const [path] =
+    pathAndQuery.includes("?") === true
+      ? pathAndQuery.split("?")
+      : [pathAndQuery, ""];
 
   const hostLine = lines.find((line) => line.toLowerCase().startsWith("host:"));
-  const hostFromRequest = hostLine
-    ? hostLine.split(":").slice(1).join(":").trim()
-    : null;
+  const hostFromRequest =
+    hostLine !== undefined
+      ? hostLine.split(":").slice(1).join(":").trim()
+      : undefined;
 
   let requestId: string | undefined;
 
-  if (hostFromRequest && path) {
+  if (hostFromRequest !== undefined && path !== undefined && path !== "") {
     const allRows = Array.from(document.querySelectorAll(".c-item-row"));
 
     for (const row of allRows) {
@@ -40,47 +42,64 @@ export function getSelectedRequestFromDOM() {
         ?.textContent?.trim();
       const rowId = row.getAttribute("data-row-id");
 
-      if (hostCell?.includes(hostFromRequest) && pathCell === path && rowId) {
+      if (
+        hostCell !== undefined &&
+        hostCell !== "" &&
+        hostCell.includes(hostFromRequest) &&
+        pathCell === path &&
+        rowId !== null &&
+        rowId !== ""
+      ) {
         requestId = rowId;
         break;
       }
     }
   }
 
-  let url: string | null = null;
+  let url: string | undefined;
 
-  if (hostLine) {
+  if (hostLine !== undefined) {
     const host = hostLine.split(":").slice(1).join(":").trim();
     url = `https://${host}`;
   } else {
-    return null;
+    return undefined;
   }
 
   try {
     const urlObj = new URL(url);
-    const [finalPath, query = ""] = pathAndQuery.includes("?")
-      ? pathAndQuery.split("?")
-      : [pathAndQuery, ""];
+    const [finalPath, query = ""] =
+      pathAndQuery.includes("?") === true
+        ? pathAndQuery.split("?")
+        : [pathAndQuery, ""];
 
     const hostMatch = rawRequest.match(/Host:\s*(.+?)(?::(\d+))?\r?\n/i);
-    const host = hostMatch?.[1]?.trim() || urlObj.hostname;
-    const port = hostMatch?.[2]
-      ? parseInt(hostMatch[2])
-      : urlObj.port
-        ? parseInt(urlObj.port)
-        : urlObj.protocol === "https:"
-          ? 443
-          : 80;
+    const hostFromMatch = hostMatch?.[1]?.trim();
+    const host =
+      hostFromMatch !== undefined && hostFromMatch !== ""
+        ? hostFromMatch
+        : urlObj.hostname;
+    const portFromMatch = hostMatch?.[2];
+    const port =
+      portFromMatch !== undefined
+        ? parseInt(portFromMatch)
+        : urlObj.port !== ""
+          ? parseInt(urlObj.port)
+          : urlObj.protocol === "https:"
+            ? 443
+            : 80;
+
+    const finalIdValue = requestId ?? Date.now().toString();
+    const finalPathValue =
+      finalPath !== undefined && finalPath !== "" ? finalPath : "/";
 
     return {
-      id: requestId || Date.now().toString(),
+      id: finalIdValue,
       host,
       port,
-      path: finalPath || "/",
+      path: finalPathValue,
       query,
     };
   } catch {
-    return null;
+    return undefined;
   }
 }
-
