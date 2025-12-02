@@ -1,7 +1,7 @@
 export function getSelectedRequestFromDOM() {
   const requestEditor = document.querySelector(
     "[data-language='http-request']",
-  );
+  ) as HTMLElement;
 
   if (requestEditor === null) {
     return undefined;
