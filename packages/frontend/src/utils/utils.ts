@@ -22,7 +22,9 @@ export function getSelectedRequestFromDOM() {
       ? pathAndQuery.split("?")
       : [pathAndQuery, ""];
 
-  const hostLine = lines.find((line) => line.toLowerCase().startsWith("host:"));
+  const hostLine = lines.find((line: string) =>
+    line.toLowerCase().startsWith("host:"),
+  );
   const hostFromRequest =
     hostLine !== undefined
       ? hostLine.split(":").slice(1).join(":").trim()
