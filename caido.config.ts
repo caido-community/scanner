@@ -1,17 +1,18 @@
+import path from "path";
+
+import tailwindCaido from "@caido/tailwindcss";
 import { defineConfig } from "@caido-community/dev";
 import vue from "@vitejs/plugin-vue";
+import prefixwrap from "postcss-prefixwrap";
 import tailwindcss from "tailwindcss";
 import tailwindPrimeui from "tailwindcss-primeui";
-import tailwindCaido from "@caido/tailwindcss";
-import path from "path";
-import prefixwrap from "postcss-prefixwrap";
 
 const id = "scanner";
 export default defineConfig({
   id,
   name: "Scanner",
   description: "Passive and active vulnerability scanner",
-  version: "1.0.5",
+  version: "1.0.7",
   author: {
     name: "Caido Labs Inc.",
     email: "dev@caido.io",
