@@ -128,6 +128,19 @@ export const useScannerService = defineStore("services.scanner", () => {
     }
   };
 
+  const deleteOtherSessions = async (keepSessionId: string) => {
+    const state = store.getState();
+    if (state.type !== "Success") return;
+
+    const sessionsToDelete = state.sessions.filter(
+      (session) => session.id !== keepSessionId,
+    );
+
+    for (const session of sessionsToDelete) {
+      await deleteScanSession(session.id);
+    }
+  };
+
   const updateSessionTitle = async (sessionId: string, title: string) => {
     const result = await repository.updateSessionTitle(sessionId, title);
     switch (result.kind) {
@@ -184,6 +197,7 @@ export const useScannerService = defineStore("services.scanner", () => {
     clearSelection,
     cancelScanSession,
     deleteScanSession,
+    deleteOtherSessions,
     updateSessionTitle,
     downloadExecutionTrace,
     rerunScanSession,

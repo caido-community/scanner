@@ -1,6 +1,8 @@
+import { Buffer } from "buffer";
+
 import { type ExecutionHistory } from "engine";
 
 export const packExecutionHistory = (history: ExecutionHistory): string => {
   const json = JSON.stringify(history);
-  return btoa(json);
+  return Buffer.from(json, "utf-8").toString("base64");
 };

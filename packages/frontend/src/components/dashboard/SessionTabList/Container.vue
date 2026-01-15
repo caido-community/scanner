@@ -28,6 +28,10 @@ const handleRename = (sessionId: string, newName: string) => {
 const handleDelete = (sessionId: string) => {
   scannerService.deleteScanSession(sessionId);
 };
+
+const handleDeleteOthers = (sessionId: string) => {
+  scannerService.deleteOtherSessions(sessionId);
+};
 </script>
 
 <template>
@@ -50,6 +54,7 @@ const handleDelete = (sessionId: string) => {
           @select="handleTabSelect(session.id)"
           @rename="(newName) => handleRename(session.id, newName)"
           @delete="handleDelete(session.id)"
+          @delete-others="handleDeleteOthers(session.id)"
         />
       </div>
     </template>
