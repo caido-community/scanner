@@ -17,6 +17,7 @@ const emit = defineEmits<{
   (e: "select", event: MouseEvent): void;
   (e: "rename", newName: string): void;
   (e: "delete"): void;
+  (e: "deleteOthers"): void;
 }>();
 
 const newValue = ref("");
@@ -36,6 +37,13 @@ const contextMenuItems = [
     icon: "fas fa-trash",
     command: () => {
       emit("delete");
+    },
+  },
+  {
+    label: "Delete others",
+    icon: "fas fa-trash",
+    command: () => {
+      emit("deleteOthers");
     },
   },
 ];
