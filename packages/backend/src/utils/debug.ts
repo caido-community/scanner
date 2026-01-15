@@ -1,5 +1,6 @@
-import { type ExecutionHistory } from "engine";
 import { Buffer } from "buffer";
+
+import { type ExecutionHistory } from "engine";
 
 export const packExecutionHistory = (history: ExecutionHistory): string => {
   const json = JSON.stringify(history);

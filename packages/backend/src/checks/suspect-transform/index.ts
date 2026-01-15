@@ -189,11 +189,10 @@ export default defineCheck<State>(({ step }) => {
     }
 
     try {
-      const testValue = currentParam.value + currentCheck.probe;
       const requestSpec = createRequestWithParameter(
         context,
         currentParam,
-        testValue,
+        currentCheck.probe,
       );
 
       const { request, response } =
@@ -235,9 +234,23 @@ export default defineCheck<State>(({ step }) => {
                 ])
                 .build();
 
-              return done({
+              const nextCheckIndex = state.currentCheckIndex + 1;
+              const nextParamIndex =
+                nextCheckIndex >= state.checks.length
+                  ? state.currentParamIndex + 1
+                  : state.currentParamIndex;
+              const resetCheckIndex =
+                nextCheckIndex >= state.checks.length ? 0 : nextCheckIndex;
+
+              return continueWith({
                 findings: [finding],
-                state,
+                nextStep: "testTransforms",
+                state: {
+                  ...state,
+                  currentParamIndex: nextParamIndex,
+                  currentCheckIndex: resetCheckIndex,
+                  confirmationAttempts: 0,
+                },
               });
             }
 
