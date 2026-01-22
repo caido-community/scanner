@@ -6,6 +6,6 @@ export {
   hasParameters,
 } from "./parameters";
 export { keyStrategy } from "./key";
-export { bodyMatchesAny } from "./body";
+export { bodyMatchesAny, isJsonContentType } from "./body";
 export { getSetCookieHeaders } from "./cookie";
 export { findingBuilder } from "./findings";
