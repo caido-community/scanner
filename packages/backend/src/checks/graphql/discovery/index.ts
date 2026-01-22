@@ -72,18 +72,30 @@ function hasGraphQLIndicators(target: ScanTarget): boolean {
     return false;
   }
 
+  const method = request.getMethod().toUpperCase();
+  if (method === "OPTIONS") {
+    return false;
+  }
+
   const path = request.getPath();
-  if (isGraphQLPath(path)) {
-    return true;
-  }
-
   const requestBody = request.getBody()?.toText();
-  if (requestBody !== undefined && isGraphQLRequest(requestBody)) {
+  const responseBody = response.getBody()?.toText();
+
+  const hasGraphQLPathIndicator = isGraphQLPath(path);
+  const hasGraphQLRequestBody =
+    requestBody !== undefined && isGraphQLRequest(requestBody);
+  const hasGraphQLResponseBody =
+    responseBody !== undefined && isGraphQLResponse(responseBody);
+
+  if (hasGraphQLPathIndicator) {
     return true;
   }
 
-  const responseBody = response.getBody()?.toText();
-  if (responseBody !== undefined && isGraphQLResponse(responseBody)) {
+  if (hasGraphQLRequestBody) {
+    return true;
+  }
+
+  if (hasGraphQLResponseBody && hasGraphQLRequestBody) {
     return true;
   }
 

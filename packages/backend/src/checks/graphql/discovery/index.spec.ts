@@ -252,7 +252,7 @@ describe("graphql-endpoint check", () => {
     ]);
   });
 
-  it("should detect GraphQL endpoint by response structure with data field", async () => {
+  it("should not detect GraphQL endpoint by response structure alone without GraphQL request", async () => {
     const request = createMockRequest({
       id: "1",
       host: "example.com",
@@ -271,65 +271,29 @@ describe("graphql-endpoint check", () => {
       { request, response },
     ]);
 
-    expect(executionHistory).toMatchObject([
-      {
-        checkId: "graphql-endpoint",
-        targetRequestId: "1",
-        status: "completed",
-        steps: [
-          {
-            stepName: "detect",
-            findings: [
-              {
-                name: "GraphQL Endpoint Discovered",
-                severity: "info",
-              },
-            ],
-            result: "done",
-          },
-        ],
-      },
-    ]);
+    expect(executionHistory).toEqual([]);
   });
 
-  it("should detect GraphQL endpoint by response structure with errors field", async () => {
+  it("should not detect GraphQL endpoint for OPTIONS requests", async () => {
     const request = createMockRequest({
       id: "1",
       host: "example.com",
-      method: "POST",
-      path: "/api/data",
+      method: "OPTIONS",
+      path: "/graphql",
     });
 
     const response = createMockResponse({
       id: "1",
       code: 200,
       headers: { "Content-Type": ["application/json"] },
-      body: '{"errors": [{"message": "Cannot query field"}]}',
+      body: "{}",
     });
 
     const executionHistory = await runCheck(graphqlEndpointCheck, [
       { request, response },
     ]);
 
-    expect(executionHistory).toMatchObject([
-      {
-        checkId: "graphql-endpoint",
-        targetRequestId: "1",
-        status: "completed",
-        steps: [
-          {
-            stepName: "detect",
-            findings: [
-              {
-                name: "GraphQL Endpoint Discovered",
-                severity: "info",
-              },
-            ],
-            result: "done",
-          },
-        ],
-      },
-    ]);
+    expect(executionHistory).toEqual([]);
   });
 
   it("should handle 400 responses on GraphQL paths", async () => {

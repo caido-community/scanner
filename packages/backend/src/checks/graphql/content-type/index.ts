@@ -10,13 +10,15 @@ const SIMPLE_CONTENT_TYPES = [
   },
 ];
 
-const INTROSPECTION_QUERY = JSON.stringify({
-  query: "{ __typename }",
-});
-
 type GraphQLResponse = {
   data?: unknown;
   errors?: unknown[];
+};
+
+type GraphQLRequest = {
+  operationName?: string;
+  query?: string;
+  variables?: unknown;
 };
 
 function isSuccessfulGraphQLResponse(body: string): boolean {
@@ -33,12 +35,46 @@ function isSuccessfulGraphQLResponse(body: string): boolean {
   }
 }
 
+function isGraphQLRequest(body: string): boolean {
+  try {
+    const parsed = JSON.parse(body) as GraphQLRequest;
+
+    if (typeof parsed !== "object" || parsed === null) {
+      return false;
+    }
+
+    const hasQuery = "query" in parsed && typeof parsed.query === "string";
+    const hasOperationName =
+      "operationName" in parsed &&
+      (typeof parsed.operationName === "string" ||
+        parsed.operationName === null);
+
+    return hasQuery || hasOperationName;
+  } catch {
+    return false;
+  }
+}
+
 type State = {
   contentTypesToTest: Array<{ contentType: string; name: string }>;
 };
 
 export default defineCheck<State>(({ step }) => {
   step("init", (state, context) => {
+    const method = context.target.request.getMethod().toUpperCase();
+    if (method !== "POST") {
+      return done({ state });
+    }
+
+    const originalBody = context.target.request.getBody()?.toText();
+    if (
+      originalBody === undefined ||
+      originalBody === "" ||
+      !isGraphQLRequest(originalBody)
+    ) {
+      return done({ state });
+    }
+
     const originalContentType = context.target.request
       .getHeader("content-type")?.[0]
       ?.toLowerCase();
@@ -68,11 +104,6 @@ export default defineCheck<State>(({ step }) => {
 
     const spec = context.target.request.toSpec();
     spec.setHeader("Content-Type", currentTest.contentType);
-
-    const originalBody = context.target.request.getBody()?.toText();
-    if (originalBody === undefined || originalBody === "") {
-      spec.setBody(INTROSPECTION_QUERY);
-    }
 
     const { request, response } = await context.sdk.requests.send(spec);
 
