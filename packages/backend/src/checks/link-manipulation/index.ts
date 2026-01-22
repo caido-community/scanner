@@ -3,6 +3,8 @@ import { defineCheck, done, type ScanTarget, Severity } from "engine";
 import { Tags } from "../../types";
 import { extractParameters, keyStrategy, type Parameter } from "../../utils";
 
+type ReflectionType = "full" | "partial";
+
 const HREF_ELEMENTS = ["a", "link", "area", "base"];
 const SRC_ELEMENTS = [
   "img",
@@ -112,7 +114,7 @@ export default defineCheck(({ step }) => {
         "Detects when user-supplied input is reflected in href or src attributes, which can lead to phishing attacks, javascript: URL injection, or external resource loading.",
       type: "passive",
       tags: [Tags.INPUT_VALIDATION, Tags.XSS, Tags.OPEN_REDIRECT],
-      severities: [Severity.MEDIUM],
+      severities: [Severity.HIGH, Severity.LOW],
       aggressivity: { minRequests: 0, maxRequests: 0 },
     },
     dedupeKey: keyStrategy()
@@ -126,6 +128,21 @@ export default defineCheck(({ step }) => {
     when: (target) => isExploitable(target),
   };
 });
+
+function getReflectionType(
+  paramValue: string,
+  attributeValue: string,
+): ReflectionType | undefined {
+  if (!attributeValue.includes(paramValue)) {
+    return undefined;
+  }
+
+  if (attributeValue === paramValue) {
+    return "full";
+  }
+
+  return "partial";
+}
 
 function findReflections(
   parameters: Parameter[],
@@ -143,23 +160,32 @@ function findReflections(
 
   for (const param of parameters) {
     for (const match of attributeMatches) {
-      if (match.value.includes(param.value)) {
-        const paramKey = `${param.name}:${param.source}`;
-        if (reportedParams.has(paramKey)) {
-          continue;
-        }
-        reportedParams.add(paramKey);
-
-        findings.push({
-          name: `Link Manipulation in parameter '${param.name}'`,
-          description: `Parameter \`${param.name}\` from ${param.source} is reflected in the \`${match.attribute}\` attribute of a \`<${match.tagName}>\` element.\n\n**Reflected value:** \`${param.value}\`\n**Found in:** \`<${match.tagName} ${match.attribute}="${truncate(match.value, 100)}">\`\n\nThis can potentially be exploited for:\n- Phishing attacks (manipulating links to external domains)\n- JavaScript URL injection (\`javascript:\` protocol)\n- External resource loading manipulation`,
-          severity: Severity.MEDIUM,
-          correlation: {
-            requestID: context.target.request.getId(),
-            locations: [],
-          },
-        });
+      const reflectionType = getReflectionType(param.value, match.value);
+      if (reflectionType === undefined) {
+        continue;
       }
+
+      const paramKey = `${param.name}:${param.source}`;
+      if (reportedParams.has(paramKey)) {
+        continue;
+      }
+      reportedParams.add(paramKey);
+
+      const isFullControl = reflectionType === "full";
+      const severity = isFullControl ? Severity.HIGH : Severity.LOW;
+      const controlDescription = isFullControl
+        ? "The parameter value fully controls the attribute value, allowing complete manipulation of the link destination."
+        : "The parameter value is partially reflected in the attribute. While exploitation may be limited, it could still enable phishing or redirect attacks depending on the context.";
+
+      findings.push({
+        name: `Link Manipulation in parameter '${param.name}'`,
+        description: `Parameter \`${param.name}\` from ${param.source} is reflected in the \`${match.attribute}\` attribute of a \`<${match.tagName}>\` element.\n\n**Reflected value:** \`${param.value}\`\n**Found in:** \`<${match.tagName} ${match.attribute}="${truncate(match.value, 100)}">\`\n**Control level:** ${isFullControl ? "Full" : "Partial"}\n\n${controlDescription}\n\nThis can potentially be exploited for:\n- Phishing attacks (manipulating links to external domains)\n- JavaScript URL injection (\`javascript:\` protocol)\n- External resource loading manipulation`,
+        severity,
+        correlation: {
+          requestID: context.target.request.getId(),
+          locations: [],
+        },
+      });
     }
   }
 
