@@ -37,9 +37,9 @@ const DB_CONNECTION_PATTERNS = [
   /(?:database|db|connection|conn)_(?:url|string|uri|host|user|password|pass|pwd)\s*[=:]\s*[^\s]+/gi,
   /(?:DATABASE|DB|CONNECTION|CONN)_(?:URL|STRING|URI|HOST|USER|PASSWORD|PASS|PWD)\s*[=:]\s*[^\s]+/gi,
 
-  // Connection string patterns with credentials
-  /(?:user|username|uid)\s*[=:]\s*[^;,\s]+[;,\s]+(?:password|pwd|pass)\s*[=:]\s*[^;,\s]+/gi,
-  /(?:password|pwd|pass)\s*[=:]\s*[^;,\s]+[;,\s]+(?:user|username|uid)\s*[=:]\s*[^;,\s]+/gi,
+  // Connection string patterns with credentials (exclude JS property references like d.password)
+  /(?:user|username|uid)\s*[=:]\s*[^;,\s]+[;,\s]+(?:password|pwd|pass)\s*[=:]\s*(?![a-zA-Z_$][a-zA-Z0-9_$]*\.)[^;,\s]+/gi,
+  /(?:password|pwd|pass)\s*[=:]\s*(?![a-zA-Z_$][a-zA-Z0-9_$]*\.)[^;,\s]+[;,\s]+(?:user|username|uid)\s*[=:]\s*[^;,\s]+/gi,
 
   // JDBC connection strings
   /jdbc:[^:]+:[^;]+;user=[^;]+;password=[^;]+/gi,
