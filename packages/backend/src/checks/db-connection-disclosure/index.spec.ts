@@ -522,4 +522,41 @@ describe("Database Connection Disclosure Check", () => {
       executionHistory[0]?.steps.flatMap((step) => step.findings) ?? [];
     expect(allFindings).toEqual([]);
   });
+
+  it("should not trigger on JS property access patterns", async () => {
+    const request = createMockRequest({
+      id: "12",
+      host: "example.com",
+      method: "GET",
+      path: "/",
+    });
+
+    const response = createMockResponse({
+      id: "12",
+      code: 200,
+      headers: { "content-type": ["application/javascript"] },
+      body: "username:d.username,password:d.password",
+    });
+
+    const executionHistory = await runCheck(
+      dbConnectionDisclosureScan,
+      [{ request, response }],
+      {
+        sendHandler: () => Promise.resolve({ request, response }),
+        config: { aggressivity: ScanAggressivity.LOW },
+      },
+    );
+
+    expect(executionHistory).toMatchObject([
+      {
+        checkId: "db-connection-disclosure",
+        targetRequestId: "12",
+        status: "completed",
+      },
+    ]);
+
+    const allFindings =
+      executionHistory[0]?.steps.flatMap((step) => step.findings) ?? [];
+    expect(allFindings).toEqual([]);
+  });
 });
