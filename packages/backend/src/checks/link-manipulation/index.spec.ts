@@ -189,7 +189,7 @@ describe("link-manipulation check", () => {
             findings: [
               {
                 name: "Link Manipulation in parameter 'redirect'",
-                severity: "medium",
+                severity: "high",
                 correlation: {
                   requestID: "1",
                 },
@@ -233,7 +233,7 @@ describe("link-manipulation check", () => {
             findings: [
               {
                 name: "Link Manipulation in parameter 'image'",
-                severity: "medium",
+                severity: "high",
                 correlation: {
                   requestID: "1",
                 },
@@ -277,7 +277,7 @@ describe("link-manipulation check", () => {
             findings: [
               {
                 name: "Link Manipulation in parameter 'script'",
-                severity: "medium",
+                severity: "high",
               },
             ],
             result: "done",
@@ -318,7 +318,7 @@ describe("link-manipulation check", () => {
             findings: [
               {
                 name: "Link Manipulation in parameter 'frame'",
-                severity: "medium",
+                severity: "high",
               },
             ],
             result: "done",
@@ -359,7 +359,7 @@ describe("link-manipulation check", () => {
             findings: [
               {
                 name: "Link Manipulation in parameter 'stylesheet'",
-                severity: "medium",
+                severity: "high",
               },
             ],
             result: "done",
@@ -404,7 +404,7 @@ describe("link-manipulation check", () => {
             findings: [
               {
                 name: "Link Manipulation in parameter 'url'",
-                severity: "medium",
+                severity: "high",
               },
             ],
             result: "done",
@@ -489,7 +489,7 @@ describe("link-manipulation check", () => {
             findings: [
               {
                 name: "Link Manipulation in parameter 'callback'",
-                severity: "medium",
+                severity: "low",
               },
             ],
             result: "done",
@@ -532,7 +532,7 @@ describe("link-manipulation check", () => {
             findings: [
               {
                 name: "Link Manipulation in parameter 'redirect'",
-                severity: "medium",
+                severity: "high",
               },
             ],
             result: "done",
