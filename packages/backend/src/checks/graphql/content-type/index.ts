@@ -1,4 +1,5 @@
 import { continueWith, defineCheck, done, Severity } from "engine";
+import { z } from "zod";
 
 import { Tags } from "../../../types";
 import { keyStrategy } from "../../../utils/key";
@@ -10,26 +11,29 @@ const SIMPLE_CONTENT_TYPES = [
   },
 ];
 
-type GraphQLResponse = {
-  data?: unknown;
-  errors?: unknown[];
-};
+const GraphQLResponseSchema = z.object({
+  data: z.unknown().optional(),
+  errors: z.array(z.unknown()).optional(),
+});
 
-type GraphQLRequest = {
-  operationName?: string;
-  query?: string;
-  variables?: unknown;
-};
+const GraphQLRequestSchema = z
+  .object({
+    operationName: z.union([z.string(), z.null()]).optional(),
+    query: z.string().optional(),
+    variables: z.unknown().optional(),
+  })
+  .refine(
+    (data) => data.query !== undefined || data.operationName !== undefined,
+    {
+      message: "GraphQL request must have either query or operationName",
+    },
+  );
 
 function isSuccessfulGraphQLResponse(body: string): boolean {
   try {
-    const parsed = JSON.parse(body) as GraphQLResponse;
-
-    if (typeof parsed !== "object" || parsed === null) {
-      return false;
-    }
-
-    return "data" in parsed;
+    const parsed: unknown = JSON.parse(body);
+    const result = GraphQLResponseSchema.safeParse(parsed);
+    return result.success && result.data.data !== undefined;
   } catch {
     return false;
   }
@@ -37,19 +41,8 @@ function isSuccessfulGraphQLResponse(body: string): boolean {
 
 function isGraphQLRequest(body: string): boolean {
   try {
-    const parsed = JSON.parse(body) as GraphQLRequest;
-
-    if (typeof parsed !== "object" || parsed === null) {
-      return false;
-    }
-
-    const hasQuery = "query" in parsed && typeof parsed.query === "string";
-    const hasOperationName =
-      "operationName" in parsed &&
-      (typeof parsed.operationName === "string" ||
-        parsed.operationName === null);
-
-    return hasQuery || hasOperationName;
+    const parsed: unknown = JSON.parse(body);
+    return GraphQLRequestSchema.safeParse(parsed).success;
   } catch {
     return false;
   }
