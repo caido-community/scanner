@@ -70,6 +70,10 @@ export const BALANCED_PRESET: Preset = {
       enabled: true,
     },
     {
+      checkID: Checks.SPRING_ACTUATOR,
+      enabled: true,
+    },
+    {
       checkID: Checks.USER_AGENT_DEPENDENT_RESPONSE,
       enabled: false,
     },

@@ -29,6 +29,7 @@ import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
+import springActuatorScan from "./spring-actuator";
 import { mysqlErrorBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
@@ -72,6 +73,7 @@ export const Checks = {
   ROBOTS_TXT: "robots-txt",
   BASIC_REFLECTED_XSS: "basic-reflected-xss",
   MYSQL_ERROR_BASED_SQLI: "mysql-error-based-sqli",
+  SPRING_ACTUATOR: "spring-actuator",
   SSTI: "ssti",
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
@@ -116,6 +118,7 @@ export const checks = [
   robotsTxtScan,
   basicReflectedXSSScan,
   mysqlErrorBased,
+  springActuatorScan,
   sstiScan,
   sqlStatementInParams,
   ssnDisclosureScan,

@@ -42,6 +42,10 @@ export const LIGHT_PRESET: Preset = {
       enabled: true,
     },
     {
+      checkID: Checks.SPRING_ACTUATOR,
+      enabled: true,
+    },
+    {
       checkID: Checks.GRAPHQL_CONTENT_TYPE,
       enabled: false,
     },

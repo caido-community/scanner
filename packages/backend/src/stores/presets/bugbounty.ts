@@ -69,6 +69,10 @@ export const BUGBOUNTY_PRESET: Preset = {
       checkID: Checks.SUSPECT_TRANSFORM,
       enabled: true,
     },
+    {
+      checkID: Checks.SPRING_ACTUATOR,
+      enabled: false,
+    },
   ],
   passive: [
     {
@@ -209,6 +213,10 @@ export const BUGBOUNTY_PRESET: Preset = {
     },
     {
       checkID: Checks.SUSPECT_TRANSFORM,
+      enabled: true,
+    },
+    {
+      checkID: Checks.SPRING_ACTUATOR,
       enabled: true,
     },
   ],

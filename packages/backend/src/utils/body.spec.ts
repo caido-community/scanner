@@ -1,7 +1,7 @@
 import { createMockRequest, createMockResponse } from "engine";
 import { describe, expect, it } from "vitest";
 
-import { bodyMatchesAny } from "./body";
+import { bodyMatchesAny, isJsonContentType } from "./body";
 
 describe("matchesBody", () => {
   it("should return true when any pattern matches", () => {
@@ -79,5 +79,35 @@ describe("matchesBody", () => {
     });
 
     expect(bodyMatchesAny(request, patterns)).toBe(true);
+  });
+});
+
+describe("isJsonContentType", () => {
+  it("should return true for application/json", () => {
+    expect(isJsonContentType("application/json")).toBe(true);
+  });
+
+  it("should return true for application/json with charset", () => {
+    expect(isJsonContentType("application/json; charset=utf-8")).toBe(true);
+  });
+
+  it("should return true for vnd json types", () => {
+    expect(isJsonContentType("application/vnd.api+json")).toBe(true);
+  });
+
+  it("should return false for text/html", () => {
+    expect(isJsonContentType("text/html")).toBe(false);
+  });
+
+  it("should return false for application/octet-stream", () => {
+    expect(isJsonContentType("application/octet-stream")).toBe(false);
+  });
+
+  it("should be case-insensitive", () => {
+    expect(isJsonContentType("Application/JSON")).toBe(true);
+  });
+
+  it("should return false for empty string", () => {
+    expect(isJsonContentType("")).toBe(false);
   });
 });

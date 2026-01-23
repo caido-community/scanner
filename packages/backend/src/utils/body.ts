@@ -1,5 +1,10 @@
 import type { Request, Response } from "caido:utils";
 
+export function isJsonContentType(contentType: string): boolean {
+  const normalized = contentType.toLowerCase().split(";")[0]?.trim();
+  return normalized !== undefined && normalized.includes("json");
+}
+
 /**
  * Checks if the body of a Request or Response matches any of the provided regex patterns.
  *
