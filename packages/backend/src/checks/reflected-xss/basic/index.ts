@@ -1,3 +1,4 @@
+import type { Response } from "caido:utils";
 import {
   continueWith,
   defineCheck,
@@ -14,6 +15,11 @@ import {
 } from "../../../utils";
 import { keyStrategy } from "../../../utils/key";
 
+function isHtmlResponse(response: Response): boolean {
+  const contentType = response.getHeader("Content-Type")?.[0]?.toLowerCase();
+  return contentType === undefined || contentType.includes("text/html");
+}
+
 function isExploitable(target: ScanTarget): boolean {
   const { request, response } = target;
 
@@ -21,8 +27,7 @@ function isExploitable(target: ScanTarget): boolean {
     return false;
   }
 
-  const contentType = response.getHeader("Content-Type")?.[0]?.toLowerCase();
-  if (contentType !== undefined && !contentType.includes("text/html")) {
+  if (!isHtmlResponse(response)) {
     return false;
   }
 
@@ -37,6 +42,10 @@ function isExploitable(target: ScanTarget): boolean {
   }
 
   return true;
+}
+
+function countOccurrences(text: string, search: string): number {
+  return text.split(search).length - 1;
 }
 
 type State = {
@@ -95,106 +104,93 @@ export default defineCheck<State>(({ step }) => {
       return done({ state });
     }
 
-    const currentPayloadConfig = REFLECTION_PAYLOADS[state.currentPayloadIndex];
-    if (currentPayloadConfig === undefined) {
+    const payloadConfig = REFLECTION_PAYLOADS[state.currentPayloadIndex];
+    if (payloadConfig === undefined) {
       return done({ state });
     }
 
-    const currentPayload = currentPayloadConfig.payload;
-    const originalResponse = context.target.response;
-    const originalResponseBody = originalResponse?.getBody()?.toText();
+    const { payload, type: payloadType } = payloadConfig;
+    const originalBody = context.target.response?.getBody()?.toText();
 
     for (const param of state.testParams) {
-      const requestSpec = createRequestWithParameter(
-        context,
-        param,
-        currentPayload,
-      );
+      const requestSpec = createRequestWithParameter(context, param, payload);
       const { request, response } =
         await context.sdk.requests.send(requestSpec);
 
-      if (response !== undefined) {
-        const responseBody = response.getBody()?.toText();
-        if (
-          responseBody !== undefined &&
-          responseBody.includes(currentPayload)
-        ) {
-          const originalReflectionCount =
-            originalResponseBody !== undefined
-              ? originalResponseBody.split(currentPayload).length - 1
-              : 0;
-          const newReflectionCount =
-            responseBody.split(currentPayload).length - 1;
+      if (response === undefined || !isHtmlResponse(response)) {
+        continue;
+      }
 
-          if (newReflectionCount > originalReflectionCount) {
-            if (currentPayloadConfig.type === "waf-evasion") {
-              const newWafEvadedParams = [...state.wafEvadedParams, param];
-              return continueWith({
-                nextStep: "testPayloads",
-                state: {
-                  ...state,
-                  currentPayloadIndex: state.currentPayloadIndex + 1,
-                  wafEvadedParams: newWafEvadedParams,
-                },
-              });
-            } else {
-              return done({
-                findings: [
-                  {
-                    name:
-                      "Basic Reflected XSS in parameter '" + param.name + "'",
-                    description: `Parameter \`${param.name}\` in ${param.source} reflects XSS payload without proper encoding.\n\n**Payload used:**\n\`\`\`\n${currentPayload}\n\`\`\``,
-                    severity: Severity.HIGH,
-                    correlation: {
-                      requestID: request.getId(),
-                      locations: [],
-                    },
-                  },
-                ],
-                state,
-              });
-            }
-          }
-        } else if (currentPayloadConfig.type === "standard") {
-          const isWafEvaded = state.wafEvadedParams.some(
-            (p) => p.name === param.name && p.source === param.source,
-          );
+      const responseBody = response.getBody()?.toText();
+      if (responseBody === undefined) {
+        continue;
+      }
 
-          if (isWafEvaded) {
-            return done({
-              findings: [
-                {
-                  name:
-                    "Potential XSS with WAF Protection in parameter '" +
-                    param.name +
-                    "'",
-                  description: `Parameter \`${param.name}\` in ${param.source} reflects harmless payloads but blocks XSS attempts, indicating potential WAF or input validation.`,
-                  severity: Severity.MEDIUM,
-                  correlation: {
-                    requestID: request.getId(),
-                    locations: [],
-                  },
-                },
-              ],
+      const hasReflection = responseBody.includes(payload);
+      if (hasReflection) {
+        const originalCount =
+          originalBody !== undefined
+            ? countOccurrences(originalBody, payload)
+            : 0;
+        const newCount = countOccurrences(responseBody, payload);
+
+        if (newCount > originalCount) {
+          if (payloadType === "waf-evasion") {
+            return continueWith({
+              nextStep: "testPayloads",
               state: {
                 ...state,
-                possibleWafBlocked: true,
+                currentPayloadIndex: state.currentPayloadIndex + 1,
+                wafEvadedParams: [...state.wafEvadedParams, param],
               },
             });
           }
+
+          return done({
+            findings: [
+              {
+                name: `Basic Reflected XSS in parameter '${param.name}'`,
+                description: `Parameter \`${param.name}\` in ${param.source} reflects XSS payload without proper encoding.\n\n**Payload used:**\n\`\`\`\n${payload}\n\`\`\``,
+                severity: Severity.HIGH,
+                correlation: {
+                  requestID: request.getId(),
+                  locations: [],
+                },
+              },
+            ],
+            state,
+          });
+        }
+      } else if (payloadType === "standard") {
+        const wasWafEvaded = state.wafEvadedParams.some(
+          (p) => p.name === param.name && p.source === param.source,
+        );
+
+        if (wasWafEvaded) {
+          return done({
+            findings: [
+              {
+                name: `Potential XSS with WAF Protection in parameter '${param.name}'`,
+                description: `Parameter \`${param.name}\` in ${param.source} reflects harmless payloads but blocks XSS attempts, indicating potential WAF or input validation.`,
+                severity: Severity.MEDIUM,
+                correlation: {
+                  requestID: request.getId(),
+                  locations: [],
+                },
+              },
+            ],
+            state: {
+              ...state,
+              possibleWafBlocked: true,
+            },
+          });
         }
       }
     }
 
     const nextPayloadIndex = state.currentPayloadIndex + 1;
     if (nextPayloadIndex >= REFLECTION_PAYLOADS.length) {
-      return done({
-        findings: [],
-        state: {
-          ...state,
-          currentPayloadIndex: nextPayloadIndex,
-        },
-      });
+      return done({ state });
     }
 
     return continueWith({
@@ -233,8 +229,6 @@ export default defineCheck<State>(({ step }) => {
       wafEvadedParams: [],
       possibleWafBlocked: false,
     }),
-    when: (target) => {
-      return isExploitable(target);
-    },
+    when: (target) => isExploitable(target),
   };
 });
