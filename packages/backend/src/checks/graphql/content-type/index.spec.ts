@@ -244,7 +244,7 @@ describe("graphql-content-type check", () => {
     expect(findings.length).toBe(0);
   });
 
-  it("should use introspection query when original body is empty", async () => {
+  it("should not run when original body is empty (not a GraphQL request)", async () => {
     const request = createMockRequest({
       id: "1",
       host: "example.com",
@@ -261,37 +261,40 @@ describe("graphql-content-type check", () => {
       body: '{"data": null}',
     });
 
-    const sendHandler = () => {
-      const mockRequest = createMockRequest({
-        id: "2",
-        host: "example.com",
-        method: "POST",
-        path: "/graphql",
-      });
-
-      const mockResponse = createMockResponse({
-        id: "2",
-        code: 200,
-        headers: { "Content-Type": ["application/json"] },
-        body: '{"data": {"__typename": "Query"}}',
-      });
-
-      return Promise.resolve({ request: mockRequest, response: mockResponse });
-    };
-
-    const executionHistory = await runChecks(checks, [{ request, response }], {
-      sendHandler,
-    });
+    const executionHistory = await runChecks(checks, [{ request, response }]);
 
     const contentTypeExecution = executionHistory.find(
       (e) => e.checkId === "graphql-content-type",
     );
     const findings =
       contentTypeExecution?.steps.flatMap((s) => s.findings) ?? [];
-    expect(findings.length).toBe(1);
-    expect(findings[0]?.name).toBe(
-      "GraphQL Content-Type Not Validated (application/x-www-form-urlencoded)",
+    expect(findings.length).toBe(0);
+  });
+
+  it("should not run when request method is not POST", async () => {
+    const request = createMockRequest({
+      id: "1",
+      host: "example.com",
+      method: "GET",
+      path: "/graphql",
+      headers: { "Content-Type": ["application/json"] },
+    });
+
+    const response = createMockResponse({
+      id: "1",
+      code: 200,
+      headers: { "Content-Type": ["application/json"] },
+      body: '{"data": {"user": {"id": "1"}}}',
+    });
+
+    const executionHistory = await runChecks(checks, [{ request, response }]);
+
+    const contentTypeExecution = executionHistory.find(
+      (e) => e.checkId === "graphql-content-type",
     );
+    const findings =
+      contentTypeExecution?.steps.flatMap((s) => s.findings) ?? [];
+    expect(findings.length).toBe(0);
   });
 
   it("should find no issues when response only has errors (parsing failure)", async () => {

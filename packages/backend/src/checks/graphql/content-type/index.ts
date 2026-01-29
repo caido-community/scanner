@@ -1,4 +1,5 @@
 import { continueWith, defineCheck, done, Severity } from "engine";
+import { z } from "zod";
 
 import { Tags } from "../../../types";
 import { keyStrategy } from "../../../utils/key";
@@ -10,24 +11,38 @@ const SIMPLE_CONTENT_TYPES = [
   },
 ];
 
-const INTROSPECTION_QUERY = JSON.stringify({
-  query: "{ __typename }",
+const GraphQLResponseSchema = z.object({
+  data: z.unknown().optional(),
+  errors: z.array(z.unknown()).optional(),
 });
 
-type GraphQLResponse = {
-  data?: unknown;
-  errors?: unknown[];
-};
+const GraphQLRequestSchema = z
+  .object({
+    operationName: z.union([z.string(), z.null()]).optional(),
+    query: z.string().optional(),
+    variables: z.unknown().optional(),
+  })
+  .refine(
+    (data) => data.query !== undefined || data.operationName !== undefined,
+    {
+      message: "GraphQL request must have either query or operationName",
+    },
+  );
 
 function isSuccessfulGraphQLResponse(body: string): boolean {
   try {
-    const parsed = JSON.parse(body) as GraphQLResponse;
+    const parsed: unknown = JSON.parse(body);
+    const result = GraphQLResponseSchema.safeParse(parsed);
+    return result.success && result.data.data !== undefined;
+  } catch {
+    return false;
+  }
+}
 
-    if (typeof parsed !== "object" || parsed === null) {
-      return false;
-    }
-
-    return "data" in parsed;
+function isGraphQLRequest(body: string): boolean {
+  try {
+    const parsed: unknown = JSON.parse(body);
+    return GraphQLRequestSchema.safeParse(parsed).success;
   } catch {
     return false;
   }
@@ -39,6 +54,20 @@ type State = {
 
 export default defineCheck<State>(({ step }) => {
   step("init", (state, context) => {
+    const method = context.target.request.getMethod().toUpperCase();
+    if (method !== "POST") {
+      return done({ state });
+    }
+
+    const originalBody = context.target.request.getBody()?.toText();
+    if (
+      originalBody === undefined ||
+      originalBody === "" ||
+      !isGraphQLRequest(originalBody)
+    ) {
+      return done({ state });
+    }
+
     const originalContentType = context.target.request
       .getHeader("content-type")?.[0]
       ?.toLowerCase();
@@ -68,11 +97,6 @@ export default defineCheck<State>(({ step }) => {
 
     const spec = context.target.request.toSpec();
     spec.setHeader("Content-Type", currentTest.contentType);
-
-    const originalBody = context.target.request.getBody()?.toText();
-    if (originalBody === undefined || originalBody === "") {
-      spec.setBody(INTROSPECTION_QUERY);
-    }
 
     const { request, response } = await context.sdk.requests.send(spec);
 
