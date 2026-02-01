@@ -38,6 +38,10 @@ export const BALANCED_PRESET: Preset = {
       enabled: true,
     },
     {
+      checkID: Checks.TIME_BASED_SQLI,
+      enabled: false,
+    },
+    {
       checkID: Checks.COMMAND_INJECTION,
       enabled: true,
     },

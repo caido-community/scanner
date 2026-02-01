@@ -30,7 +30,7 @@ import privateKeyDisclosureScan from "./private-key-disclosure";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
 import springActuatorScan from "./spring-actuator";
-import { mysqlErrorBased } from "./sql-injection";
+import { mysqlErrorBased, mysqlTimeBased } from "./sql-injection";
 import sqlStatementInParams from "./sql-statement-in-params";
 import ssnDisclosureScan from "./ssn-disclosure";
 import sstiScan from "./ssti";
@@ -73,13 +73,13 @@ export const Checks = {
   ROBOTS_TXT: "robots-txt",
   BASIC_REFLECTED_XSS: "basic-reflected-xss",
   MYSQL_ERROR_BASED_SQLI: "mysql-error-based-sqli",
+  TIME_BASED_SQLI: "time-based-sqli",
   SPRING_ACTUATOR: "spring-actuator",
   SSTI: "ssti",
   SQL_STATEMENT_IN_PARAMS: "sql-statement-in-params",
   SSN_DISCLOSURE: "ssn-disclosure",
   SUSPECT_TRANSFORM: "suspect-transform",
   USER_AGENT_DEPENDENT_RESPONSE: "user-agent-dependent-response",
-  // MYSQL_TIME_BASED_SQLI: "mysql-time-based-sqli" - TODO: fix false positives
 } as const;
 
 export const checks = [
@@ -118,6 +118,7 @@ export const checks = [
   robotsTxtScan,
   basicReflectedXSSScan,
   mysqlErrorBased,
+  mysqlTimeBased,
   springActuatorScan,
   sstiScan,
   sqlStatementInParams,

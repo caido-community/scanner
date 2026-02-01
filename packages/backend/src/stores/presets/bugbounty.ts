@@ -54,6 +54,10 @@ export const BUGBOUNTY_PRESET: Preset = {
       enabled: true,
     },
     {
+      checkID: Checks.TIME_BASED_SQLI,
+      enabled: true,
+    },
+    {
       checkID: Checks.COMMAND_INJECTION,
       enabled: true,
     },
