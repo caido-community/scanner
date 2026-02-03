@@ -55,16 +55,16 @@ describe("Time-Based SQL Injection", () => {
     expect(executionHistory).toMatchObject([]);
   });
 
-  it("should have correct metadata", async () => {
+  it("should have correct metadata", () => {
     expect(timeBasedSQLI.metadata.id).toBe("time-based-sqli");
     expect(timeBasedSQLI.metadata.name).toBe("Time-Based SQL Injection");
     expect(timeBasedSQLI.metadata.type).toBe("active");
-    expect(timeBasedSQLI.metadata.severities).toContain("high");
+    expect(timeBasedSQLI.metadata.severities).toContain("critical");
     expect(timeBasedSQLI.metadata.description).toContain("MySQL");
     expect(timeBasedSQLI.metadata.description).toContain("PostgreSQL");
   });
 
-  it("should have payloads for supported databases", async () => {
-    expect(timeBasedSQLI.metadata.aggressivity.maxRequests).toBe(7);
+  it("should have payloads for supported databases", () => {
+    expect(timeBasedSQLI.metadata.aggressivity.maxRequests).toBe(8);
   });
 });
