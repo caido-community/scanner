@@ -6,7 +6,6 @@ import type {
   StepTickResult,
 } from "../types/check";
 import type {
-  CheckContext,
   CheckDefinitionV2,
   RegexCheckDefinition,
 } from "../types/check-v2";
