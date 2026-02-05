@@ -56,10 +56,11 @@ export default defineCheckV2({
   minAggressivity: ScanAggressivity.LOW,
   dependsOn: ["other-check-id"],
   skipIfFoundBy: ["other-check-id"],
-  output: (ctx) => ({ someData: "value" }),
 
   async execute(ctx) {
     // Check logic here
+    // Optionally return output for dependent checks:
+    // return { someData: "value" };
   },
 });
 ```

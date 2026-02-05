@@ -1,6 +1,7 @@
 import type {
   Check,
   CheckMetadata,
+  CheckOutput,
   CheckTask,
   StepTickResult,
 } from "../types/check";
@@ -37,7 +38,7 @@ export function defineCheckV2(config: CheckDefinitionV2): Check {
   const create = (runtimeContext: RuntimeContext): CheckTask => {
     const findings: Finding[] = [];
     let hasRun = false;
-    let checkContext: CheckContext | undefined;
+    let output: CheckOutput = undefined;
 
     return {
       metadata,
@@ -57,19 +58,22 @@ export function defineCheckV2(config: CheckDefinitionV2): Check {
           );
         }
 
-        checkContext = createCheckContext({
+        const checkContext = createCheckContext({
           runtimeContext,
           wrappedSdk: taskContext.wrappedSdk,
           findings,
           getInterrupted: taskContext.getInterrupted,
         });
 
-        await config.execute(checkContext);
+        const result = await config.execute(checkContext);
+        if (result !== undefined) {
+          output = result;
+        }
+
         return { status: "done", findings };
       },
       getFindings: () => findings,
-      getOutput: () =>
-        checkContext && config.output ? config.output(checkContext) : undefined,
+      getOutput: () => output,
       getTarget: () => runtimeContext.target,
       getCurrentStepName: () => (hasRun ? undefined : "execute"),
       getCurrentState: () => ({}),

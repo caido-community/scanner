@@ -19,8 +19,7 @@ export type CheckDefinitionV2 = {
 
   dedupeKey?: (target: ScanTarget) => string;
   when?: (target: ScanTarget) => boolean;
-  output?: (ctx: CheckContext) => CheckOutput;
-  execute: (ctx: CheckContext) => Promise<void>;
+  execute: (ctx: CheckContext) => Promise<CheckOutput | void>;
 };
 
 export type CheckContext = RuntimeContext & {
