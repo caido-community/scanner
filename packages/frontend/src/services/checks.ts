@@ -15,7 +15,7 @@ export const useChecksService = defineStore("services.checks", () => {
     store.send({ type: "Start" });
     const result = await repository.getChecks();
 
-    if (result.kind === "Success") {
+    if (result.kind === "Ok") {
       store.send({ type: "Success", checks: result.value });
     } else {
       store.send({ type: "Error", error: result.error });

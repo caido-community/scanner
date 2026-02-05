@@ -18,7 +18,7 @@ export const useConfigService = defineStore("services.config", () => {
 
     const result = await repository.getConfig();
 
-    if (result.kind === "Success") {
+    if (result.kind === "Ok") {
       store.send({ type: "Success", config: result.value });
     } else {
       store.send({ type: "Error", error: result.error });
@@ -31,7 +31,7 @@ export const useConfigService = defineStore("services.config", () => {
       store.send({ type: "Start" });
       const result = await repository.getConfig();
 
-      if (result.kind === "Success") {
+      if (result.kind === "Ok") {
         store.send({ type: "Success", config: result.value });
       } else {
         store.send({ type: "Error", error: result.error });
@@ -41,7 +41,7 @@ export const useConfigService = defineStore("services.config", () => {
     sdk.backend.onEvent("config:updated", async () => {
       const result = await repository.getConfig();
 
-      if (result.kind === "Success") {
+      if (result.kind === "Ok") {
         store.send({ type: "Success", config: result.value });
       }
     });
@@ -56,7 +56,7 @@ export const useConfigService = defineStore("services.config", () => {
         update,
       ) as UserConfig;
       const result = await repository.updateConfig(updatedConfig);
-      if (result.kind === "Success") {
+      if (result.kind === "Ok") {
         store.send({ type: "UpdateConfig", config: updatedConfig });
       } else {
         store.send({ type: "Error", error: result.error });

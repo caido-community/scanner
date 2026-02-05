@@ -249,6 +249,10 @@ export const createRunnable = ({
         const taskContext = {
           ...context,
           sdk: wrappedSdk,
+          __v2Context: {
+            wrappedSdk,
+            getInterrupted: () => interruptReason !== undefined,
+          },
         };
         return check.create(taskContext);
       });
@@ -484,7 +488,7 @@ export const createRunnable = ({
         checksTotal += tasks.flat().length;
       }
 
-      return { kind: "Success", checksTotal };
+      return { kind: "Ok", checksTotal };
     },
     cancel: async (reason) => {
       if (interruptReason || !hasRun) {

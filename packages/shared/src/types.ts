@@ -1,11 +1,13 @@
-import {
-  type CheckType,
-  type Finding,
-  type InterruptReason,
-  type ScanAggressivity,
-  type ScanConfig,
-  type Severity,
+import type {
+  CheckType,
+  Finding,
+  InterruptReason,
+  ScanAggressivity,
+  ScanConfig,
+  Severity,
 } from "engine";
+
+export { Result } from "engine";
 
 /**
  * UserConfig is the configuration for the user.
@@ -193,18 +195,6 @@ export type QueueTask = {
   requestID: string;
   status: "pending" | "running";
 };
-
-export type Result<T> =
-  | { kind: "Error"; error: string }
-  | { kind: "Success"; value: T };
-
-export function ok<T>(value: T): Result<T> {
-  return { kind: "Success", value };
-}
-
-export function error<T>(error: string): Result<T> {
-  return { kind: "Error", error };
-}
 
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];

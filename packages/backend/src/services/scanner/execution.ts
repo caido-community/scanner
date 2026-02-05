@@ -1,11 +1,5 @@
-import { createRegistry } from "engine";
-import {
-  error,
-  ok,
-  type Result,
-  type ScanRequestPayload,
-  type Session,
-} from "shared";
+import { createRegistry, Result } from "engine";
+import type { Result as ResultType, ScanRequestPayload, Session } from "shared";
 
 import { ScanRequestPayloadSchema } from "../../schemas";
 import { ChecksStore } from "../../stores/checks";
@@ -18,7 +12,7 @@ import { validateInput } from "../../utils/validation";
 export const startActiveScan = (
   sdk: BackendSDK,
   payload: ScanRequestPayload,
-): Result<Session> => {
+): ResultType<Session> => {
   const validation = validateInput(ScanRequestPayloadSchema, payload);
   if (validation.kind === "Error") {
     return validation;
@@ -35,7 +29,7 @@ export const startActiveScan = (
   });
 
   if (activeChecks.length === 0) {
-    return error("No active scans available");
+    return Result.err("No active scans available");
   }
 
   const scannerStore = ScannerStore.get();
@@ -247,5 +241,5 @@ export const startActiveScan = (
     }
   })();
 
-  return ok(initialSession);
+  return Result.ok(initialSession);
 };

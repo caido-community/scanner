@@ -35,7 +35,7 @@ export const useScannerService = defineStore("services.scanner", () => {
     store.send({ type: "Start" });
     const result = await repository.getScanSessions();
 
-    if (result.kind === "Success") {
+    if (result.kind === "Ok") {
       store.send({ type: "Success", sessions: result.value });
     } else {
       store.send({ type: "Error", error: result.error });
@@ -67,7 +67,7 @@ export const useScannerService = defineStore("services.scanner", () => {
       store.send({ type: "Start" });
       const result = await repository.getScanSessions();
 
-      if (result.kind === "Success") {
+      if (result.kind === "Ok") {
         store.send({ type: "Success", sessions: result.value });
       } else {
         store.send({ type: "Error", error: result.error });
@@ -78,7 +78,7 @@ export const useScannerService = defineStore("services.scanner", () => {
   const startActiveScan = async (payload: ScanRequestPayload) => {
     const result = await repository.startActiveScan(payload);
 
-    if (result.kind === "Success") {
+    if (result.kind === "Ok") {
       sdk.window.showToast("Scan submitted", { variant: "success" });
     } else {
       sdk.window.showToast(result.error, {
@@ -100,7 +100,7 @@ export const useScannerService = defineStore("services.scanner", () => {
   const cancelScanSession = async (sessionId: string) => {
     const result = await repository.cancelScanSession(sessionId);
     switch (result.kind) {
-      case "Success":
+      case "Ok":
         sdk.window.showToast("Scan cancelled", { variant: "success" });
         store.send({ type: "CancelSession", sessionId });
         break;
@@ -115,7 +115,7 @@ export const useScannerService = defineStore("services.scanner", () => {
 
     const result = await repository.deleteScanSession(sessionId);
     switch (result.kind) {
-      case "Success":
+      case "Ok":
         sdk.window.showToast("Scan deleted", { variant: "success" });
         store.send({ type: "DeleteSession", sessionId });
 
@@ -144,7 +144,7 @@ export const useScannerService = defineStore("services.scanner", () => {
   const updateSessionTitle = async (sessionId: string, title: string) => {
     const result = await repository.updateSessionTitle(sessionId, title);
     switch (result.kind) {
-      case "Success":
+      case "Ok":
         store.send({ type: "UpdateSession", session: result.value });
         break;
       case "Error":
@@ -155,7 +155,7 @@ export const useScannerService = defineStore("services.scanner", () => {
   const downloadExecutionTrace = async (sessionId: string) => {
     const result = await repository.getExecutionTrace(sessionId);
     switch (result.kind) {
-      case "Success": {
+      case "Ok": {
         const blob = new Blob([result.value], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -175,7 +175,7 @@ export const useScannerService = defineStore("services.scanner", () => {
   const rerunScanSession = async (sessionId: string) => {
     const result = await repository.rerunScanSession(sessionId);
     switch (result.kind) {
-      case "Success":
+      case "Ok":
         sdk.window.showToast("Scan restarted", { variant: "success" });
         selectSession(result.value.id);
         break;

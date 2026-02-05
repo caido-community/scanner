@@ -55,7 +55,7 @@ export const useLauncher = defineStore("stores.launcher", () => {
     const result = await scannerService.startActiveScan(payload);
 
     switch (result.kind) {
-      case "Success": {
+      case "Ok": {
         scannerService.selectSession(result.value.id);
         incrementCount();
 

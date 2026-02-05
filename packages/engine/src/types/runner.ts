@@ -53,7 +53,7 @@ export type ScanResult =
 
 export type ScanEstimateResult =
   | {
-      kind: "Success";
+      kind: "Ok";
       checksTotal: number;
     }
   | {
