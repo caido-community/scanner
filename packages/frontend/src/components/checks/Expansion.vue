@@ -3,7 +3,7 @@ import type { CheckMetadata } from "engine";
 
 import { useTable } from "./useTable";
 
-defineProps<{
+const { check } = defineProps<{
   check: CheckMetadata;
 }>();
 

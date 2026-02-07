@@ -2,6 +2,7 @@
 import Card from "primevue/card";
 import ProgressBar from "primevue/progressbar";
 import { type Session } from "shared";
+import { toRef } from "vue";
 
 import { ChecksTable } from "./ChecksTable";
 import Header from "./Header.vue";
@@ -9,7 +10,7 @@ import { useForm } from "./useForm";
 
 import FindingsBySeverity from "@/components/common/FindingsBySeverity.vue";
 
-const props = defineProps<{
+const { session } = defineProps<{
   session: Session;
 }>();
 
@@ -23,7 +24,7 @@ const {
   checksFailed,
   checksRunning,
   findings,
-} = useForm(props);
+} = useForm(toRef(() => session));
 </script>
 
 <template>

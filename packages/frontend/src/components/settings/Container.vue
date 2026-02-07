@@ -6,7 +6,7 @@ import Success from "./Success.vue";
 import InvalidState from "@/components/common/InvalidState.vue";
 import { type ConfigState } from "@/types/config";
 
-defineProps<{
+const { configState } = defineProps<{
   configState: ConfigState;
 }>();
 </script>

@@ -2,13 +2,13 @@
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import { type Session } from "shared";
-import { computed } from "vue";
+import { computed, toRef } from "vue";
 
 import { useForm } from "./useForm";
 
 import { useScannerService } from "@/services/scanner";
 
-const props = defineProps<{
+const { session } = defineProps<{
   session: Session;
 }>();
 
@@ -26,20 +26,20 @@ const {
   isRerunning,
   showDeleteDialog,
   showRerunDialog,
-} = useForm(props);
+} = useForm(toRef(() => session));
 
 const scannerService = useScannerService();
 
 const hasExecutionTrace = computed(() => {
-  if (props.session.kind === "Done" || props.session.kind === "Interrupted") {
-    return props.session.hasExecutionTrace;
+  if (session.kind === "Done" || session.kind === "Interrupted") {
+    return session.hasExecutionTrace;
   }
 
   return false;
 });
 
 const onDownloadTrace = () => {
-  scannerService.downloadExecutionTrace(props.session.id);
+  scannerService.downloadExecutionTrace(session.id);
 };
 </script>
 

@@ -7,7 +7,7 @@ import InvalidState from "@/components/common/InvalidState.vue";
 import { type ChecksState } from "@/types/checks";
 import { type ConfigState } from "@/types/config";
 
-defineProps<{
+const { checksState, configState } = defineProps<{
   checksState: ChecksState;
   configState: ConfigState;
 }>();

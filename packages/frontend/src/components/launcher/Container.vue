@@ -18,12 +18,12 @@ const {
   goPrevious,
 } = useStepper();
 
-const props = defineProps<{
+const { sdk, incrementCount } = defineProps<{
   sdk: FrontendSDK;
   incrementCount: () => void;
 }>();
 
-provideSDK(props.sdk);
+provideSDK(sdk);
 
 const launcher = useLauncher();
 </script>
@@ -73,7 +73,7 @@ const launcher = useLauncher();
         severity="success"
         :disabled="launcher.isLoading"
         :loading="launcher.isLoading"
-        @mousedown="launcher.onSubmit(props.sdk, props.incrementCount)"
+        @mousedown="launcher.onSubmit(sdk, incrementCount)"
       />
     </div>
   </div>

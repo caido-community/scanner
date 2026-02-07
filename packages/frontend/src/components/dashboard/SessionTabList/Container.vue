@@ -7,7 +7,7 @@ import Tab from "./Tab.vue";
 import { useScannerService } from "@/services/scanner";
 import { type SessionsState } from "@/types/scanner";
 
-defineProps<{
+const { state } = defineProps<{
   state: SessionsState & { type: "Success" };
 }>();
 

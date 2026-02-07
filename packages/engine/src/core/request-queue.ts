@@ -91,9 +91,7 @@ export const createRequestQueue = ({
       const timeoutPromise = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
           reject(
-            new Error(
-              `Request timeout after ${config.checkTimeout} seconds`,
-            ),
+            new Error(`Request timeout after ${config.checkTimeout} seconds`),
           );
         }, requestTimeoutMs);
       });

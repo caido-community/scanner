@@ -2,16 +2,17 @@
 import Column from "primevue/column";
 import DataTable from "primevue/datatable";
 import { type Session } from "shared";
+import { toRef } from "vue";
 
 import { useTable } from "./useTable";
 
 import FindingsBySeverity from "@/components/common/FindingsBySeverity.vue";
 
-const props = defineProps<{
+const { session } = defineProps<{
   session: Session;
 }>();
 
-const { checksHistory } = useTable(props);
+const { checksHistory } = useTable(toRef(() => session));
 </script>
 
 <template>

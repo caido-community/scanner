@@ -2,7 +2,7 @@
 import { type Finding, Severity } from "engine";
 import { computed } from "vue";
 
-const props = defineProps<{
+const { findings } = defineProps<{
   findings: Finding[];
 }>();
 
@@ -15,7 +15,7 @@ const findingsBySeverity = computed(() => {
     [Severity.INFO]: 0,
   };
 
-  props.findings.forEach((finding) => {
+  findings.forEach((finding) => {
     counts[finding.severity]++;
   });
 
