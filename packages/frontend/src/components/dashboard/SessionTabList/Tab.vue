@@ -21,6 +21,7 @@ const {
 const emit = defineEmits<{
   (e: "select", event: MouseEvent): void;
   (e: "rename", newName: string): void;
+  (e: "rerun"): void;
   (e: "delete"): void;
   (e: "deleteOthers"): void;
 }>();
@@ -35,6 +36,13 @@ const contextMenuItems = [
     icon: "fas fa-pencil",
     command: () => {
       isEditable.value = true;
+    },
+  },
+  {
+    label: "Rerun",
+    icon: "fas fa-redo",
+    command: () => {
+      emit("rerun");
     },
   },
   {

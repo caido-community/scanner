@@ -29,6 +29,10 @@ const handleDelete = (sessionId: string) => {
   scannerService.deleteScanSession(sessionId);
 };
 
+const handleRerun = (sessionId: string) => {
+  scannerService.rerunScanSession(sessionId);
+};
+
 const handleDeleteOthers = (sessionId: string) => {
   scannerService.deleteOtherSessions(sessionId);
 };
@@ -53,6 +57,7 @@ const handleDeleteOthers = (sessionId: string) => {
           :status="session.kind"
           @select="handleTabSelect(session.id)"
           @rename="(newName) => handleRename(session.id, newName)"
+          @rerun="handleRerun(session.id)"
           @delete="handleDelete(session.id)"
           @delete-others="handleDeleteOthers(session.id)"
         />
