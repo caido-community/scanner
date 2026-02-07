@@ -293,6 +293,8 @@ export const createRunnable = ({
             return existingFindings !== undefined && existingFindings.length > 0;
           });
           if (shouldSkip) {
+            const key = `${task.metadata.id}-${context.target.request.getId()}`;
+            activeCheckRecords.delete(key);
             return;
           }
         }
