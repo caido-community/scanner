@@ -98,7 +98,6 @@ const {
           display="comma"
           placeholder="All requests (no scope filter)"
           class="w-full"
-          filter
         />
       </div>
 

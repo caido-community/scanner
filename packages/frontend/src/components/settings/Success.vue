@@ -130,7 +130,6 @@ const aggressivityOptions = computed(() =>
                   option-label="label"
                   option-value="value"
                   display="comma"
-                  filter
                   placeholder="All requests (no scope filter)"
                   :disabled="!passiveEnabled"
                   class="w-full"
