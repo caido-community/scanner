@@ -1,4 +1,4 @@
-import { PromisePool } from "@supercharge/promise-pool";
+import { PromisePool, PromisePoolError } from "@supercharge/promise-pool";
 import { batchingToposort } from "batching-toposort-ts";
 import { type SDK } from "caido:plugin";
 import {
@@ -239,6 +239,39 @@ export const createRunnable = ({
     batch: Check[],
     context: RuntimeContext,
   ): Promise<void> => {
+    const recordCheckFailure = (
+      task: CheckTask,
+      errorCode: ScanRunnableErrorCode,
+      errorMessage: string,
+    ) => {
+      const targetRequestId = task.getTarget().request.getId();
+      const key = `${task.metadata.id}-${targetRequestId}`;
+      const activeRecord = activeCheckRecords.get(key);
+
+      if (activeRecord) {
+        const checkRecord: CheckExecutionRecord = {
+          checkId: activeRecord.checkId,
+          targetRequestId: activeRecord.targetRequestId,
+          steps: activeRecord.steps,
+          status: "failed",
+          error: {
+            code: errorCode,
+            message: errorMessage,
+          },
+        };
+
+        executionHistory.push(checkRecord);
+        activeCheckRecords.delete(key);
+      }
+
+      emit("scan:check-failed", {
+        checkID: task.metadata.id,
+        targetRequestID: targetRequestId,
+        errorCode,
+        errorMessage,
+      });
+    };
+
     const tasks = batch
       .filter((check) => isCheckApplicable(check, context))
       .map((check) => {
@@ -263,6 +296,18 @@ export const createRunnable = ({
       .handleError((error, _, pool) => {
         if (error instanceof ScanRunnableInterruptedError) {
           pool.stop();
+          return;
+        }
+        if (
+          error instanceof PromisePoolError &&
+          error.message.includes("timed out")
+        ) {
+          const errorMessage = `Check timed out after ${context.config.checkTimeout} seconds`;
+          recordCheckFailure(
+            error.item as CheckTask,
+            ScanRunnableErrorCode.RUNTIME_ERROR,
+            errorMessage,
+          );
           return;
         }
 
@@ -339,30 +384,7 @@ export const createRunnable = ({
         }
 
         if (result.status === "failed") {
-          const key = `${task.metadata.id}-${context.target.request.getId()}`;
-          const activeRecord = activeCheckRecords.get(key);
-
-          if (activeRecord) {
-            const checkRecord: CheckExecutionRecord = {
-              checkId: activeRecord.checkId,
-              targetRequestId: activeRecord.targetRequestId,
-              steps: activeRecord.steps,
-              status: "failed",
-              error: {
-                code: result.errorCode,
-                message: result.errorMessage,
-              },
-            };
-
-            executionHistory.push(checkRecord);
-            activeCheckRecords.delete(key);
-          }
-          emit("scan:check-failed", {
-            checkID: task.metadata.id,
-            targetRequestID: context.target.request.getId(),
-            errorCode: result.errorCode,
-            errorMessage: result.errorMessage,
-          });
+          recordCheckFailure(task, result.errorCode, result.errorMessage);
         }
 
         return result;
