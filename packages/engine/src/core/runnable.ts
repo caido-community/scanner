@@ -392,6 +392,9 @@ export const createRunnable = ({
                 ScanRunnableErrorCode.REQUEST_NOT_FOUND,
               );
             }
+            if (config.inScopeOnly && !sdk.requests.inScope(target.request)) {
+              return;
+            }
 
             const context = createRuntimeContext(
               {
@@ -483,6 +486,9 @@ export const createRunnable = ({
         const target = await sdk.requests.get(requestID);
         if (target === undefined) {
           return { kind: "Error", error: `Request ${requestID} not found` };
+        }
+        if (config.inScopeOnly && !sdk.requests.inScope(target.request)) {
+          continue;
         }
 
         const context = createRuntimeContext(
