@@ -288,8 +288,11 @@ export const createRunnable = ({
       })
       .process(async (task) => {
         if (task.metadata.skipIfFoundBy) {
-          const existingFindings = findings.get(task.metadata.id) || [];
-          if (existingFindings.length > 0) {
+          const shouldSkip = task.metadata.skipIfFoundBy.some((checkId) => {
+            const existingFindings = findings.get(checkId);
+            return existingFindings !== undefined && existingFindings.length > 0;
+          });
+          if (shouldSkip) {
             return;
           }
         }
