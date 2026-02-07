@@ -154,7 +154,7 @@ export type ExecutionHistory = CheckExecutionRecord[];
 
 export type ScanConfig = {
   aggressivity: ScanAggressivity;
-  inScopeOnly: boolean;
+  scopeIDs: string[];
   concurrentChecks: number;
   concurrentRequests: number;
   concurrentTargets: number;

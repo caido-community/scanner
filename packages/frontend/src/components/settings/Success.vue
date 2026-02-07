@@ -3,30 +3,30 @@ import { ScanAggressivity, Severity } from "engine";
 import Card from "primevue/card";
 import Dropdown from "primevue/dropdown";
 import InputNumber from "primevue/inputnumber";
+import MultiSelect from "primevue/multiselect";
 import SelectButton from "primevue/selectbutton";
 import ToggleSwitch from "primevue/toggleswitch";
-import { computed, toRefs } from "vue";
+import { computed, toRef } from "vue";
 
 import { useForm } from "./useForm";
 
 import { type ConfigState } from "@/types/config";
 
-const props = defineProps<{
+const { state } = defineProps<{
   state: ConfigState & { type: "Success" };
 }>();
-
-const { state } = toRefs(props);
 
 const {
   passiveEnabled,
   passiveAggressivity,
-  passiveInScopeOnly,
+  passiveScopeIDs,
+  scopeOptions,
   passiveSeverities,
   passiveConcurrentScans,
   passiveConcurrentRequests,
   defaultPresetName,
   presetOptions,
-} = useForm(state);
+} = useForm(toRef(() => state));
 
 const severityOptions = computed(() =>
   Object.values(Severity).map((severity) => ({
@@ -118,16 +118,22 @@ const aggressivityOptions = computed(() =>
 
             <div class="flex items-start justify-between gap-4">
               <div class="flex flex-col gap-1 flex-1">
-                <label class="text-sm font-medium">In-Scope Only</label>
+                <label class="text-sm font-medium">Passive Scope Filter</label>
                 <p class="text-xs text-surface-400">
-                  When enabled, the scanner will only analyze requests that are
-                  in scope
+                  Only analyze requests matching the selected scopes
                 </p>
               </div>
-              <div class="flex-shrink-0">
-                <ToggleSwitch
-                  v-model="passiveInScopeOnly"
+              <div class="flex-shrink-0 w-72">
+                <MultiSelect
+                  v-model="passiveScopeIDs"
+                  :options="scopeOptions"
+                  option-label="label"
+                  option-value="value"
+                  display="comma"
+                  filter
+                  placeholder="All requests (no scope filter)"
                   :disabled="!passiveEnabled"
+                  class="w-full"
                 />
               </div>
             </div>

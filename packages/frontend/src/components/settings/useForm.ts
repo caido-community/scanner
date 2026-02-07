@@ -2,11 +2,13 @@ import { type ScanAggressivity, type Severity } from "engine";
 import type { Preset } from "shared";
 import { computed, type Ref } from "vue";
 
+import { useSDK } from "@/plugins/sdk";
 import { useConfigService } from "@/services/config";
 import { type ConfigState } from "@/types/config";
 
 export const useForm = (state: Ref<ConfigState & { type: "Success" }>) => {
   const configService = useConfigService();
+  const sdk = useSDK();
 
   const passiveEnabled = computed({
     get: () => state.value.config.passive.enabled,
@@ -26,11 +28,11 @@ export const useForm = (state: Ref<ConfigState & { type: "Success" }>) => {
     },
   });
 
-  const passiveInScopeOnly = computed({
-    get: () => state.value.config.passive.inScopeOnly,
-    set: async (value: boolean) => {
+  const passiveScopeIDs = computed({
+    get: () => state.value.config.passive.scopeIDs,
+    set: async (value: string[]) => {
       await configService.updateConfig({
-        passive: { inScopeOnly: value },
+        passive: { scopeIDs: value },
       });
     },
   });
@@ -80,14 +82,20 @@ export const useForm = (state: Ref<ConfigState & { type: "Success" }>) => {
     }));
   });
 
+  const scopeOptions = sdk.scopes.getScopes().map((scope) => ({
+    label: scope.name,
+    value: scope.id,
+  }));
+
   return {
     passiveEnabled,
     passiveAggressivity,
-    passiveInScopeOnly,
+    passiveScopeIDs,
     passiveConcurrentScans,
     passiveConcurrentRequests,
     passiveSeverities,
     defaultPresetName,
     presetOptions,
+    scopeOptions,
   };
 };

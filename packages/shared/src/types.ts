@@ -21,7 +21,7 @@ export { Result } from "engine";
 export type PassiveConfig = {
   enabled: boolean;
   aggressivity: ScanAggressivity;
-  inScopeOnly: boolean;
+  scopeIDs: string[];
   concurrentChecks: number;
   concurrentRequests: number;
   overrides: Override[];

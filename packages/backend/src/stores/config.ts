@@ -19,12 +19,37 @@ import {
 const createDefaultPassiveConfig = (): PassiveConfig => ({
   enabled: true,
   aggressivity: ScanAggressivity.LOW,
-  inScopeOnly: true,
+  scopeIDs: [],
   concurrentChecks: 2,
   concurrentRequests: 3,
   overrides: [],
   severities: ["critical", "high", "medium", "low", "info"],
 });
+
+type LegacyPassiveConfig = Partial<PassiveConfig> & {
+  inScopeOnly?: boolean;
+};
+
+const migratePassiveConfig = (
+  passive: LegacyPassiveConfig,
+  legacyScopeIDs: string[],
+): PassiveConfig => {
+  const { inScopeOnly: _legacyInScopeOnly, ...restPassive } = passive;
+
+  const scopeIDs = Array.isArray(passive.scopeIDs)
+    ? passive.scopeIDs.filter((scopeID): scopeID is string => {
+        return typeof scopeID === "string";
+      })
+    : passive.inScopeOnly === true
+      ? legacyScopeIDs
+      : [];
+
+  return {
+    ...createDefaultPassiveConfig(),
+    ...restPassive,
+    scopeIDs,
+  };
+};
 
 const createDefaultActiveConfig = (): ActiveConfig => ({
   overrides: [],
@@ -112,8 +137,15 @@ export class ConfigStore {
   private async loadProjectConfig(projectId: string): Promise<void> {
     const savedConfig = await this.projectConfigStorage.load(projectId);
     if (savedConfig !== undefined) {
-      this.config.passive = savedConfig.passive;
-      this.config.active = savedConfig.active;
+      const legacyScopeIDs = await this.getAllScopeIDs();
+      this.config.passive = migratePassiveConfig(
+        savedConfig.passive,
+        legacyScopeIDs,
+      );
+      this.config.active = {
+        ...createDefaultActiveConfig(),
+        ...savedConfig.active,
+      };
       return;
     }
 
@@ -123,6 +155,15 @@ export class ConfigStore {
       this.config.passive.overrides = defaultPreset.passive;
     }
     this.saveProjectConfig();
+  }
+
+  private async getAllScopeIDs(): Promise<string[]> {
+    try {
+      const scopes = await this.sdk.scope.getAll();
+      return scopes.map((scope) => scope.id);
+    } catch {
+      return [];
+    }
   }
 
   private getDefaultPreset(): Preset | undefined {

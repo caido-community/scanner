@@ -15,7 +15,7 @@ import {
   ScanRunnableInterruptedError,
   ScanRuntimeError,
 } from "../core/errors";
-import { type Check, type CheckOutput } from "../types/check";
+import { type Check, type CheckOutput, type CheckTask } from "../types/check";
 import { type Finding } from "../types/finding";
 import {
   type CheckExecutionRecord,
@@ -70,6 +70,14 @@ export const createRunnable = ({
     emit,
     getInterruptReason: () => interruptReason,
   });
+
+  const isTargetInScope = (request: Request): boolean => {
+    if (config.scopeIDs.length === 0) {
+      return true;
+    }
+
+    return sdk.requests.inScope(request, config.scopeIDs);
+  };
 
   const recordStepExecution = (
     checkId: string,
@@ -335,7 +343,9 @@ export const createRunnable = ({
         if (task.metadata.skipIfFoundBy) {
           const shouldSkip = task.metadata.skipIfFoundBy.some((checkId) => {
             const existingFindings = findings.get(checkId);
-            return existingFindings !== undefined && existingFindings.length > 0;
+            return (
+              existingFindings !== undefined && existingFindings.length > 0
+            );
           });
           if (shouldSkip) {
             const key = `${task.metadata.id}-${context.target.request.getId()}`;
@@ -414,7 +424,7 @@ export const createRunnable = ({
                 ScanRunnableErrorCode.REQUEST_NOT_FOUND,
               );
             }
-            if (config.inScopeOnly && !sdk.requests.inScope(target.request)) {
+            if (!isTargetInScope(target.request)) {
               return;
             }
 
@@ -509,7 +519,7 @@ export const createRunnable = ({
         if (target === undefined) {
           return { kind: "Error", error: `Request ${requestID} not found` };
         }
-        if (config.inScopeOnly && !sdk.requests.inScope(target.request)) {
+        if (!isTargetInScope(target.request)) {
           continue;
         }
 

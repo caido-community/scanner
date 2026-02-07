@@ -2,9 +2,11 @@ import { ScanAggressivity, Severity } from "engine";
 import prettyMs from "pretty-ms";
 import { computed } from "vue";
 
+import { useSDK } from "@/plugins/sdk";
 import { useLauncher } from "@/stores/launcher";
 
 export const useForm = () => {
+  const sdk = useSDK();
   const { form } = useLauncher();
 
   const aggressivityOptions = Object.values(ScanAggressivity).map(
@@ -19,17 +21,10 @@ export const useForm = () => {
     value: severity,
   }));
 
-  const scopeOptions = [
-    { label: "All", value: false },
-    { label: "In-Scope only", value: true },
-  ];
-
-  const inScopeOnly = computed({
-    get: () => form.config.inScopeOnly,
-    set: (value: boolean) => {
-      form.config.inScopeOnly = value;
-    },
-  });
+  const scopeOptions = sdk.scopes.getScopes().map((scope) => ({
+    label: scope.name,
+    value: scope.id,
+  }));
 
   const readableTimeout = computed(() => {
     const timeout = form.config.scanTimeout;
@@ -44,7 +39,6 @@ export const useForm = () => {
     aggressivityOptions,
     severityOptions,
     scopeOptions,
-    inScopeOnly,
     readableTimeout,
   };
 };

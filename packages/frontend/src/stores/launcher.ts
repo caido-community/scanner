@@ -19,7 +19,7 @@ export const useLauncher = defineStore("stores.launcher", () => {
     targets: [],
     config: {
       aggressivity: ScanAggressivity.MEDIUM,
-      inScopeOnly: false,
+      scopeIDs: [],
       scanTimeout: 10 * 60,
       checkTimeout: 2 * 60,
       concurrentChecks: 2,

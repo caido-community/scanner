@@ -13,19 +13,23 @@ export const useConfigService = defineStore("services.config", () => {
 
   const getState = () => store.getState();
 
-  const initialize = async () => {
+  const refresh = async () => {
     store.send({ type: "Start" });
-
     const result = await repository.getConfig();
 
     if (result.kind === "Ok") {
       store.send({ type: "Success", config: result.value });
-    } else {
-      store.send({ type: "Error", error: result.error });
-      sdk.window.showToast("Failed to load configuration", {
-        variant: "error",
-      });
+      return;
     }
+
+    store.send({ type: "Error", error: result.error });
+    sdk.window.showToast("Failed to load configuration", {
+      variant: "error",
+    });
+  };
+
+  const initialize = async () => {
+    await refresh();
 
     sdk.backend.onEvent("project:changed", async () => {
       store.send({ type: "Start" });
@@ -69,6 +73,7 @@ export const useConfigService = defineStore("services.config", () => {
 
   return {
     getState,
+    refresh,
     initialize,
     updateConfig,
   };

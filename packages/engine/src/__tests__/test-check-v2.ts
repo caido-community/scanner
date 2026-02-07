@@ -45,7 +45,7 @@ export function mockTarget(options: MockTargetOptions): {
 
 const createFullConfig = (options?: TestCheckOptions): ScanConfig => ({
   aggressivity: ScanAggressivity.MEDIUM,
-  inScopeOnly: false,
+  scopeIDs: [],
   concurrentChecks: 1,
   concurrentRequests: 1,
   concurrentTargets: 1,

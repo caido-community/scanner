@@ -89,8 +89,8 @@ export async function init(sdk: BackendSDK) {
 
     passiveTaskQueue.setConcurrency(config.passive.concurrentChecks);
 
-    if (config.passive.inScopeOnly) {
-      const inScope = sdk.requests.inScope(request);
+    if (config.passive.scopeIDs.length > 0) {
+      const inScope = sdk.requests.inScope(request, config.passive.scopeIDs);
       if (!inScope) return;
     }
 
@@ -116,7 +116,7 @@ export async function init(sdk: BackendSDK) {
 
       const runnable = registry.create(sdk, {
         aggressivity: config.passive.aggressivity,
-        inScopeOnly: config.passive.inScopeOnly,
+        scopeIDs: config.passive.scopeIDs,
         concurrentChecks: config.passive.concurrentChecks,
         concurrentRequests: config.passive.concurrentRequests,
         concurrentTargets: 1,
