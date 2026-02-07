@@ -86,16 +86,26 @@ export const createRequestQueue = ({
         await requestLock;
       }
 
+      const requestTimeoutMs = config.checkTimeout * 1000;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error("Request timeout after 60 seconds"));
-        }, 60000);
+        timeoutId = setTimeout(() => {
+          reject(
+            new Error(
+              `Request timeout after ${config.checkTimeout} seconds`,
+            ),
+          );
+        }, requestTimeoutMs);
       });
 
       const result = await Promise.race([
         sdk.requests.send(item.request),
         timeoutPromise,
-      ]);
+      ]).finally(() => {
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+        }
+      });
 
       emit("scan:request-completed", {
         pendingRequestID: item.pendingRequestID,
