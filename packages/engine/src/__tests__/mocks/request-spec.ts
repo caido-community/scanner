@@ -1,4 +1,9 @@
-import { type Body, type RequestSpec, type RequestSpecRaw } from "caido:utils";
+import {
+  type Body,
+  type ConnectionInfo,
+  type RequestSpec,
+  type RequestSpecRaw,
+} from "caido:utils";
 
 import { MockBody } from "./request";
 
@@ -82,6 +87,32 @@ export class MockRequestSpec implements RequestSpec {
 
   getId(): string {
     return this.id.toString();
+  }
+
+  getUrl(): string;
+  getUrl(options: { raw: true }): Uint8Array;
+  getUrl(options?: { raw?: boolean }): string | Uint8Array {
+    const protocol = this.tls ? "https" : "http";
+    const isDefaultPort =
+      (this.tls && this.port === 443) || (!this.tls && this.port === 80);
+    const port = isDefaultPort ? "" : `:${this.port}`;
+    const query = this.query.length > 0 ? `?${this.query}` : "";
+    const url = `${protocol}://${this.host}${port}${this.path}${query}`;
+
+    if (options?.raw === true) {
+      return new TextEncoder().encode(url);
+    }
+
+    return url;
+  }
+
+  getInfo(): ConnectionInfo {
+    return {
+      host: this.host,
+      port: this.port,
+      tls: this.tls,
+      sni: this.host,
+    };
   }
 
   getMethod(): string;

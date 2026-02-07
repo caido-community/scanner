@@ -10,7 +10,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@caido/sdk-backend": "0.48.1",
+    "@caido/sdk-backend": "0.55.3",
     "vitest": "3.2.3"
   },
   "dependencies": {
