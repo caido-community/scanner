@@ -107,6 +107,16 @@ export const createRequestQueue = ({
 
       item.resolve(result);
     } catch (error) {
+      if (error instanceof ScanRunnableInterruptedError) {
+        emit("scan:request-failed", {
+          pendingRequestID: item.pendingRequestID,
+          error: error.message,
+          targetRequestID: item.targetRequestID,
+          checkID: item.checkID,
+        });
+        item.reject(error);
+        return;
+      }
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
