@@ -449,20 +449,29 @@ export const createRunnable = ({
       };
 
       if (config.scanTimeout > 0) {
-        const timeoutPromise = new Promise<ScanResult>((resolve) => {
-          setTimeout(() => {
-            if (!interruptReason) {
+        let finished = false;
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        const timeoutPromise = new Promise<"timeout">((resolve) => {
+          timeoutId = setTimeout(() => {
+            if (!finished && !interruptReason) {
               interruptReason = "Timeout";
             }
-            resolve({
-              kind: "Interrupted",
-              reason: "Timeout",
-              findings: Array.from(findings.values()).flat(),
-            });
+            resolve("timeout");
           }, config.scanTimeout * 1000);
         });
 
-        return Promise.race([runScan(), timeoutPromise]);
+        const runPromise = runScan().finally(() => {
+          finished = true;
+          if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+          }
+        });
+
+        const result = await Promise.race([runPromise, timeoutPromise]);
+        if (result === "timeout") {
+          return await runPromise;
+        }
+        return result;
       } else {
         return runScan();
       }
