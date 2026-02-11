@@ -97,9 +97,9 @@ const activeSection = ref<SettingsSection>("general");
             <template v-if="activeSection === 'general'">
               <div class="flex flex-col gap-4">
                 <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium">Default Preset</label>
-                    <p class="text-xs text-surface-400">
+                  <div class="flex flex-col gap-0">
+                    <label class="text-base font-medium">Default Preset</label>
+                    <p class="text-sm text-surface-400">
                       The preset that will be applied to new projects
                     </p>
                   </div>
@@ -114,11 +114,11 @@ const activeSection = ref<SettingsSection>("general");
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex min-w-0 flex-col gap-1">
-                    <label class="text-sm font-medium"
+                  <div class="flex min-w-0 flex-col gap-0">
+                    <label class="text-base font-medium"
                       >Request Timeout (seconds)</label
                     >
-                    <p class="text-xs text-surface-400">
+                    <p class="text-sm text-surface-400">
                       Maximum time to wait for a single HTTP request to complete
                     </p>
                   </div>
@@ -132,11 +132,11 @@ const activeSection = ref<SettingsSection>("general");
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium"
+                  <div class="flex flex-col gap-0">
+                    <label class="text-base font-medium"
                       >Enable Passive Scanner</label
                     >
-                    <p class="text-xs text-surface-400">
+                    <p class="text-sm text-surface-400">
                       When enabled, the scanner will automatically analyze HTTP
                       traffic for vulnerabilities
                     </p>
@@ -151,11 +151,11 @@ const activeSection = ref<SettingsSection>("general");
             <template v-else-if="activeSection === 'filtering'">
               <div class="flex flex-col gap-4">
                 <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium"
+                  <div class="flex flex-col gap-0">
+                    <label class="text-base font-medium"
                       >Passive Scope Filter</label
                     >
-                    <p class="text-xs text-surface-400">
+                    <p class="text-sm text-surface-400">
                       Only analyze requests matching the selected scopes
                     </p>
                   </div>
@@ -172,9 +172,9 @@ const activeSection = ref<SettingsSection>("general");
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium">Severities</label>
-                    <p class="text-xs text-surface-400">
+                  <div class="flex flex-col gap-0">
+                    <label class="text-base font-medium">Severities</label>
+                    <p class="text-sm text-surface-400">
                       Select which severity levels to include in passive
                       scanning
                     </p>
@@ -198,9 +198,9 @@ const activeSection = ref<SettingsSection>("general");
             <template v-else>
               <div class="flex flex-col gap-4">
                 <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium">Scans Concurrency</label>
-                    <p class="text-xs text-surface-400">
+                  <div class="flex flex-col gap-0">
+                    <label class="text-base font-medium">Scans Concurrency</label>
+                    <p class="text-sm text-surface-400">
                       Number of scans that can run simultaneously
                     </p>
                   </div>
@@ -222,11 +222,11 @@ const activeSection = ref<SettingsSection>("general");
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium"
+                  <div class="flex flex-col gap-0">
+                    <label class="text-base font-medium"
                       >Requests Concurrency</label
                     >
-                    <p class="text-xs text-surface-400">
+                    <p class="text-sm text-surface-400">
                       Number of requests to send simultaneously during single
                       scan execution
                     </p>
@@ -241,9 +241,9 @@ const activeSection = ref<SettingsSection>("general");
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium">Scan Aggressivity</label>
-                    <p class="text-xs text-surface-400">
+                  <div class="flex flex-col gap-0">
+                    <label class="text-base font-medium">Scan Aggressivity</label>
+                    <p class="text-sm text-surface-400">
                       Controls the aggressiveness of passive scanning checks.
                       Lower means faster scanning and less accurate results.
                     </p>
