@@ -35,6 +35,30 @@ type RequestQueue = {
   ) => Promise<RequestResponse>;
 };
 
+export const computeDelayNeeded = ({
+  now,
+  lastRequestTime,
+  requestsDelayMs,
+}: {
+  now: number;
+  lastRequestTime: number;
+  requestsDelayMs: number;
+}): number => {
+  return Math.max(0, requestsDelayMs - (now - lastRequestTime));
+};
+
+export const canStartQueuedRequest = ({
+  queueLength,
+  activeRequests,
+  concurrentRequests,
+}: {
+  queueLength: number;
+  activeRequests: number;
+  concurrentRequests: number;
+}): boolean => {
+  return queueLength > 0 && activeRequests < concurrentRequests;
+};
+
 export const createRequestQueue = ({
   sdk,
   config,
@@ -70,11 +94,11 @@ export const createRequestQueue = ({
 
       if (config.requestsDelayMs > 0) {
         requestLock = requestLock.then(async () => {
-          const timeSinceLastRequest = Date.now() - lastRequestTime;
-          const delayNeeded = Math.max(
-            0,
-            config.requestsDelayMs - timeSinceLastRequest,
-          );
+          const delayNeeded = computeDelayNeeded({
+            now: Date.now(),
+            lastRequestTime,
+            requestsDelayMs: config.requestsDelayMs,
+          });
 
           if (delayNeeded > 0) {
             await new Promise((resolve) => setTimeout(resolve, delayNeeded));
@@ -156,7 +180,13 @@ export const createRequestQueue = ({
         continue;
       }
 
-      if (activeRequests >= config.concurrentRequests) {
+      if (
+        !canStartQueuedRequest({
+          queueLength: queue.length,
+          activeRequests,
+          concurrentRequests: config.concurrentRequests,
+        })
+      ) {
         await new Promise((resolve) => setTimeout(resolve, 10));
         continue;
       }

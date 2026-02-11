@@ -17,11 +17,14 @@ import {
 } from "../core/errors";
 import { type Check, type CheckOutput, type CheckTask } from "../types/check";
 import { type Finding } from "../types/finding";
+import type { Result } from "../types/result";
+import { Result as ResultHelpers } from "../types/result";
 import {
   type CheckExecutionRecord,
   type ExecutionHistory,
   type InterruptReason,
   type RuntimeContext,
+  type ScanAggressivity,
   type ScanConfig,
   type ScanEstimateResult,
   type ScanEvents,
@@ -32,9 +35,99 @@ import {
 } from "../types/runner";
 import { parseHtmlFromString } from "../utils/html/parser";
 import { type ParsedHtml } from "../utils/html/types";
+import { createPrefixedRandomId } from "../utils/random";
 
 import { createTaskExecutor } from "./execution";
 import { createRequestQueue } from "./request-queue";
+
+type CheckDedupeRecord = {
+  checkID: string;
+  key: string;
+};
+
+type CheckApplicabilityError =
+  | "severity"
+  | "aggressivity"
+  | "when"
+  | "duplicate-dedupe-key";
+
+type CheckApplicabilityResult = Result<
+  {
+    dedupeRecord?: CheckDedupeRecord;
+  },
+  CheckApplicabilityError
+>;
+
+const aggressivityPriority: Record<ScanAggressivity, number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+};
+
+const hasRequiredAggressivity = ({
+  minAggressivity,
+  aggressivity,
+}: {
+  minAggressivity?: ScanAggressivity;
+  aggressivity: ScanAggressivity;
+}): boolean => {
+  if (minAggressivity === undefined) {
+    return true;
+  }
+
+  return (
+    aggressivityPriority[minAggressivity] <= aggressivityPriority[aggressivity]
+  );
+};
+
+export const evaluateCheckApplicability = ({
+  check,
+  context,
+  dedupeKeys,
+}: {
+  check: Check;
+  context: RuntimeContext;
+  dedupeKeys: Map<string, Set<string>>;
+}): CheckApplicabilityResult => {
+  if (
+    !check.metadata.severities.some((severity) =>
+      context.config.severities.includes(severity),
+    )
+  ) {
+    return ResultHelpers.err("severity");
+  }
+
+  if (
+    !hasRequiredAggressivity({
+      minAggressivity: check.metadata.minAggressivity,
+      aggressivity: context.config.aggressivity,
+    })
+  ) {
+    return ResultHelpers.err("aggressivity");
+  }
+
+  if (check.when !== undefined && !check.when(context.target)) {
+    return ResultHelpers.err("when");
+  }
+
+  if (check.dedupeKey === undefined) {
+    return ResultHelpers.ok({});
+  }
+
+  const checkID = check.metadata.id;
+  const key = check.dedupeKey(context.target);
+  const checkCache = dedupeKeys.get(checkID);
+  if (checkCache !== undefined && checkCache.has(key)) {
+    return ResultHelpers.err("duplicate-dedupe-key");
+  }
+
+  return ResultHelpers.ok({
+    dedupeRecord: {
+      checkID,
+      key,
+    },
+  });
+};
 
 export const createRunnable = ({
   sdk,
@@ -114,40 +207,28 @@ export const createRunnable = ({
     context: RuntimeContext,
     targetDedupeKeys: Map<string, Set<string>> = dedupeKeys,
   ): boolean => {
-    if (
-      !check.metadata.severities.some((s) =>
-        context.config.severities.includes(s),
-      )
-    ) {
+    const applicability = evaluateCheckApplicability({
+      check,
+      context,
+      dedupeKeys: targetDedupeKeys,
+    });
+
+    if (ResultHelpers.isErr(applicability)) {
       return false;
     }
 
-    if (
-      check.metadata.minAggressivity !== undefined &&
-      check.metadata.minAggressivity > context.config.aggressivity
-    ) {
-      return false;
-    }
-
-    if (check.when !== undefined && !check.when(context.target)) {
-      return false;
-    }
-
-    if (check.dedupeKey !== undefined) {
-      const checkId = check.metadata.id;
-      const key = check.dedupeKey(context.target);
-
-      let checkCache = targetDedupeKeys.get(checkId);
+    if (applicability.value.dedupeRecord !== undefined) {
+      let checkCache = targetDedupeKeys.get(
+        applicability.value.dedupeRecord.checkID,
+      );
       if (checkCache === undefined) {
         checkCache = new Set<string>();
-        targetDedupeKeys.set(checkId, checkCache);
+        targetDedupeKeys.set(
+          applicability.value.dedupeRecord.checkID,
+          checkCache,
+        );
       }
-
-      if (checkCache.has(key)) {
-        return false;
-      }
-
-      checkCache.add(key);
+      checkCache.add(applicability.value.dedupeRecord.key);
     }
 
     return true;
@@ -224,7 +305,7 @@ export const createRunnable = ({
           return sdk.requests.get(id);
         },
         send: async (request: RequestSpec | RequestSpecRaw) => {
-          const pendingRequestID = Math.random().toString(36).substring(2, 15);
+          const pendingRequestID = createPrefixedRandomId("req-");
 
           emit("scan:request-pending", {
             pendingRequestID,
@@ -559,7 +640,7 @@ export const createRunnable = ({
   };
 };
 
-const getCheckBatches = (checks: Check[]): Check[][] => {
+export const getCheckBatches = (checks: Check[]): Check[][] => {
   const checkMap = new Map(checks.map((check) => [check.metadata.id, check]));
   const dag: Record<string, string[]> = {};
 

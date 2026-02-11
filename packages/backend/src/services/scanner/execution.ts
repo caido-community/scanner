@@ -1,5 +1,10 @@
 import { createRegistry, Result } from "engine";
-import type { Result as ResultType, ScanRequestPayload, Session } from "shared";
+import type {
+  Result as ResultType,
+  ScanRequestPayload,
+  Session,
+  SessionProgress,
+} from "shared";
 
 import { ScanRequestPayloadSchema } from "../../schemas";
 import { ChecksStore } from "../../stores/checks";
@@ -8,6 +13,15 @@ import { ScannerStore } from "../../stores/scanner";
 import { type BackendSDK } from "../../types";
 import { packExecutionHistory } from "../../utils/debug";
 import { validateInput } from "../../utils/validation";
+
+function getRunningSessionProgress(
+  session: Session | undefined,
+): SessionProgress | undefined {
+  if (session === undefined || session.kind !== "Running") {
+    return undefined;
+  }
+  return session.progress;
+}
 
 export const startActiveScan = (
   sdk: BackendSDK,
@@ -105,10 +119,9 @@ export const startActiveScan = (
           checkID,
           targetRequestID,
         );
-        if (!checkFinishedSession || checkFinishedSession.kind !== "Running")
-          return;
-
-        sdk.api.send("session:progress", id, checkFinishedSession.progress);
+        const progress = getRunningSessionProgress(checkFinishedSession);
+        if (progress === undefined) return;
+        sdk.api.send("session:progress", id, progress);
       });
 
       runnable.on(
@@ -120,14 +133,9 @@ export const startActiveScan = (
             targetRequestID,
             pendingRequestID,
           );
-
-          if (
-            !requestPendingSession ||
-            requestPendingSession.kind !== "Running"
-          )
-            return;
-
-          sdk.api.send("session:progress", id, requestPendingSession.progress);
+          const progress = getRunningSessionProgress(requestPendingSession);
+          if (progress === undefined) return;
+          sdk.api.send("session:progress", id, progress);
         },
       );
 
@@ -139,17 +147,9 @@ export const startActiveScan = (
             pendingRequestID,
             requestID,
           );
-          if (
-            !requestCompletedSession ||
-            requestCompletedSession.kind !== "Running"
-          )
-            return;
-
-          sdk.api.send(
-            "session:progress",
-            id,
-            requestCompletedSession.progress,
-          );
+          const progress = getRunningSessionProgress(requestCompletedSession);
+          if (progress === undefined) return;
+          sdk.api.send("session:progress", id, progress);
         },
       );
 
@@ -159,10 +159,9 @@ export const startActiveScan = (
           pendingRequestID,
           error,
         );
-        if (!requestFailedSession || requestFailedSession.kind !== "Running")
-          return;
-
-        sdk.api.send("session:progress", id, requestFailedSession.progress);
+        const progress = getRunningSessionProgress(requestFailedSession);
+        if (progress === undefined) return;
+        sdk.api.send("session:progress", id, progress);
       });
 
       runnable.on("scan:check-started", ({ checkID, targetRequestID }) => {
@@ -171,10 +170,9 @@ export const startActiveScan = (
           checkID,
           targetRequestID,
         );
-        if (!checkRunningSession || checkRunningSession.kind !== "Running")
-          return;
-
-        sdk.api.send("session:progress", id, checkRunningSession.progress);
+        const progress = getRunningSessionProgress(checkRunningSession);
+        if (progress === undefined) return;
+        sdk.api.send("session:progress", id, progress);
       });
 
       runnable.on(
@@ -186,10 +184,9 @@ export const startActiveScan = (
             targetRequestID,
             errorMessage || "Unknown error",
           );
-          if (!checkFailedSession || checkFailedSession.kind !== "Running")
-            return;
-
-          sdk.api.send("session:progress", id, checkFailedSession.progress);
+          const progress = getRunningSessionProgress(checkFailedSession);
+          if (progress === undefined) return;
+          sdk.api.send("session:progress", id, progress);
         },
       );
 

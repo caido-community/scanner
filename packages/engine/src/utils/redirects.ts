@@ -49,7 +49,7 @@ export async function findRedirection(
   if (refreshHeaders && refreshHeaders.length > 0) {
     const refreshContent = refreshHeaders[0];
     if (refreshContent !== undefined && refreshContent !== "") {
-      const urlMatch = refreshContent.match(/(?:url\s*=\s*)?(.+)/i);
+      const urlMatch = refreshContent.match(/url\s*=\s*([^;]+)/i);
       if (urlMatch && urlMatch[1] !== undefined && urlMatch[1] !== "") {
         const url = urlMatch[1].replace(/^['"]|['"]$/g, "").trim();
 
@@ -131,7 +131,9 @@ export async function findRedirection(
   return { hasRedirection: false };
 }
 
-function detectJavaScriptRedirect(scriptContent: string): string | undefined {
+export function detectJavaScriptRedirect(
+  scriptContent: string,
+): string | undefined {
   const patterns = [
     // location = 'url' or location.href = 'url'
     /(?:location(?:\.href)?)\s*=\s*['"`]([^'"`]+)['"`]/gi,
@@ -164,7 +166,7 @@ function detectJavaScriptRedirect(scriptContent: string): string | undefined {
   return undefined;
 }
 
-function isCommonNonRedirect(url: string): boolean {
+export function isCommonNonRedirect(url: string): boolean {
   const lowerUrl = url.toLowerCase();
 
   // Skip common non-redirect patterns
