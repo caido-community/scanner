@@ -1,5 +1,4 @@
-import { ScanAggressivity } from "engine";
-import type { ActiveConfig, PassiveConfig, Preset, UserConfig } from "shared";
+import type { Preset, UserConfig } from "shared";
 
 import {
   PresetsStorage,
@@ -10,50 +9,17 @@ import {
 import type { BackendSDK } from "../types";
 
 import {
+  computeUpdatedConfig,
+  createDefaultActiveConfig,
+  createDefaultPassiveConfig,
+  migratePassiveConfig,
+} from "./config.utils";
+import {
   BALANCED_PRESET,
   BUGBOUNTY_PRESET,
   HEAVY_PRESET,
   LIGHT_PRESET,
 } from "./presets";
-
-const createDefaultPassiveConfig = (): PassiveConfig => ({
-  enabled: true,
-  aggressivity: ScanAggressivity.LOW,
-  scopeIDs: [],
-  concurrentChecks: 2,
-  concurrentRequests: 3,
-  overrides: [],
-  severities: ["critical", "high", "medium", "low", "info"],
-});
-
-type LegacyPassiveConfig = Partial<PassiveConfig> & {
-  inScopeOnly?: boolean;
-};
-
-const migratePassiveConfig = (
-  passive: LegacyPassiveConfig,
-  legacyScopeIDs: string[],
-): PassiveConfig => {
-  const { inScopeOnly: _legacyInScopeOnly, ...restPassive } = passive;
-
-  const scopeIDs = Array.isArray(passive.scopeIDs)
-    ? passive.scopeIDs.filter((scopeID): scopeID is string => {
-        return typeof scopeID === "string";
-      })
-    : passive.inScopeOnly === true
-      ? legacyScopeIDs
-      : [];
-
-  return {
-    ...createDefaultPassiveConfig(),
-    ...restPassive,
-    scopeIDs,
-  };
-};
-
-const createDefaultActiveConfig = (): ActiveConfig => ({
-  overrides: [],
-});
 
 const createDefaultPresets = (): Preset[] => [
   LIGHT_PRESET,
@@ -207,30 +173,15 @@ export class ConfigStore {
   }
 
   updateUserConfig(config: Partial<UserConfig>): UserConfig {
-    Object.assign(this.config, config);
+    const updateResult = computeUpdatedConfig(this.config, config);
+    this.config = updateResult.nextConfig;
 
-    if (config.presets !== undefined) {
-      this.presetsStorage.save(config.presets);
-
-      if (
-        this.config.defaultPresetName !== undefined &&
-        !this.config.presets.some(
-          (p) => p.name === this.config.defaultPresetName,
-        )
-      ) {
-        const firstPreset = this.config.presets[0];
-        this.config.defaultPresetName =
-          firstPreset !== undefined ? firstPreset.name : undefined;
-        this.settingsStorage.save({
-          defaultPresetName: this.config.defaultPresetName,
-        });
-      }
+    if (updateResult.presetsToSave !== undefined) {
+      this.presetsStorage.save(updateResult.presetsToSave);
     }
 
-    if (config.defaultPresetName !== undefined) {
-      this.settingsStorage.save({
-        defaultPresetName: config.defaultPresetName,
-      });
+    if (updateResult.settingsToSave !== undefined) {
+      this.settingsStorage.save(updateResult.settingsToSave);
     }
 
     this.saveProjectConfig();
