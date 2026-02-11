@@ -125,6 +125,35 @@ describe("createRequestQueue", () => {
     ]);
   });
 
+  it("uses requestTimeout when provided, falls back to checkTimeout", async () => {
+    const sdk = createTestSdk({
+      sendHandler: () =>
+        new Promise(() => {}),
+    });
+
+    const configWithRequestTimeout = {
+      ...createScanConfig(),
+      checkTimeout: 60,
+      requestTimeout: 1,
+    };
+
+    const queue = createRequestQueue({
+      sdk: sdk as unknown as SDK,
+      config: configWithRequestTimeout,
+      emit: () => {},
+      getInterruptReason: () => undefined,
+    });
+
+    await expect(
+      queue.enqueue(
+        createMockRequestSpec({ host: "example.com" }),
+        "pending-1",
+        "target-1",
+        "check-1",
+      ),
+    ).rejects.toThrow("Request timeout after 1 seconds");
+  });
+
   it("rejects with interruption when scan is interrupted", async () => {
     const sdk = createTestSdk();
     let interrupt: "Cancelled" | "Timeout" | undefined = "Cancelled";

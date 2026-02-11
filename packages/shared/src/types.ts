@@ -48,6 +48,7 @@ export type UserConfig = {
   active: ActiveConfig;
   presets: Preset[];
   defaultPresetName?: string;
+  requestTimeout?: number;
 };
 
 export type SelectOptions = {

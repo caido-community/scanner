@@ -11,6 +11,7 @@ const ScanConfigSchema = z.object({
   requestsDelayMs: z.number().int().min(0),
   scanTimeout: z.number().int().min(1),
   checkTimeout: z.number().int().min(1),
+  requestTimeout: z.number().int().min(1).max(600).optional(),
   severities: z.array(SeveritySchema).min(1),
 });
 

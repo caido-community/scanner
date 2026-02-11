@@ -45,6 +45,7 @@ type ComputeUpdatedConfigResult = {
   presetsToSave?: Preset[];
   settingsToSave?: {
     defaultPresetName: string | undefined;
+    requestTimeout: number | undefined;
   };
 };
 
@@ -82,9 +83,13 @@ export const computeUpdatedConfig = (
 
   const defaultPresetNameChanged =
     currentConfig.defaultPresetName !== nextConfig.defaultPresetName;
+  const requestTimeoutChanged =
+    configPatch.requestTimeout !== undefined &&
+    currentConfig.requestTimeout !== nextConfig.requestTimeout;
   const shouldPersistSettings =
     configPatch.defaultPresetName !== undefined ||
-    (configPatch.presets !== undefined && defaultPresetNameChanged);
+    (configPatch.presets !== undefined && defaultPresetNameChanged) ||
+    requestTimeoutChanged;
 
   return {
     nextConfig,
@@ -92,6 +97,7 @@ export const computeUpdatedConfig = (
     settingsToSave: shouldPersistSettings
       ? {
           defaultPresetName: nextConfig.defaultPresetName,
+          requestTimeout: nextConfig.requestTimeout,
         }
       : undefined,
   };

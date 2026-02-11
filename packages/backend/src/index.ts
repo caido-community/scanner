@@ -114,6 +114,7 @@ export async function init(sdk: BackendSDK) {
         registry.register(check);
       }
 
+      const requestTimeout = config.requestTimeout ?? 2 * 60;
       const runnable = registry.create(sdk, {
         aggressivity: config.passive.aggressivity,
         scopeIDs: config.passive.scopeIDs,
@@ -123,6 +124,7 @@ export async function init(sdk: BackendSDK) {
         severities: config.passive.severities,
         scanTimeout: 5 * 60,
         checkTimeout: 2 * 60,
+        requestTimeout,
         requestsDelayMs: 0,
       });
 

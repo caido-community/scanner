@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ScanAggressivity, Severity } from "engine";
 import Card from "primevue/card";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
 import InputNumber from "primevue/inputnumber";
 import MultiSelect from "primevue/multiselect";
 import SelectButton from "primevue/selectbutton";
@@ -25,6 +25,7 @@ const {
   passiveConcurrentScans,
   passiveConcurrentRequests,
   defaultPresetName,
+  requestTimeout,
   presetOptions,
 } = useForm(toRef(() => state));
 
@@ -84,13 +85,32 @@ const aggressivityOptions = computed(() =>
                 </p>
               </div>
               <div class="flex-shrink-0">
-                <Dropdown
+                <Select
                   v-model="defaultPresetName"
                   :options="presetOptions"
                   option-label="label"
                   option-value="value"
                   placeholder="Select a preset"
                   class="w-48"
+                />
+              </div>
+            </div>
+
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex flex-col gap-1 flex-1 min-w-0">
+                <label class="text-sm font-medium"
+                  >Request Timeout (seconds)</label
+                >
+                <p class="text-xs text-surface-400">
+                  Maximum time to wait for a single HTTP request to complete
+                </p>
+              </div>
+              <div class="flex-shrink-0">
+                <InputNumber
+                  v-model="requestTimeout"
+                  :min="1"
+                  :max="600"
+                  placeholder="120"
                 />
               </div>
             </div>

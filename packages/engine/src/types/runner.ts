@@ -161,5 +161,6 @@ export type ScanConfig = {
   requestsDelayMs: number;
   scanTimeout: number;
   checkTimeout: number;
+  requestTimeout?: number;
   severities: Severity[];
 };

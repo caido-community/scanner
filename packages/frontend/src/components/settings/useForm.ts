@@ -73,6 +73,15 @@ export const useForm = (state: Ref<ConfigState & { type: "Success" }>) => {
     },
   });
 
+  const requestTimeout = computed({
+    get: () => state.value.config.requestTimeout,
+    set: async (value: number | null | undefined) => {
+      await configService.updateConfig({
+        requestTimeout: value ?? undefined,
+      });
+    },
+  });
+
   const presets = computed(() => state.value.config.presets);
 
   const presetOptions = computed(() => {
@@ -95,6 +104,7 @@ export const useForm = (state: Ref<ConfigState & { type: "Success" }>) => {
     passiveConcurrentRequests,
     passiveSeverities,
     defaultPresetName,
+    requestTimeout,
     presetOptions,
     scopeOptions,
   };

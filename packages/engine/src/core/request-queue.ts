@@ -110,12 +110,14 @@ export const createRequestQueue = ({
         await requestLock;
       }
 
-      const requestTimeoutMs = config.checkTimeout * 1000;
+      const requestTimeoutSeconds =
+        config.requestTimeout ?? config.checkTimeout;
+      const requestTimeoutMs = requestTimeoutSeconds * 1000;
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       const timeoutPromise = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
           reject(
-            new Error(`Request timeout after ${config.checkTimeout} seconds`),
+            new Error(`Request timeout after ${requestTimeoutSeconds} seconds`),
           );
         }, requestTimeoutMs);
       });

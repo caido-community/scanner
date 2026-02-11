@@ -156,7 +156,7 @@ const {
           <label
             class="flex items-center gap-1 text-sm font-medium text-surface-200"
           >
-            Timeout (seconds)
+            Scan Timeout (seconds)
             <span
               v-if="readableTimeout"
               class="text-surface-500 text-xs font-normal"
@@ -174,6 +174,23 @@ const {
           placeholder="600"
           class="w-full"
           @input="form.config.scanTimeout = Number($event.value)"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <div>
+          <label class="block text-sm font-medium text-surface-200">
+            Request Timeout (seconds)
+          </label>
+          <small class="block text-sm text-surface-400">
+            Maximum time to wait for a single HTTP request
+          </small>
+        </div>
+        <InputNumber
+          v-model="form.config.requestTimeout"
+          :min="1"
+          placeholder="120"
+          class="w-full"
         />
       </div>
 
