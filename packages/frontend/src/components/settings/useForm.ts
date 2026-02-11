@@ -75,7 +75,7 @@ export const useForm = (state: Ref<ConfigState & { type: "Success" }>) => {
 
   const requestTimeout = computed({
     get: () => state.value.config.requestTimeout,
-    set: async (value: number | null | undefined) => {
+    set: async (value: number | undefined) => {
       await configService.updateConfig({
         requestTimeout: value ?? undefined,
       });

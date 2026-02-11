@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ScanAggressivity, Severity } from "engine";
 import Card from "primevue/card";
-import Select from "primevue/select";
 import InputNumber from "primevue/inputnumber";
 import MultiSelect from "primevue/multiselect";
+import Select from "primevue/select";
 import SelectButton from "primevue/selectbutton";
 import ToggleSwitch from "primevue/toggleswitch";
 import { computed, toRef } from "vue";

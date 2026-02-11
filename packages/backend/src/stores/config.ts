@@ -82,8 +82,7 @@ export class ConfigStore {
     const savedSettings = await this.settingsStorage.load();
     if (savedSettings !== undefined) {
       this.config.defaultPresetName = savedSettings.defaultPresetName;
-      this.config.requestTimeout =
-        savedSettings.requestTimeout ?? 2 * 60;
+      this.config.requestTimeout = savedSettings.requestTimeout ?? 2 * 60;
     } else {
       this.config.requestTimeout = 2 * 60;
     }

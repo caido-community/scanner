@@ -127,8 +127,7 @@ describe("createRequestQueue", () => {
 
   it("uses requestTimeout when provided, falls back to checkTimeout", async () => {
     const sdk = createTestSdk({
-      sendHandler: () =>
-        new Promise(() => {}),
+      sendHandler: () => new Promise(() => {}),
     });
 
     const configWithRequestTimeout = {
