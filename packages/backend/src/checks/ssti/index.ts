@@ -7,11 +7,7 @@ import {
 } from "engine";
 
 import { Tags } from "../../types";
-import {
-  createRequestWithParameter,
-  extractReflectedParameters,
-  type Parameter,
-} from "../../utils";
+import { extractReflectedParameters, type Parameter } from "../../utils";
 import { keyStrategy } from "../../utils/key";
 
 const MARKER = "__ssti_probe__";
@@ -219,11 +215,7 @@ export default defineCheck<State>(({ step }) => {
 
     try {
       const testValue = currentParam.value + MARKER + currentPayload.payload;
-      const requestSpec = createRequestWithParameter(
-        context,
-        currentParam,
-        testValue,
-      );
+      const requestSpec = currentParam.inject(testValue);
 
       const { request, response } =
         await context.sdk.requests.send(requestSpec);
@@ -307,11 +299,7 @@ export default defineCheck<State>(({ step }) => {
 
     try {
       const testValue = currentParam.value + currentPayload.payload;
-      const requestSpec = createRequestWithParameter(
-        context,
-        currentParam,
-        testValue,
-      );
+      const requestSpec = currentParam.inject(testValue);
 
       const { request, response } =
         await context.sdk.requests.send(requestSpec);

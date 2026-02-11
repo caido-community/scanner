@@ -135,7 +135,15 @@ export class MockRequest implements Request {
   }
 
   getRaw(): RequestRaw {
-    const raw = `${this.mockData.method} ${this.mockData.path}${this.mockData.query ? `?${this.mockData.query}` : ""} HTTP/1.1\r\n`;
+    const requestLine = `${this.mockData.method} ${this.mockData.path}${this.mockData.query ? `?${this.mockData.query}` : ""} HTTP/1.1`;
+    const headerLines = Object.entries(this.mockData.headers).flatMap(
+      ([name, values]) => values.map((value) => `${name}: ${value}`),
+    );
+    const start = [requestLine, ...headerLines].join("\r\n");
+    const raw =
+      this.mockData.body !== ""
+        ? `${start}\r\n\r\n${this.mockData.body}`
+        : `${start}\r\n\r\n`;
     return new MockRequestRaw(raw);
   }
 

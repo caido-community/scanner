@@ -8,11 +8,7 @@ import {
 } from "engine";
 
 import { Tags } from "../../../types";
-import {
-  createRequestWithParameter,
-  extractReflectedParameters,
-  type Parameter,
-} from "../../../utils";
+import { extractReflectedParameters, type Parameter } from "../../../utils";
 import { keyStrategy } from "../../../utils/key";
 
 function isHtmlResponse(response: Response): boolean {
@@ -113,7 +109,7 @@ export default defineCheck<State>(({ step }) => {
     const originalBody = context.target.response?.getBody()?.toText();
 
     for (const param of state.testParams) {
-      const requestSpec = createRequestWithParameter(context, param, payload);
+      const requestSpec = param.inject(payload);
       const { request, response } =
         await context.sdk.requests.send(requestSpec);
 

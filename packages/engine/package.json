@@ -17,6 +17,7 @@
     "@supercharge/promise-pool": "3.2.0",
     "batching-toposort-ts": "1.0.0",
     "html5parser": "2.0.2",
-    "mitt": "3.0.1"
+    "mitt": "3.0.1",
+    "ts-http-forge": "^0.1.7"
   }
 }

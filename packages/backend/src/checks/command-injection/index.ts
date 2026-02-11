@@ -9,7 +9,6 @@ import {
 import { Tags } from "../../types";
 import {
   bodyMatchesAny,
-  createRequestWithParameter,
   extractParameters,
   hasParameters,
   type Parameter,
@@ -252,11 +251,7 @@ export default defineCheck<State>(({ step }) => {
     }
 
     const testValue = currentParam.value + currentPayloadConfig.payload;
-    const testRequestSpec = createRequestWithParameter(
-      context,
-      currentParam,
-      testValue,
-    );
+    const testRequestSpec = currentParam.inject(testValue);
     const { request: testRequest, response: testResponse } =
       await context.sdk.requests.send(testRequestSpec);
 

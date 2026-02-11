@@ -1,6 +1,5 @@
+export { type Parameter } from "engine";
 export {
-  type Parameter,
-  createRequestWithParameter,
   extractParameters,
   extractReflectedParameters,
   hasParameters,
