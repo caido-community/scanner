@@ -2,13 +2,12 @@
 import Button from "primevue/button";
 import Card from "primevue/card";
 import Checkbox from "primevue/checkbox";
-import Column from "primevue/column";
 import ContextMenu from "primevue/contextmenu";
-import DataTable from "primevue/datatable";
 import Dialog from "primevue/dialog";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import InputText from "primevue/inputtext";
+import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 
 import CheckExpansion from "./Expansion.vue";
 import { useCheckPresets } from "./usePresets";
@@ -16,9 +15,11 @@ import { useTable } from "./useTable";
 
 const {
   search,
-  expandedRows,
-  filters,
-  checks,
+  visibleChecks,
+  isExpandedCheck,
+  toggleExpandedCheck,
+  toggleAggressivitySort,
+  getAggressivitySortIcon,
   getPassiveEnabled,
   getActiveEnabled,
   togglePassiveCheck,
@@ -39,6 +40,15 @@ const {
   onPresetContextMenu,
   applyPreset,
 } = useCheckPresets();
+
+const columnWidths = {
+  expander: "3rem",
+  name: "26%",
+  description: "40%",
+  aggressivity: "22%",
+  passive: "5%",
+  active: "5%",
+} as const;
 </script>
 
 <template>
@@ -47,7 +57,7 @@ const {
     class="h-full"
     :pt="{
       body: { class: 'h-full p-0' },
-      content: { class: 'h-full flex flex-col' },
+      content: { class: 'h-full flex flex-col min-h-0' },
     }"
   >
     <template #content>
@@ -70,88 +80,168 @@ const {
         </IconField>
       </div>
 
-      <DataTable
-        v-model:expanded-rows="expandedRows"
-        :value="checks"
-        scrollable
-        scroll-height="flex"
-        striped-rows
-        :filters="filters"
-        :global-filter-fields="['name', 'id', 'description']"
-        size="small"
-        class="flex-1 overflow-auto"
-        expandable-rows
-        removable-sort
-      >
-        <template #empty>
-          <div class="flex justify-center items-center h-32">
-            <span class="text-surface-400">No checks found</span>
-          </div>
-        </template>
+      <div class="flex-1 min-h-0 flex flex-col">
+        <div class="overflow-y-scroll" style="scrollbar-gutter: stable">
+          <table class="w-full border-spacing-0 border-separate table-fixed">
+            <thead class="bg-surface-900">
+              <tr class="text-surface-0/70">
+                <th
+                  class="font-normal leading-[normal] border-y-2 border-x-0 border-solid border-surface-900 py-[0.375rem] px-2"
+                  :style="{ width: columnWidths.expander }"
+                />
+                <th
+                  class="font-normal leading-[normal] text-left border-y-2 border-x-0 border-solid border-surface-900 py-[0.375rem] px-2"
+                  :style="{ width: columnWidths.name }"
+                >
+                  Name
+                </th>
+                <th
+                  class="font-normal leading-[normal] text-left border-y-2 border-x-0 border-solid border-surface-900 py-[0.375rem] px-2"
+                  :style="{ width: columnWidths.description }"
+                >
+                  Description
+                </th>
+                <th
+                  class="font-normal leading-[normal] text-left border-y-2 border-x-0 border-solid border-surface-900 py-[0.375rem] px-2 cursor-pointer hover:bg-surface-700/50"
+                  :style="{ width: columnWidths.aggressivity }"
+                  @click="toggleAggressivitySort"
+                >
+                  <span class="flex items-center gap-2">
+                    Aggressivity
+                    <i :class="getAggressivitySortIcon()" class="text-xs" />
+                  </span>
+                </th>
+                <th
+                  class="font-normal leading-[normal] text-center border-y-2 border-x-0 border-solid border-surface-900 py-[0.375rem] px-2"
+                  :style="{ width: columnWidths.passive }"
+                >
+                  Passive
+                </th>
+                <th
+                  class="font-normal leading-[normal] text-center border-y-2 border-x-0 border-solid border-surface-900 py-[0.375rem] px-2"
+                  :style="{ width: columnWidths.active }"
+                >
+                  Active
+                </th>
+              </tr>
+            </thead>
+          </table>
+        </div>
 
-        <Column :expander="true" header-style="width: 3rem" />
-
-        <Column field="name" header="Name" class="min-w-48">
-          <template #body="{ data }">
-            <div>
-              <div class="font-medium">{{ data.name }}</div>
-              <div class="text-xs text-surface-400">{{ data.id }}</div>
-            </div>
-          </template>
-        </Column>
-
-        <Column field="description" header="Description" class="min-w-64">
-          <template #body="{ data }">
-            <div class="text-sm">{{ data.description }}</div>
-          </template>
-        </Column>
-
-        <Column
-          field="aggressivity"
-          header="Aggressivity"
-          class="min-w-48"
-          sortable
-          sort-field="aggressivity.maxRequests"
+        <div
+          v-if="visibleChecks.length === 0"
+          class="flex-1 min-h-0 flex justify-center items-center"
         >
-          <template #body="{ data }">
-            <div
-              class="inline-flex px-2 rounded-md text-sm font-mono"
-              :class="getAggressivityBadgeClass(data.aggressivity)"
+          <span class="text-surface-400">No checks found</span>
+        </div>
+
+        <DynamicScroller
+          v-else
+          class="flex-1 overflow-auto"
+          style="scrollbar-gutter: stable"
+          :items="visibleChecks"
+          :min-item-size="40"
+          key-field="id"
+        >
+          <template #default="{ item, index, active }">
+            <DynamicScrollerItem
+              :item="item"
+              :active="active"
+              :size-dependencies="[isExpandedCheck(item.id)]"
             >
-              {{ getAggressivityText(data) }}
-            </div>
+              <table
+                class="w-full border-spacing-0 border-separate table-fixed"
+              >
+                <tbody>
+                  <tr
+                    :class="[
+                      index % 2 === 0 ? 'bg-surface-800' : 'bg-surface-900',
+                      'text-sm',
+                    ]"
+                  >
+                    <td
+                      class="leading-[normal] border-0 py-[0.375rem] px-2 align-middle"
+                      :style="{ width: columnWidths.expander }"
+                    >
+                      <Button
+                        text
+                        rounded
+                        severity="secondary"
+                        :icon="
+                          isExpandedCheck(item.id)
+                            ? 'fas fa-chevron-down'
+                            : 'fas fa-chevron-right'
+                        "
+                        :pt="{ root: { class: '!w-6 !h-6 !p-0' } }"
+                        @click.stop="toggleExpandedCheck(item.id)"
+                      />
+                    </td>
+                    <td
+                      class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-top"
+                      :style="{ width: columnWidths.name }"
+                    >
+                      <div>
+                        <div class="font-medium truncate text-[0.9rem]">{{ item.name }}</div>
+                        <div class="text-xs text-surface-400 truncate">
+                          {{ item.id }}
+                        </div>
+                      </div>
+                    </td>
+                    <td
+                      class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-middle"
+                      :style="{ width: columnWidths.description }"
+                    >
+                      <div class="text-sm truncate">{{ item.description }}</div>
+                    </td>
+                    <td
+                      class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-middle"
+                      :style="{ width: columnWidths.aggressivity }"
+                    >
+                      <div
+                        class="inline-flex rounded-md text-sm font-mono"
+                        :class="getAggressivityBadgeClass(item.aggressivity)"
+                      >
+                        {{ getAggressivityText(item) }}
+                      </div>
+                    </td>
+                    <td
+                      class="leading-[normal] text-center border-0 py-[0.375rem] px-2 align-middle"
+                      :style="{ width: columnWidths.passive }"
+                    >
+                      <Checkbox
+                        :model-value="getPassiveEnabled(item)"
+                        binary
+                        @update:model-value="togglePassiveCheck(item)"
+                      />
+                    </td>
+                    <td
+                      class="leading-[normal] text-center border-0 py-[0.375rem] px-2 align-middle"
+                      :style="{ width: columnWidths.active }"
+                    >
+                      <Checkbox
+                        :model-value="getActiveEnabled(item)"
+                        binary
+                        @update:model-value="toggleActiveCheck(item)"
+                      />
+                    </td>
+                  </tr>
+                  <tr
+                    v-if="isExpandedCheck(item.id)"
+                    :class="
+                      index % 2 === 0 ? 'bg-surface-800' : 'bg-surface-900'
+                    "
+                  >
+                    <td :colspan="6" class="border-t border-surface-700">
+                      <CheckExpansion :check="item" />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </DynamicScrollerItem>
           </template>
-        </Column>
+        </DynamicScroller>
 
-        <Column header="Passive" class="w-20">
-          <template #body="{ data }">
-            <div class="flex justify-center">
-              <Checkbox
-                :model-value="getPassiveEnabled(data)"
-                binary
-                @update:model-value="togglePassiveCheck(data)"
-              />
-            </div>
-          </template>
-        </Column>
-
-        <Column header="Active" class="w-20">
-          <template #body="{ data }">
-            <div class="flex justify-center">
-              <Checkbox
-                :model-value="getActiveEnabled(data)"
-                binary
-                @update:model-value="toggleActiveCheck(data)"
-              />
-            </div>
-          </template>
-        </Column>
-
-        <template #expansion="{ data }">
-          <CheckExpansion :check="data" />
-        </template>
-
-        <template #footer>
+        <div class="border-t border-surface-700 p-3">
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-4">
               <div class="text-sm text-surface-300">Presets</div>
@@ -178,8 +268,8 @@ const {
               </div>
             </div>
           </div>
-        </template>
-      </DataTable>
+        </div>
+      </div>
     </template>
   </Card>
 

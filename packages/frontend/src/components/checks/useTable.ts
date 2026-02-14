@@ -1,20 +1,26 @@
 import type { CheckAggressivity, CheckMetadata } from "engine";
-import type { DataTableFilterMeta } from "primevue/datatable";
 import { computed, ref } from "vue";
 
 import { useChecksService } from "@/services/checks";
 import { useConfigService } from "@/services/config";
 
+type AggressivitySortDirection = "none" | "asc" | "desc";
+
+const getAggressivitySortValue = (aggressivity: CheckAggressivity) => {
+  if (aggressivity.maxRequests === "Infinity") {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return aggressivity.maxRequests;
+};
+
 export const useTable = () => {
   const search = ref("");
-  const expandedRows = ref([]);
+  const expandedCheckIDs = ref<Array<string>>([]);
+  const aggressivitySortDirection = ref<AggressivitySortDirection>("none");
 
   const checksService = useChecksService();
   const configService = useConfigService();
-
-  const filters = computed<DataTableFilterMeta>(() => ({
-    global: { value: search.value ?? "", matchMode: "contains" },
-  }));
 
   const checks = computed(() => {
     const checksState = checksService.getState();
@@ -22,6 +28,81 @@ export const useTable = () => {
 
     return checksState.checks;
   });
+
+  const visibleChecks = computed(() => {
+    const searchTerm = search.value.trim().toLowerCase();
+    const filteredChecks =
+      searchTerm === ""
+        ? checks.value
+        : checks.value.filter((check) => {
+            return (
+              check.name.toLowerCase().includes(searchTerm) ||
+              check.id.toLowerCase().includes(searchTerm) ||
+              check.description.toLowerCase().includes(searchTerm)
+            );
+          });
+
+    if (aggressivitySortDirection.value === "none") {
+      return filteredChecks;
+    }
+
+    const sortedChecks = [...filteredChecks].sort((a, b) => {
+      const difference =
+        getAggressivitySortValue(a.aggressivity) -
+        getAggressivitySortValue(b.aggressivity);
+
+      if (difference !== 0) {
+        return aggressivitySortDirection.value === "asc"
+          ? difference
+          : -difference;
+      }
+
+      return a.name.localeCompare(b.name);
+    });
+
+    return sortedChecks;
+  });
+
+  const toggleAggressivitySort = () => {
+    if (aggressivitySortDirection.value === "none") {
+      aggressivitySortDirection.value = "asc";
+      return;
+    }
+
+    if (aggressivitySortDirection.value === "asc") {
+      aggressivitySortDirection.value = "desc";
+      return;
+    }
+
+    aggressivitySortDirection.value = "none";
+  };
+
+  const getAggressivitySortIcon = () => {
+    if (aggressivitySortDirection.value === "asc") {
+      return "fas fa-sort-up";
+    }
+
+    if (aggressivitySortDirection.value === "desc") {
+      return "fas fa-sort-down";
+    }
+
+    return "fas fa-sort";
+  };
+
+  const isExpandedCheck = (checkID: string) => {
+    return expandedCheckIDs.value.includes(checkID);
+  };
+
+  const toggleExpandedCheck = (checkID: string) => {
+    if (isExpandedCheck(checkID)) {
+      expandedCheckIDs.value = expandedCheckIDs.value.filter(
+        (currentCheckID) => currentCheckID !== checkID,
+      );
+      return;
+    }
+
+    expandedCheckIDs.value = [...expandedCheckIDs.value, checkID];
+  };
 
   const getAggressivityText = (check: CheckMetadata) => {
     const { minRequests, maxRequests } = check.aggressivity;
@@ -134,9 +215,11 @@ export const useTable = () => {
 
   return {
     search,
-    expandedRows,
-    filters,
-    checks,
+    visibleChecks,
+    isExpandedCheck,
+    toggleExpandedCheck,
+    toggleAggressivitySort,
+    getAggressivitySortIcon,
     getPassiveEnabled,
     getActiveEnabled,
     getAggressivityText,

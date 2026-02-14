@@ -199,7 +199,9 @@ const activeSection = ref<SettingsSection>("general");
               <div class="flex flex-col gap-4">
                 <div class="flex min-w-0 flex-col gap-2">
                   <div class="flex flex-col gap-0">
-                    <label class="text-base font-medium">Scans Concurrency</label>
+                    <label class="text-base font-medium"
+                      >Scans Concurrency</label
+                    >
                     <p class="text-sm text-surface-400">
                       Number of scans that can run simultaneously
                     </p>
@@ -242,7 +244,9 @@ const activeSection = ref<SettingsSection>("general");
 
                 <div class="flex min-w-0 flex-col gap-2">
                   <div class="flex flex-col gap-0">
-                    <label class="text-base font-medium">Scan Aggressivity</label>
+                    <label class="text-base font-medium"
+                      >Scan Aggressivity</label
+                    >
                     <p class="text-sm text-surface-400">
                       Controls the aggressiveness of passive scanning checks.
                       Lower means faster scanning and less accurate results.

@@ -42,7 +42,7 @@ const {
     </template>
 
     <template #content>
-      <div class="flex flex-col h-full">
+      <div class="flex flex-col h-full min-h-0">
         <div class="flex flex-col gap-4 p-4">
           <div class="flex items-start justify-between gap-4">
             <div class="flex flex-col gap-2 flex-1">

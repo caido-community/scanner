@@ -62,7 +62,8 @@ const hasProbeVariance = (probes: ProbeResult[]): boolean => {
 export default defineCheckV2({
   id: "user-agent-dependent-response",
   name: "User agent dependent response",
-  description: "Detects differences in responses when varying the User-Agent header.",
+  description:
+    "Detects differences in responses when varying the User-Agent header.",
   type: "active",
   tags: [Tags.INFORMATION_DISCLOSURE, Tags.INPUT_VALIDATION],
   severities: [Severity.INFO],
