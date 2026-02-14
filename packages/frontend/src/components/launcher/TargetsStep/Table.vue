@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import Button from "primevue/button";
-import Column from "primevue/column";
-import DataTable from "primevue/datatable";
+import Checkbox from "primevue/checkbox";
 import { type BasicRequest } from "shared";
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { RecycleScroller } from "vue-virtual-scroller";
 
 import { useSDK } from "@/plugins/sdk";
 import { useLauncher } from "@/stores/launcher";
@@ -12,12 +12,44 @@ const sdk = useSDK();
 const launcher = useLauncher();
 const { form } = launcher;
 
-const selectedTargets = ref<BasicRequest[]>([]);
+const selectedTargetIDs = ref<Array<BasicRequest["id"]>>([]);
+
+const selectedTargetIDsSet = computed(() => new Set(selectedTargetIDs.value));
+
+const selectedTargetsCount = computed(() => {
+  return form.targets.filter((target) =>
+    selectedTargetIDsSet.value.has(target.id),
+  ).length;
+});
+
+const isTargetSelected = (targetID: BasicRequest["id"]) =>
+  selectedTargetIDsSet.value.has(targetID);
+
+const toggleTargetSelection = (targetID: BasicRequest["id"]) => {
+  if (selectedTargetIDsSet.value.has(targetID)) {
+    selectedTargetIDs.value = selectedTargetIDs.value.filter(
+      (id) => id !== targetID,
+    );
+    return;
+  }
+
+  selectedTargetIDs.value = [...selectedTargetIDs.value, targetID];
+};
+
+watch(
+  () => form.targets,
+  (targets) => {
+    const targetIDs = new Set(targets.map((target) => target.id));
+    selectedTargetIDs.value = selectedTargetIDs.value.filter((targetID) =>
+      targetIDs.has(targetID),
+    );
+  },
+);
 
 const handleDeleteSelected = () => {
-  const selectedIds = selectedTargets.value.map((target) => target.id);
+  const selectedIDsSet = new Set(selectedTargetIDs.value);
   const remainingTargets = form.targets.filter(
-    (target) => !selectedIds.includes(target.id),
+    (target) => !selectedIDsSet.has(target.id),
   );
 
   if (remainingTargets.length === 0) {
@@ -29,8 +61,9 @@ const handleDeleteSelected = () => {
   }
 
   form.targets = remainingTargets;
-  selectedTargets.value = [];
+  selectedTargetIDs.value = [];
 };
+
 </script>
 <template>
   <div class="flex flex-col h-full py-1">
@@ -40,47 +73,62 @@ const handleDeleteSelected = () => {
       </div>
       <div class="h-8 flex items-center">
         <Button
-          v-if="selectedTargets.length > 0"
+          v-if="selectedTargetsCount > 0"
           icon="fas fa-trash"
           severity="danger"
           size="small"
-          :label="`Delete ${selectedTargets.length} selected`"
+          :label="`Delete ${selectedTargetsCount} selected`"
           @click="handleDeleteSelected"
         />
       </div>
     </div>
-    <DataTable
-      v-model:selection="selectedTargets"
-      :value="form.targets"
-      scrollable
-      striped-rows
-      scroll-height="flex"
-      table-style="table-layout: fixed"
-      selection-mode="multiple"
-      :meta-key-selection="true"
-    >
-      <Column field="method" header="Method" style="width: 10%">
-        <template #body="{ data }">
-          <div class="text-sm truncate">{{ data.method }}</div>
-        </template>
-      </Column>
-      <Column field="host" header="Host" style="width: 30%">
-        <template #body="{ data }">
-          <div class="text-sm font-medium truncate">
-            {{ data.host }}:{{ data.port }}
+
+    <div class="flex-1 min-h-0 flex flex-col">
+      <div
+        class="flex items-center text-surface-0/70 bg-surface-800 text-sm flex-shrink-0"
+        style="scrollbar-gutter: stable"
+      >
+        <div class="w-12 flex-shrink-0 px-2" />
+        <div class="flex-[10] px-2 py-[0.375rem] min-w-0">Method</div>
+        <div class="flex-[28] px-2 py-[0.375rem] min-w-0">Host</div>
+        <div class="flex-[28] px-2 py-[0.375rem] min-w-0">Path</div>
+        <div class="flex-[34] px-2 py-[0.375rem] min-w-0">Query</div>
+      </div>
+
+      <RecycleScroller
+        class="flex-1 overflow-auto"
+        style="scrollbar-gutter: stable"
+        :items="form.targets"
+        :item-size="34"
+        key-field="id"
+      >
+        <template #default="{ item, index }">
+          <div
+            class="flex items-center h-[34px] text-sm"
+            :class="index % 2 === 0 ? 'bg-surface-900' : 'bg-surface-800'"
+          >
+            <div class="w-12 flex-shrink-0 px-2">
+              <Checkbox
+                :model-value="isTargetSelected(item.id)"
+                binary
+                @update:model-value="toggleTargetSelection(item.id)"
+              />
+            </div>
+            <div class="flex-[10] px-2 min-w-0">
+              <div class="truncate">{{ item.method }}</div>
+            </div>
+            <div class="flex-[28] px-2 min-w-0">
+              <div class="font-medium truncate">{{ item.host }}:{{ item.port }}</div>
+            </div>
+            <div class="flex-[28] px-2 min-w-0">
+              <div class="truncate">{{ item.path }}</div>
+            </div>
+            <div class="flex-[34] px-2 min-w-0">
+              <div class="truncate">{{ item.query }}</div>
+            </div>
           </div>
         </template>
-      </Column>
-      <Column field="path" header="Path" style="width: 35%">
-        <template #body="{ data }">
-          <div class="text-sm truncate">{{ data.path }}</div>
-        </template>
-      </Column>
-      <Column field="query" header="Query" style="width: 35%">
-        <template #body="{ data }">
-          <div class="text-sm truncate">{{ data.query }}</div>
-        </template>
-      </Column>
-    </DataTable>
+      </RecycleScroller>
+    </div>
   </div>
 </template>
