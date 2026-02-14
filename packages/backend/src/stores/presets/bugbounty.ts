@@ -50,6 +50,10 @@ export const BUGBOUNTY_PRESET: Preset = {
       enabled: true,
     },
     {
+      checkID: Checks.REFLECTED_CSS_INJECTION,
+      enabled: true,
+    },
+    {
       checkID: Checks.MYSQL_ERROR_BASED_SQLI,
       enabled: true,
     },
@@ -197,6 +201,10 @@ export const BUGBOUNTY_PRESET: Preset = {
     },
     {
       checkID: Checks.BASIC_REFLECTED_XSS,
+      enabled: true,
+    },
+    {
+      checkID: Checks.REFLECTED_CSS_INJECTION,
       enabled: true,
     },
     {

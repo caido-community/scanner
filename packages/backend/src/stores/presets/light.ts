@@ -54,6 +54,10 @@ export const LIGHT_PRESET: Preset = {
       enabled: false,
     },
     {
+      checkID: Checks.REFLECTED_CSS_INJECTION,
+      enabled: false,
+    },
+    {
       checkID: Checks.MYSQL_ERROR_BASED_SQLI,
       enabled: false,
     },
@@ -89,6 +93,10 @@ export const LIGHT_PRESET: Preset = {
     },
     {
       checkID: Checks.OPEN_REDIRECT,
+      enabled: false,
+    },
+    {
+      checkID: Checks.REFLECTED_CSS_INJECTION,
       enabled: false,
     },
     {
