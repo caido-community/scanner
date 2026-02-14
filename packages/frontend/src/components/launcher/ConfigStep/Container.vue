@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import InputNumber from "primevue/inputnumber";
 import InputText from "primevue/inputtext";
-import MultiSelect from "primevue/multiselect";
 import SelectButton from "primevue/selectbutton";
 
+import { ScopeSelector } from "./ScopeSelector";
 import { useForm } from "./useForm";
 
 const {
@@ -33,9 +33,11 @@ const {
 
     <div
       class="grid grid-cols-3 gap-6"
-      style="grid-template-columns: 1.5fr 2fr 1fr"
+      style="
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr) minmax(0, 1fr)
+      "
     >
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2 min-w-0">
         <div>
           <label class="block text-sm font-medium text-surface-200">
             Aggressivity
@@ -90,13 +92,10 @@ const {
             Filter scan targets by selected scopes
           </small>
         </div>
-        <MultiSelect
+        <ScopeSelector
           v-model="form.config.scopeIDs"
           :options="scopeOptions"
-          option-label="label"
-          option-value="value"
-          display="comma"
-          placeholder="All requests (no scope filter)"
+          placeholder="No scope filter"
           class="w-full"
         />
       </div>
