@@ -1,4 +1,4 @@
-import { continueWith, defineCheck, done, Severity } from "engine";
+import { defineCheckV2, Result, Severity } from "engine";
 
 import { Tags } from "../../types";
 import { keyStrategy } from "../../utils";
@@ -16,79 +16,111 @@ const USER_AGENTS = [
   },
 ];
 
-type State = {
-  originalStatus: number;
-  originalLength: number;
-  probes: {
-    userAgent: string;
-    responseCode: number;
-    bodyLength: number;
-  }[];
+type ProbeResult = {
+  userAgent: string;
+  responseCode: number;
+  bodyLength: number;
 };
 
 const bodyLength = (text: string | undefined): number =>
   text === undefined ? 0 : text.length;
 
-export default defineCheck<State>(({ step }) => {
-  step("probeUserAgents", async (state, context) => {
-    const { request, response } = context.target;
-    if (response === undefined) {
-      return done({ state });
+const hasMeaningfulDifference = (
+  left: { responseCode: number; bodyLength: number },
+  right: { responseCode: number; bodyLength: number },
+): boolean => {
+  if (left.responseCode !== right.responseCode) {
+    return true;
+  }
+
+  const lengthDifference = Math.abs(left.bodyLength - right.bodyLength);
+  return lengthDifference > 100;
+};
+
+const hasProbeVariance = (probes: ProbeResult[]): boolean => {
+  for (let i = 0; i < probes.length; i++) {
+    const firstProbe = probes[i];
+    if (firstProbe === undefined) {
+      continue;
     }
 
-    const probes: State["probes"] = [];
+    for (let j = i + 1; j < probes.length; j++) {
+      const secondProbe = probes[j];
+      if (secondProbe === undefined) {
+        continue;
+      }
+
+      if (hasMeaningfulDifference(firstProbe, secondProbe)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+export default defineCheckV2({
+  id: "user-agent-dependent-response",
+  name: "User agent dependent response",
+  description: "Detects differences in responses when varying the User-Agent header.",
+  type: "active",
+  tags: [Tags.INFORMATION_DISCLOSURE, Tags.INPUT_VALIDATION],
+  severities: [Severity.INFO],
+  aggressivity: {
+    minRequests: USER_AGENTS.length,
+    maxRequests: USER_AGENTS.length,
+  },
+  dedupeKey: keyStrategy().withHost().withPath().build(),
+  when: (target) =>
+    target.request.getMethod().toUpperCase() === "GET" &&
+    target.response !== undefined,
+  async execute(ctx) {
+    const originalResponse = ctx.target.response;
+    if (originalResponse === undefined) {
+      return;
+    }
+
+    const probes: ProbeResult[] = [];
 
     for (const profile of USER_AGENTS) {
-      const spec = request.toSpec();
+      const spec = ctx.target.request.toSpec();
       spec.setHeader("User-Agent", profile.value);
 
-      const result = await context.sdk.requests.send(spec);
-      const probeResponse = result.response;
-      if (probeResponse === undefined) {
+      const result = await ctx.send(spec);
+      if (Result.isErr(result)) {
         continue;
       }
 
       probes.push({
         userAgent: profile.label,
-        responseCode: probeResponse.getCode(),
-        bodyLength: bodyLength(probeResponse.getBody()?.toText()),
+        responseCode: result.value.response.getCode(),
+        bodyLength: bodyLength(result.value.response.getBody()?.toText()),
       });
     }
 
-    return continueWith({
-      nextStep: "evaluateDifferences",
-      state: {
-        originalStatus: response.getCode(),
-        originalLength: bodyLength(response.getBody()?.toText()),
-        probes,
-      },
-    });
-  });
-
-  step("evaluateDifferences", (state, context) => {
-    if (state.probes.length === 0) {
-      return done({ state });
+    if (probes.length < 2) {
+      return;
     }
 
-    const originalStatus = state.originalStatus;
-    const originalLength = state.originalLength;
+    const original = {
+      responseCode: originalResponse.getCode(),
+      bodyLength: bodyLength(originalResponse.getBody()?.toText()),
+    };
 
-    const differences = state.probes.filter((probe) => {
-      if (probe.responseCode !== originalStatus) {
-        return true;
-      }
-
-      const lengthDifference = Math.abs(probe.bodyLength - originalLength);
-      return lengthDifference > 100;
-    });
-
+    const differences = probes.filter((probe) =>
+      hasMeaningfulDifference(probe, original),
+    );
     if (differences.length === 0) {
-      return done({ state });
+      return;
+    }
+
+    if (!hasProbeVariance(probes)) {
+      return;
     }
 
     const details = differences
       .map((probe) => {
-        return `- User agent \`${probe.userAgent}\` received status ${probe.responseCode} (body length ${probe.bodyLength}), while original response was status ${originalStatus} (body length ${originalLength})`;
+        return `- User agent \`${probe.userAgent}\` received status ${probe.responseCode} (body length ${probe.bodyLength}), while original response was status ${original.responseCode} (body length ${original.bodyLength})`;
       })
       .join("\n");
 
@@ -100,40 +132,10 @@ export default defineCheck<State>(({ step }) => {
       "Such behaviour can indicate user-agent based content filtering or potential fingerprinting opportunities.",
     ].join("\n");
 
-    return done({
-      state,
-      findings: [
-        {
-          name: "User agent dependent response detected",
-          description,
-          severity: Severity.INFO,
-          correlation: {
-            requestID: context.target.request.getId(),
-            locations: [],
-          },
-        },
-      ],
+    ctx.finding({
+      name: "User agent dependent response detected",
+      description,
+      severity: Severity.INFO,
     });
-  });
-
-  return {
-    metadata: {
-      id: "user-agent-dependent-response",
-      name: "User agent dependent response",
-      description:
-        "Detects differences in responses when varying the User-Agent header.",
-      type: "active",
-      tags: [Tags.INFORMATION_DISCLOSURE, Tags.INPUT_VALIDATION],
-      severities: [Severity.INFO],
-      aggressivity: {
-        minRequests: USER_AGENTS.length,
-        maxRequests: USER_AGENTS.length,
-      },
-    },
-    initState: () => ({ originalStatus: 0, originalLength: 0, probes: [] }),
-    dedupeKey: keyStrategy().withHost().withPath().build(),
-    when: (target) =>
-      target.request.getMethod().toUpperCase() === "GET" &&
-      target.response !== undefined,
-  };
+  },
 });
