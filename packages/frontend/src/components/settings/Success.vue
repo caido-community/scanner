@@ -2,7 +2,6 @@
 import { ScanAggressivity, Severity } from "engine";
 import Card from "primevue/card";
 import InputNumber from "primevue/inputnumber";
-import MultiSelect from "primevue/multiselect";
 import Select from "primevue/select";
 import SelectButton from "primevue/selectbutton";
 import ToggleSwitch from "primevue/toggleswitch";
@@ -10,6 +9,7 @@ import { computed, ref, toRef } from "vue";
 
 import { useForm } from "./useForm";
 
+import { ScopeSelector } from "@/components/launcher/ConfigStep/ScopeSelector";
 import { type ConfigState } from "@/types/config";
 
 const { state } = defineProps<{
@@ -159,13 +159,10 @@ const activeSection = ref<SettingsSection>("general");
                       Only analyze requests matching the selected scopes
                     </p>
                   </div>
-                  <MultiSelect
+                  <ScopeSelector
                     v-model="passiveScopeIDs"
                     :options="scopeOptions"
-                    option-label="label"
-                    option-value="value"
-                    display="comma"
-                    placeholder="All requests (no scope filter)"
+                    placeholder="No scope filter"
                     :disabled="!passiveEnabled"
                     class="max-w-md"
                   />
