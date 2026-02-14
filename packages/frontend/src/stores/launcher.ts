@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 import { type BasicRequest, type ScanRequestPayload } from "shared";
 import { reactive, ref } from "vue";
 
+import { useSDK } from "@/plugins/sdk";
 import { useScannerService } from "@/services/scanner";
 import { useConfigStore } from "@/stores/config";
 import { type FrontendSDK } from "@/types";
@@ -17,6 +18,7 @@ type FormState = {
 const DEFAULT_REQUEST_TIMEOUT = 2 * 60;
 
 export const useLauncher = defineStore("stores.launcher", () => {
+  const sdk = useSDK();
   const scannerService = useScannerService();
   const configStore = useConfigStore();
   const defaultFormState: FormState = {
@@ -83,6 +85,9 @@ export const useLauncher = defineStore("stores.launcher", () => {
     ) {
       form.config.requestTimeout = configState.config.requestTimeout;
     }
+    form.config.scopeIDs = sdk.scopes
+      .getScopes()
+      .map((scope) => scope.id);
     isLoading.value = false;
   };
 
