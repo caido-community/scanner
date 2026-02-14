@@ -34,7 +34,7 @@ const {
     <div
       class="grid grid-cols-3 gap-6"
       style="
-        grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr) minmax(0, 1fr)
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr) minmax(0, 1fr);
       "
     >
       <div class="flex flex-col gap-2 min-w-0">

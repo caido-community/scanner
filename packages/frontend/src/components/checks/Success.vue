@@ -181,7 +181,9 @@ const columnWidths = {
                       :style="{ width: columnWidths.name }"
                     >
                       <div>
-                        <div class="font-medium truncate text-[0.9rem]">{{ item.name }}</div>
+                        <div class="font-medium truncate text-[0.9rem]">
+                          {{ item.name }}
+                        </div>
                         <div class="text-xs text-surface-400 truncate">
                           {{ item.id }}
                         </div>

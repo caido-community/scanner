@@ -85,9 +85,7 @@ export const useLauncher = defineStore("stores.launcher", () => {
     ) {
       form.config.requestTimeout = configState.config.requestTimeout;
     }
-    form.config.scopeIDs = sdk.scopes
-      .getScopes()
-      .map((scope) => scope.id);
+    form.config.scopeIDs = sdk.scopes.getScopes().map((scope) => scope.id);
     isLoading.value = false;
   };
 

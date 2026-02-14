@@ -2,35 +2,31 @@
 import { onClickOutside } from "@vueuse/core";
 import Button from "primevue/button";
 import Checkbox from "primevue/checkbox";
-import { computed, ref, toRefs } from "vue";
+import { computed, ref } from "vue";
 
-const props = withDefaults(
-  defineProps<{
-    options: Array<{ label: string; value: string }>;
-    placeholder?: string;
-    disabled?: boolean;
-  }>(),
-  {
-    placeholder: "All requests (no scope filter)",
-    disabled: false,
-  },
-);
-
-const { options, placeholder, disabled } = toRefs(props);
+const {
+  options,
+  placeholder = "All requests (no scope filter)",
+  disabled = false,
+} = defineProps<{
+  options: Array<{ label: string; value: string }>;
+  placeholder?: string;
+  disabled?: boolean;
+}>();
 const selectedValues = defineModel<Array<string>>({ default: [] });
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement>();
 
 const selectedOptions = computed(() => {
   const selectedSet = new Set(selectedValues.value);
-  return options.value.filter((option) => selectedSet.has(option.value));
+  return options.filter((option) => selectedSet.has(option.value));
 });
 
 const selectedCount = computed(() => selectedOptions.value.length);
 
 const triggerLabel = computed(() => {
   if (selectedCount.value === 0) {
-    return placeholder.value;
+    return placeholder;
   }
 
   if (selectedCount.value === 1) {
@@ -43,7 +39,7 @@ const triggerLabel = computed(() => {
 const isSelected = (value: string) => selectedValues.value.includes(value);
 
 const toggleOpen = () => {
-  if (disabled.value) {
+  if (disabled) {
     return;
   }
 
@@ -52,7 +48,9 @@ const toggleOpen = () => {
 
 const toggleOption = (value: string) => {
   if (isSelected(value)) {
-    selectedValues.value = selectedValues.value.filter((item) => item !== value);
+    selectedValues.value = selectedValues.value.filter(
+      (item) => item !== value,
+    );
     return;
   }
 
@@ -65,10 +63,7 @@ onClickOutside(containerRef, () => {
 </script>
 
 <template>
-  <div
-    ref="containerRef"
-    class="relative w-full min-w-0"
-  >
+  <div ref="containerRef" class="relative w-full min-w-0">
     <Button
       type="button"
       :disabled="disabled"

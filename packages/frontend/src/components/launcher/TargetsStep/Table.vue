@@ -63,7 +63,6 @@ const handleDeleteSelected = () => {
   form.targets = remainingTargets;
   selectedTargetIDs.value = [];
 };
-
 </script>
 <template>
   <div class="flex flex-col h-full py-1">
@@ -118,7 +117,9 @@ const handleDeleteSelected = () => {
               <div class="truncate">{{ item.method }}</div>
             </div>
             <div class="flex-[28] px-2 min-w-0">
-              <div class="font-medium truncate">{{ item.host }}:{{ item.port }}</div>
+              <div class="font-medium truncate">
+                {{ item.host }}:{{ item.port }}
+              </div>
             </div>
             <div class="flex-[28] px-2 min-w-0">
               <div class="truncate">{{ item.path }}</div>
