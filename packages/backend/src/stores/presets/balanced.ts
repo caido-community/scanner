@@ -50,6 +50,10 @@ export const BALANCED_PRESET: Preset = {
       enabled: true,
     },
     {
+      checkID: Checks.PHP_CODE_INJECTION,
+      enabled: true,
+    },
+    {
       checkID: Checks.SSTI,
       enabled: true,
     },

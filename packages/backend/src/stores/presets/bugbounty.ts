@@ -66,6 +66,10 @@ export const BUGBOUNTY_PRESET: Preset = {
       enabled: true,
     },
     {
+      checkID: Checks.PHP_CODE_INJECTION,
+      enabled: true,
+    },
+    {
       checkID: Checks.PATH_TRAVERSAL,
       enabled: true,
     },
@@ -213,6 +217,10 @@ export const BUGBOUNTY_PRESET: Preset = {
     },
     {
       checkID: Checks.COMMAND_INJECTION,
+      enabled: true,
+    },
+    {
+      checkID: Checks.PHP_CODE_INJECTION,
       enabled: true,
     },
     {

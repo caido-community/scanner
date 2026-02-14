@@ -66,6 +66,10 @@ export const LIGHT_PRESET: Preset = {
       enabled: false,
     },
     {
+      checkID: Checks.PHP_CODE_INJECTION,
+      enabled: false,
+    },
+    {
       checkID: Checks.PATH_TRAVERSAL,
       enabled: false,
     },

@@ -24,6 +24,7 @@ import linkManipulationScan from "./link-manipulation";
 import missingContentTypeScan from "./missing-content-type";
 import openRedirectScan from "./open-redirect";
 import pathTraversalScan from "./path-traversal";
+import phpCodeInjectionScan from "./php-code-injection";
 import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
@@ -69,6 +70,7 @@ export const Checks = {
   OPEN_REDIRECT: "open-redirect",
   PATH_TRAVERSAL: "path-traversal",
   PHPINFO: "phpinfo",
+  PHP_CODE_INJECTION: "php-code-injection",
   PRIVATE_IP_DISCLOSURE: "private-ip-disclosure",
   PRIVATE_KEY_DISCLOSURE: "private-key-disclosure",
   REFLECTED_CSS_INJECTION: "reflected-css-injection",
@@ -115,6 +117,7 @@ export const checks = [
   openRedirectScan,
   pathTraversalScan,
   phpinfoScan,
+  phpCodeInjectionScan,
   privateIpDisclosureScan,
   privateKeyDisclosureScan,
   reflectedCssInjectionScan,
