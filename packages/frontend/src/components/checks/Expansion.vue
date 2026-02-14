@@ -11,7 +11,7 @@ const { getAggressivityText } = useTable();
 </script>
 
 <template>
-  <div class="px-4 py-2 space-y-2">
+  <div class="px-6 py-4 space-y-2">
     <div>
       <span class="font-bold">Type:</span>
       <span class="capitalize ml-2">{{ check.type }}</span>
