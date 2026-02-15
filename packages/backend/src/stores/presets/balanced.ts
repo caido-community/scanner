@@ -89,6 +89,14 @@ export const BALANCED_PRESET: Preset = {
       checkID: Checks.USER_AGENT_DEPENDENT_RESPONSE,
       enabled: false,
     },
+    {
+      checkID: Checks.INPUT_REFLECTED,
+      enabled: false,
+    },
+    {
+      checkID: Checks.INPUT_STORED,
+      enabled: false,
+    },
   ],
   passive: [
     {
@@ -106,6 +114,14 @@ export const BALANCED_PRESET: Preset = {
     {
       checkID: Checks.OPEN_REDIRECT,
       enabled: true,
+    },
+    {
+      checkID: Checks.INPUT_REFLECTED,
+      enabled: false,
+    },
+    {
+      checkID: Checks.INPUT_STORED,
+      enabled: false,
     },
     {
       checkID: Checks.MYSQL_ERROR_BASED_SQLI,

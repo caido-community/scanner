@@ -19,6 +19,7 @@
     "@lezer/lr": "1.4.8",
     "engine": "workspace:*",
     "mutative": "1.3.0",
+    "ts-http-forge": "^0.1.7",
     "zod": "4.3.6"
   }
 }

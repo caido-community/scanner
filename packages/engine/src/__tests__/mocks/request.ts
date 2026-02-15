@@ -152,6 +152,13 @@ export class MockRequest implements Request {
   }
 
   toSpec(): RequestSpec {
+    const headers = Object.fromEntries(
+      Object.entries(this.mockData.headers).map(([name, values]) => [
+        name,
+        [...values],
+      ]),
+    );
+
     return createMockRequestSpec({
       host: this.mockData.host,
       port: this.mockData.port,
@@ -159,7 +166,7 @@ export class MockRequest implements Request {
       method: this.mockData.method,
       path: this.mockData.path,
       query: this.mockData.query,
-      headers: this.mockData.headers,
+      headers,
       body: this.mockData.body,
     });
   }

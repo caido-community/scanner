@@ -81,6 +81,14 @@ export const LIGHT_PRESET: Preset = {
       checkID: Checks.SUSPECT_TRANSFORM,
       enabled: false,
     },
+    {
+      checkID: Checks.INPUT_REFLECTED,
+      enabled: false,
+    },
+    {
+      checkID: Checks.INPUT_STORED,
+      enabled: false,
+    },
   ],
   passive: [
     {
@@ -97,6 +105,14 @@ export const LIGHT_PRESET: Preset = {
     },
     {
       checkID: Checks.OPEN_REDIRECT,
+      enabled: false,
+    },
+    {
+      checkID: Checks.INPUT_REFLECTED,
+      enabled: false,
+    },
+    {
+      checkID: Checks.INPUT_STORED,
       enabled: false,
     },
     {

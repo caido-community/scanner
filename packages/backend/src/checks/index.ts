@@ -19,6 +19,10 @@ import exposedEnvScan from "./exposed-env";
 import gitConfigScan from "./git-config";
 import { graphqlContentTypeScan, graphqlEndpointScan } from "./graphql";
 import hashDisclosureScan from "./hash-disclosure";
+import {
+  inputReflectedScan,
+  inputStoredScan,
+} from "./input-returned-in-response";
 import jsonHtmlResponseScan from "./json-html-response";
 import linkManipulationScan from "./link-manipulation";
 import missingContentTypeScan from "./missing-content-type";
@@ -64,6 +68,8 @@ export const Checks = {
   GRAPHQL_CONTENT_TYPE: "graphql-content-type",
   GRAPHQL_ENDPOINT: "graphql-endpoint",
   HASH_DISCLOSURE: "hash-disclosure",
+  INPUT_REFLECTED: "input-reflected",
+  INPUT_STORED: "input-stored",
   JSON_HTML_RESPONSE: "json-html-response",
   LINK_MANIPULATION: "link-manipulation",
   MISSING_CONTENT_TYPE: "missing-content-type",
@@ -111,6 +117,8 @@ export const checks = [
   graphqlContentTypeScan,
   graphqlEndpointScan,
   hashDisclosureScan,
+  inputReflectedScan,
+  inputStoredScan,
   jsonHtmlResponseScan,
   linkManipulationScan,
   missingContentTypeScan,

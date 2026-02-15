@@ -85,6 +85,14 @@ export const BUGBOUNTY_PRESET: Preset = {
       checkID: Checks.SPRING_ACTUATOR,
       enabled: false,
     },
+    {
+      checkID: Checks.INPUT_REFLECTED,
+      enabled: false,
+    },
+    {
+      checkID: Checks.INPUT_STORED,
+      enabled: false,
+    },
   ],
   passive: [
     {
@@ -106,6 +114,14 @@ export const BUGBOUNTY_PRESET: Preset = {
     {
       checkID: Checks.OPEN_REDIRECT,
       enabled: true,
+    },
+    {
+      checkID: Checks.INPUT_REFLECTED,
+      enabled: false,
+    },
+    {
+      checkID: Checks.INPUT_STORED,
+      enabled: false,
     },
     {
       checkID: Checks.ANTI_CLICKJACKING,
