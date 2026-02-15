@@ -1,13 +1,29 @@
+import { type EditorView } from "@codemirror/view";
+
 export function getSelectedRequestFromDOM() {
-  const requestEditor = document.querySelector(
-    "[data-language='http-request']",
-  ) as HTMLElement;
+  const requestEditor = document.querySelector("[data-language='http-request']");
 
   if (requestEditor === null) {
     return undefined;
   }
 
-  const rawRequest = requestEditor.innerText;
+  if (!(requestEditor instanceof HTMLElement)) {
+    return undefined;
+  }
+
+  let view = (requestEditor as unknown as { cmView?: EditorView }).cmView;
+  if (view === undefined) {
+    const cmEditor = requestEditor.querySelector(".cm-editor");
+    if (cmEditor instanceof HTMLElement) {
+      view = (cmEditor as unknown as { cmView?: EditorView }).cmView;
+    }
+  }
+
+  if (view === undefined) {
+    return undefined;
+  }
+
+  const rawRequest = view.state.doc.toString();
   const lines = rawRequest.split("\n");
   const firstLine = lines[0]?.trim();
 
