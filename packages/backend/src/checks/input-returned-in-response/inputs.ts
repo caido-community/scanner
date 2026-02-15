@@ -2,9 +2,9 @@ import type { Request, RequestSpec } from "caido:utils";
 import type { CheckContext } from "engine";
 import { HttpForge } from "ts-http-forge";
 
-export type InputVectorKind = "query" | "cookie" | "header";
+type InputVectorKind = "query" | "cookie" | "header";
 
-export type InputVector = {
+type InputVector = {
   kind: InputVectorKind;
   name: string;
   createSpec: (marker: string) => RequestSpec;
