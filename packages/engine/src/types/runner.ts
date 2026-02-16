@@ -53,7 +53,7 @@ export type ScanResult =
 
 export type ScanEstimateResult =
   | {
-      kind: "Success";
+      kind: "Ok";
       checksTotal: number;
     }
   | {
@@ -154,12 +154,13 @@ export type ExecutionHistory = CheckExecutionRecord[];
 
 export type ScanConfig = {
   aggressivity: ScanAggressivity;
-  inScopeOnly: boolean;
+  scopeIDs: string[];
   concurrentChecks: number;
   concurrentRequests: number;
   concurrentTargets: number;
   requestsDelayMs: number;
   scanTimeout: number;
   checkTimeout: number;
+  requestTimeout?: number;
   severities: Severity[];
 };

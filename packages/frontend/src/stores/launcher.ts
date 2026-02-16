@@ -5,6 +5,7 @@ import { type BasicRequest, type ScanRequestPayload } from "shared";
 import { reactive, ref } from "vue";
 
 import { useScannerService } from "@/services/scanner";
+import { useConfigStore } from "@/stores/config";
 import { type FrontendSDK } from "@/types";
 
 type FormState = {
@@ -13,15 +14,19 @@ type FormState = {
   title: string;
 };
 
+const DEFAULT_REQUEST_TIMEOUT = 2 * 60;
+
 export const useLauncher = defineStore("stores.launcher", () => {
   const scannerService = useScannerService();
+  const configStore = useConfigStore();
   const defaultFormState: FormState = {
     targets: [],
     config: {
       aggressivity: ScanAggressivity.MEDIUM,
-      inScopeOnly: false,
+      scopeIDs: [],
       scanTimeout: 10 * 60,
       checkTimeout: 2 * 60,
+      requestTimeout: DEFAULT_REQUEST_TIMEOUT,
       concurrentChecks: 2,
       concurrentTargets: 2,
       concurrentRequests: 5,
@@ -55,7 +60,7 @@ export const useLauncher = defineStore("stores.launcher", () => {
     const result = await scannerService.startActiveScan(payload);
 
     switch (result.kind) {
-      case "Success": {
+      case "Ok": {
         scannerService.selectSession(result.value.id);
         incrementCount();
 
@@ -71,6 +76,13 @@ export const useLauncher = defineStore("stores.launcher", () => {
 
   const restart = () => {
     Object.assign(form, defaultFormState);
+    const configState = configStore.getState();
+    if (
+      configState.type === "Success" &&
+      configState.config.requestTimeout !== undefined
+    ) {
+      form.config.requestTimeout = configState.config.requestTimeout;
+    }
     isLoading.value = false;
   };
 

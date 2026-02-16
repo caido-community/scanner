@@ -9,7 +9,6 @@ import {
 import { Tags } from "../../types";
 import {
   bodyMatchesAny,
-  createRequestWithParameter,
   extractParameters,
   hasParameters,
   type Parameter,
@@ -106,11 +105,7 @@ export default defineCheck<{
 
     for (const payloadSet of payloads) {
       for (const payload of payloadSet.payloads) {
-        const requestSpec = createRequestWithParameter(
-          context,
-          currentParam,
-          payload,
-        );
+        const requestSpec = currentParam.inject(payload);
         const { request, response } =
           await context.sdk.requests.send(requestSpec);
 

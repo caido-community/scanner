@@ -1,18 +1,19 @@
-import { ok, type Result, type UserConfig } from "shared";
+import { Result } from "engine";
+import type { Result as ResultType, UserConfig } from "shared";
 
 import { ConfigStore } from "../stores/config";
 import { type BackendSDK } from "../types";
 
-export const getUserConfig = (_: BackendSDK): Result<UserConfig> => {
+export const getUserConfig = (_: BackendSDK): ResultType<UserConfig> => {
   const store = ConfigStore.get();
-  return ok(store.getUserConfig());
+  return Result.ok(store.getUserConfig());
 };
 
 export const updateUserConfig = (
   _: BackendSDK,
   config: Partial<UserConfig>,
-): Result<void> => {
+): ResultType<void> => {
   const store = ConfigStore.get();
   store.updateUserConfig(config);
-  return ok(undefined);
+  return Result.ok(undefined);
 };

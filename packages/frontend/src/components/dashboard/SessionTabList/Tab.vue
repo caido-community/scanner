@@ -6,7 +6,12 @@ import { nextTick, ref } from "vue";
 
 const isEditable = defineModel<boolean>("isEditable", { default: false });
 
-const props = defineProps<{
+const {
+  isSelected,
+  label,
+  icon = "",
+  status = "",
+} = defineProps<{
   isSelected: boolean;
   label: string;
   icon?: string;
@@ -16,6 +21,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "select", event: MouseEvent): void;
   (e: "rename", newName: string): void;
+  (e: "rerun"): void;
   (e: "delete"): void;
   (e: "deleteOthers"): void;
 }>();
@@ -30,6 +36,13 @@ const contextMenuItems = [
     icon: "fas fa-pencil",
     command: () => {
       isEditable.value = true;
+    },
+  },
+  {
+    label: "Rerun",
+    icon: "fas fa-redo",
+    command: () => {
+      emit("rerun");
     },
   },
   {
@@ -72,7 +85,7 @@ const onRightClick = (event: MouseEvent) => {
 };
 
 whenever(isEditable, async () => {
-  newValue.value = props.label;
+  newValue.value = label;
   await nextTick();
 
   const input = inputRef.value;
@@ -83,7 +96,7 @@ whenever(isEditable, async () => {
 });
 
 const onSubmit = useDebounceFn(() => {
-  if (newValue.value !== props.label) {
+  if (newValue.value !== label) {
     emit("rename", newValue.value);
   }
 

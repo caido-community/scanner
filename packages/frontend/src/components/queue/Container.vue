@@ -7,7 +7,7 @@ import DataTable from "primevue/datatable";
 import { useQueueService } from "@/services/queue";
 import { type QueueState } from "@/types/queue";
 
-defineProps<{
+const { state } = defineProps<{
   state: QueueState & { type: "Success" };
 }>();
 

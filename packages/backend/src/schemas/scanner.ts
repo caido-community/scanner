@@ -4,13 +4,14 @@ import { ScanAggressivitySchema, SeveritySchema } from "./common";
 
 const ScanConfigSchema = z.object({
   aggressivity: ScanAggressivitySchema,
-  inScopeOnly: z.boolean(),
+  scopeIDs: z.array(z.string()).default([]),
   concurrentChecks: z.number().int().min(1).max(100),
   concurrentRequests: z.number().int().min(1).max(100),
   concurrentTargets: z.number().int().min(1).max(100),
   requestsDelayMs: z.number().int().min(0),
   scanTimeout: z.number().int().min(1),
   checkTimeout: z.number().int().min(1),
+  requestTimeout: z.number().int().min(1).max(600).optional(),
   severities: z.array(SeveritySchema).min(1),
 });
 

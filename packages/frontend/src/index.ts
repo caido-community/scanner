@@ -9,6 +9,7 @@ import type { FrontendSDK } from "./types";
 import App from "./views/App.vue";
 
 import { ScanLauncher } from "@/components/launcher";
+import { useConfigService } from "@/services/config";
 import { useLauncher } from "@/stores/launcher";
 
 export const init = (sdk: FrontendSDK) => {
@@ -37,6 +38,9 @@ export const init = (sdk: FrontendSDK) => {
   sdk.navigation.addPage("/scanner", {
     body: root,
     onEnter: () => {
+      const configService = useConfigService();
+
+      configService.refresh();
       sidebarCount = 0;
       sidebarItem.setCount(sidebarCount);
     },

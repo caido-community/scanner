@@ -2,7 +2,6 @@ import { continueWith, defineCheck, done, Severity } from "engine";
 
 import { Tags } from "../../../types";
 import {
-  createRequestWithParameter,
   extractParameters,
   hasParameters,
   type Parameter,
@@ -126,11 +125,7 @@ export default defineCheck<State>(({ step }) => {
       dbName,
     } = currentPayloadData;
     const testValue = currentParam.value + currentPayload;
-    const testRequestSpec = createRequestWithParameter(
-      context,
-      currentParam,
-      testValue,
-    );
+    const testRequestSpec = currentParam.inject(testValue);
 
     let testRequest;
     let testResponse;
@@ -157,11 +152,7 @@ export default defineCheck<State>(({ step }) => {
 
       if (delayDetected && confirmPayload !== undefined) {
         const confirmValue = currentParam.value + confirmPayload;
-        const confirmRequestSpec = createRequestWithParameter(
-          context,
-          currentParam,
-          confirmValue,
-        );
+        const confirmRequestSpec = currentParam.inject(confirmValue);
 
         let confirmResponse;
         try {

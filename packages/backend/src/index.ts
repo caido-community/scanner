@@ -1,6 +1,6 @@
 import type { DefineAPI } from "caido:plugin";
-import { createRegistry } from "engine";
-import { error, ok, type Result } from "shared";
+import { createRegistry, Result } from "engine";
+import type { Result as ResultType } from "shared";
 
 import { checks } from "./checks";
 import { IdSchema } from "./schemas";
@@ -89,8 +89,8 @@ export async function init(sdk: BackendSDK) {
 
     passiveTaskQueue.setConcurrency(config.passive.concurrentChecks);
 
-    if (config.passive.inScopeOnly) {
-      const inScope = sdk.requests.inScope(request);
+    if (config.passive.scopeIDs.length > 0) {
+      const inScope = sdk.requests.inScope(request, config.passive.scopeIDs);
       if (!inScope) return;
     }
 
@@ -114,15 +114,17 @@ export async function init(sdk: BackendSDK) {
         registry.register(check);
       }
 
+      const requestTimeout = config.requestTimeout ?? 2 * 60;
       const runnable = registry.create(sdk, {
         aggressivity: config.passive.aggressivity,
-        inScopeOnly: config.passive.inScopeOnly,
+        scopeIDs: config.passive.scopeIDs,
         concurrentChecks: config.passive.concurrentChecks,
         concurrentRequests: config.passive.concurrentRequests,
         concurrentTargets: 1,
         severities: config.passive.severities,
         scanTimeout: 5 * 60,
         checkTimeout: 2 * 60,
+        requestTimeout,
         requestsDelayMs: 0,
       });
 
@@ -177,7 +179,7 @@ export const getRequestResponse = async (
   sdk: BackendSDK,
   requestId: string,
 ): Promise<
-  Result<{
+  ResultType<{
     request: { id: string; raw: string };
     response: { id: string; raw: string };
   }>
@@ -190,16 +192,16 @@ export const getRequestResponse = async (
   const result = await sdk.requests.get(validation.value);
 
   if (!result) {
-    return error("Request not found");
+    return Result.err("Request not found");
   }
 
   const { request, response } = result;
 
   if (!response) {
-    return error("Response not found");
+    return Result.err("Response not found");
   }
 
-  return ok({
+  return Result.ok({
     request: {
       id: request.getId(),
       raw: Uint8ArrayToString(request.toSpecRaw().getRaw()),
@@ -214,7 +216,7 @@ export const getRequestResponse = async (
 export const getExecutionTrace = (
   sdk: BackendSDK,
   sessionId: string,
-): Result<string> => {
+): ResultType<string> => {
   const validation = validateInput(IdSchema, sessionId);
   if (validation.kind === "Error") {
     return validation;
@@ -224,10 +226,10 @@ export const getExecutionTrace = (
   const trace = scannerStore.getExecutionTrace(validation.value);
 
   if (trace === undefined) {
-    return error("Execution trace not found");
+    return Result.err("Execution trace not found");
   }
 
-  return ok(trace);
+  return Result.ok(trace);
 };
 
 const Uint8ArrayToString = (data: Uint8Array) => {

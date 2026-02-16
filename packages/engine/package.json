@@ -10,13 +10,14 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@caido/sdk-backend": "0.48.1",
+    "@caido/sdk-backend": "0.55.3",
     "vitest": "3.2.3"
   },
   "dependencies": {
     "@supercharge/promise-pool": "3.2.0",
     "batching-toposort-ts": "1.0.0",
     "html5parser": "2.0.2",
-    "mitt": "3.0.1"
+    "mitt": "3.0.1",
+    "ts-http-forge": "^0.1.7"
   }
 }

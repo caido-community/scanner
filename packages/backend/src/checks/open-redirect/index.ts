@@ -1,18 +1,16 @@
 import { type Request } from "caido:utils";
 import {
-  continueWith,
   createUrlBypassGenerator,
-  defineCheck,
-  done,
+  defineCheckV2,
   findRedirection,
-  ScanAggressivity,
+  Result,
   Severity,
 } from "engine";
 
 import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
 
-const keywords = [
+const KEYWORDS = [
   "url",
   "redirect",
   "target",
@@ -22,38 +20,38 @@ const keywords = [
   "next",
 ];
 
-const getUrlParams = (query: string): string[] => {
+const ATTACKER_HOST = "scanner-attacker.invalid";
+
+function isSuspiciousRedirectParam(name: string, value: string): boolean {
+  const keyLower = name.toLowerCase();
+  const hasKeywordInName = KEYWORDS.some((keyword) =>
+    keyLower.includes(keyword),
+  );
+  const hasUrlInValue =
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("/");
+  return hasKeywordInName || hasUrlInValue;
+}
+
+export function getSuspiciousParamsFromQuery(query: string): string[] {
   const params = new URLSearchParams(query);
-
-  return Array.from(params.keys()).filter((key: string) => {
-    const keyLower = key.toLowerCase();
+  return Array.from(params.keys()).filter((key) => {
     const value = params.get(key) ?? "";
-
-    const hasKeywordInName = keywords.some((keyword) =>
-      keyLower.includes(keyword),
-    );
-    const hasUrlInValue =
-      value.startsWith("http://") ||
-      value.startsWith("https://") ||
-      value.startsWith("/");
-
-    return hasKeywordInName || hasUrlInValue;
+    return isSuspiciousRedirectParam(key, value);
   });
-};
+}
 
-const getExpectedHostInfo = (
+export function getExpectedHostInfo(
   request: Request,
   paramValue: string | undefined,
-): {
-  host: string;
-  protocol: string;
-} => {
+): { host: string; protocol: string } {
   if (paramValue !== undefined && paramValue.startsWith("http")) {
     try {
       const url = new URL(paramValue);
       return { host: url.host, protocol: url.protocol };
     } catch {
-      // Ignore invalid URLs and fallback to using the request's host
+      return getExpectedHostInfo(request, undefined);
     }
   }
 
@@ -63,151 +61,92 @@ const getExpectedHostInfo = (
   const expectedHost = port === 80 || port === 443 ? host : `${host}:${port}`;
 
   return { host: expectedHost, protocol };
-};
+}
 
-export default defineCheck<{
-  urlParams: string[];
-}>(({ step }) => {
-  step("findUrlParams", (state, context) => {
-    const query = context.target.request.getQuery();
-    const urlParams = getUrlParams(query);
+export default defineCheckV2({
+  id: "open-redirect",
+  name: "Open Redirect",
+  description:
+    "Checks for open redirects using a variety of URL parser bypass techniques",
+  type: "active",
+  tags: [Tags.OPEN_REDIRECT],
+  severities: [Severity.MEDIUM],
+  aggressivity: {
+    minRequests: 1,
+    maxRequests: "Infinity",
+  },
+  dedupeKey: keyStrategy()
+    .withMethod()
+    .withHost()
+    .withPort()
+    .withPath()
+    .build(),
+  when: (target) => {
+    const query = target.request.getQuery();
+    if (query === undefined || query === "") return false;
+    return getSuspiciousParamsFromQuery(query).length > 0;
+  },
 
-    if (urlParams.length === 0) {
-      return done({
-        state,
+  async execute(ctx) {
+    const params = ctx
+      .parameters()
+      .filter((param) => isSuspiciousRedirectParam(param.name, param.value));
+    if (params.length === 0) return;
+
+    for (const param of params) {
+      const { host: expectedHost, protocol } = getExpectedHostInfo(
+        ctx.target.request,
+        param.value,
+      );
+
+      const generatorResult = createUrlBypassGenerator({
+        expectedHost,
+        attackerHost: ATTACKER_HOST,
+        originalValue: param.value,
+        protocol,
       });
-    }
 
-    return continueWith({
-      nextStep: "testParam",
-      state: { urlParams },
-    });
-  });
+      if (Result.isErr(generatorResult)) continue;
 
-  step("testParam", async (state, context) => {
-    if (state.urlParams.length === 0) {
-      return done({
-        state,
+      const allPayloadRecipes = [...generatorResult.value];
+      const payloadRecipes = ctx.limit(allPayloadRecipes, {
+        low: 2,
+        medium: 5,
+        high: allPayloadRecipes.length,
       });
-    }
 
-    const [currentParam, ...remainingParams] = state.urlParams;
-    if (currentParam === undefined) {
-      return done({
-        state,
-      });
-    }
+      for (const payloadRecipe of payloadRecipes) {
+        const instance = payloadRecipe.generate();
+        const spec = param.inject(instance.value);
 
-    const attackerHost = "example.com";
+        const result = await ctx.send(spec);
+        if (Result.isErr(result)) continue;
 
-    const originalQueryForParamValue = context.target.request.getQuery() || "";
-    const paramsForParamValue = new URLSearchParams(originalQueryForParamValue);
-    const paramValue = paramsForParamValue.get(currentParam) ?? "";
+        const { request } = result.value;
+        const redirectInfo = await findRedirection(request.getId(), ctx);
 
-    const { host: expectedHost, protocol } = getExpectedHostInfo(
-      context.target.request,
-      paramValue,
-    );
+        if (!redirectInfo.hasRedirection || redirectInfo.location === undefined)
+          continue;
 
-    let generator = createUrlBypassGenerator({
-      expectedHost,
-      attackerHost,
-      originalValue: paramValue,
-      protocol,
-    });
-
-    if (context.config.aggressivity === ScanAggressivity.LOW) {
-      generator = generator.limit(2);
-    } else if (context.config.aggressivity === ScanAggressivity.MEDIUM) {
-      generator = generator.limit(5);
-    }
-
-    for (const payloadRecipe of generator) {
-      const instance = payloadRecipe.generate();
-
-      const originalQuery = context.target.request.getQuery() || "";
-      const params = new URLSearchParams(originalQuery);
-      params.set(currentParam, instance.value);
-
-      const spec = context.target.request.toSpec();
-      spec.setQuery(params.toString());
-
-      const { request } = await context.sdk.requests.send(spec);
-
-      const redirectInfo = await findRedirection(request.getId(), context);
-      if (redirectInfo.hasRedirection && redirectInfo.location) {
         try {
           const redirectUrl = new URL(
             redirectInfo.location,
-            context.target.request.getUrl(),
+            ctx.target.request.getUrl(),
           );
 
           if (instance.validatesWith(redirectUrl)) {
-            return done({
-              findings: [
-                {
-                  name: "Open Redirect in parameter '" + currentParam + "'",
-                  description: `Parameter \`${currentParam}\` allows ${redirectInfo.type} redirect via the \`${payloadRecipe.technique}\` technique.\n\n**Payload used:**\n\`\`\`\n${instance.value}\n\`\`\`\n\n${payloadRecipe.description}`,
-                  severity: Severity.MEDIUM,
-                  correlation: {
-                    requestID: request.getId(),
-                    locations: [],
-                  },
-                },
-              ],
-              state: { urlParams: remainingParams },
+            ctx.finding({
+              name: `Open Redirect in parameter '${param.name}'`,
+              description: `Parameter \`${param.name}\` allows ${redirectInfo.type} redirect via the \`${payloadRecipe.technique}\` technique.\n\n**Payload used:**\n\`\`\`\n${instance.value}\n\`\`\`\n\n${payloadRecipe.description}`,
+              severity: Severity.MEDIUM,
+              request,
             });
+            return;
           }
         } catch {
-          // TODO: we might wanna log this somewhere as this is definitely a interesting finding
-          // Ignore invalid redirect URLs
+          continue;
         }
       }
     }
-
-    if (remainingParams.length === 0) {
-      return done({
-        findings: [],
-        state: { urlParams: remainingParams },
-      });
-    }
-
-    return continueWith({
-      nextStep: "testParam",
-      state: {
-        ...state,
-        urlParams: remainingParams,
-      },
-    });
-  });
-
-  return {
-    metadata: {
-      id: "open-redirect",
-      name: "Open Redirect",
-      description:
-        "Checks for open redirects using a variety of URL parser bypass techniques",
-      type: "active",
-      tags: [Tags.OPEN_REDIRECT],
-      severities: [Severity.MEDIUM],
-      aggressivity: {
-        minRequests: 1,
-        maxRequests: "Infinity",
-      },
-    },
-
-    initState: () => ({ urlParams: [] }),
-    dedupeKey: keyStrategy()
-      .withMethod()
-      .withHost()
-      .withPort()
-      .withPath()
-      .build(),
-    when: (context) => {
-      const query = context.request.getQuery();
-      if (!query) return false;
-
-      return getUrlParams(query).length > 0;
-    },
-  };
+  },
 });

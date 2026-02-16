@@ -42,7 +42,7 @@ const {
 </script>
 
 <template>
-  <ContextMenu ref="menu" :model="menuModel" />
+  <ContextMenu :ref="menu" :model="menuModel" />
   <Card
     class="h-full"
     :pt="{

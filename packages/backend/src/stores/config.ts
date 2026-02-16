@@ -1,5 +1,4 @@
-import { ScanAggressivity } from "engine";
-import type { ActiveConfig, PassiveConfig, Preset, UserConfig } from "shared";
+import type { Preset, UserConfig } from "shared";
 
 import {
   PresetsStorage,
@@ -10,25 +9,17 @@ import {
 import type { BackendSDK } from "../types";
 
 import {
+  computeUpdatedConfig,
+  createDefaultActiveConfig,
+  createDefaultPassiveConfig,
+  migratePassiveConfig,
+} from "./config.utils";
+import {
   BALANCED_PRESET,
   BUGBOUNTY_PRESET,
   HEAVY_PRESET,
   LIGHT_PRESET,
 } from "./presets";
-
-const createDefaultPassiveConfig = (): PassiveConfig => ({
-  enabled: true,
-  aggressivity: ScanAggressivity.LOW,
-  inScopeOnly: true,
-  concurrentChecks: 2,
-  concurrentRequests: 3,
-  overrides: [],
-  severities: ["critical", "high", "medium", "low", "info"],
-});
-
-const createDefaultActiveConfig = (): ActiveConfig => ({
-  overrides: [],
-});
 
 const createDefaultPresets = (): Preset[] => [
   LIGHT_PRESET,
@@ -91,6 +82,9 @@ export class ConfigStore {
     const savedSettings = await this.settingsStorage.load();
     if (savedSettings !== undefined) {
       this.config.defaultPresetName = savedSettings.defaultPresetName;
+      this.config.requestTimeout = savedSettings.requestTimeout ?? 2 * 60;
+    } else {
+      this.config.requestTimeout = 2 * 60;
     }
 
     if (this.currentProjectId !== undefined) {
@@ -112,8 +106,15 @@ export class ConfigStore {
   private async loadProjectConfig(projectId: string): Promise<void> {
     const savedConfig = await this.projectConfigStorage.load(projectId);
     if (savedConfig !== undefined) {
-      this.config.passive = savedConfig.passive;
-      this.config.active = savedConfig.active;
+      const legacyScopeIDs = await this.getAllScopeIDs();
+      this.config.passive = migratePassiveConfig(
+        savedConfig.passive,
+        legacyScopeIDs,
+      );
+      this.config.active = {
+        ...createDefaultActiveConfig(),
+        ...savedConfig.active,
+      };
       return;
     }
 
@@ -123,6 +124,15 @@ export class ConfigStore {
       this.config.passive.overrides = defaultPreset.passive;
     }
     this.saveProjectConfig();
+  }
+
+  private async getAllScopeIDs(): Promise<string[]> {
+    try {
+      const scopes = await this.sdk.scope.getAll();
+      return scopes.map((scope) => scope.id);
+    } catch {
+      return [];
+    }
   }
 
   private getDefaultPreset(): Preset | undefined {
@@ -166,30 +176,15 @@ export class ConfigStore {
   }
 
   updateUserConfig(config: Partial<UserConfig>): UserConfig {
-    Object.assign(this.config, config);
+    const updateResult = computeUpdatedConfig(this.config, config);
+    this.config = updateResult.nextConfig;
 
-    if (config.presets !== undefined) {
-      this.presetsStorage.save(config.presets);
-
-      if (
-        this.config.defaultPresetName !== undefined &&
-        !this.config.presets.some(
-          (p) => p.name === this.config.defaultPresetName,
-        )
-      ) {
-        const firstPreset = this.config.presets[0];
-        this.config.defaultPresetName =
-          firstPreset !== undefined ? firstPreset.name : undefined;
-        this.settingsStorage.save({
-          defaultPresetName: this.config.defaultPresetName,
-        });
-      }
+    if (updateResult.presetsToSave !== undefined) {
+      this.presetsStorage.save(updateResult.presetsToSave);
     }
 
-    if (config.defaultPresetName !== undefined) {
-      this.settingsStorage.save({
-        defaultPresetName: config.defaultPresetName,
-      });
+    if (updateResult.settingsToSave !== undefined) {
+      this.settingsStorage.save(updateResult.settingsToSave);
     }
 
     this.saveProjectConfig();

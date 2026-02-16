@@ -6,6 +6,7 @@ import { BaseStorage } from "./base";
 
 type UserSettings = {
   defaultPresetName?: string;
+  requestTimeout?: number;
 };
 
 export class SettingsStorage extends BaseStorage {

@@ -1,4 +1,4 @@
-import { PromisePool } from "@supercharge/promise-pool";
+import { PromisePool, PromisePoolError } from "@supercharge/promise-pool";
 import { batchingToposort } from "batching-toposort-ts";
 import { type SDK } from "caido:plugin";
 import {
@@ -15,13 +15,16 @@ import {
   ScanRunnableInterruptedError,
   ScanRuntimeError,
 } from "../core/errors";
-import { type Check, type CheckOutput } from "../types/check";
+import { type Check, type CheckOutput, type CheckTask } from "../types/check";
 import { type Finding } from "../types/finding";
+import type { Result } from "../types/result";
+import { Result as ResultHelpers } from "../types/result";
 import {
   type CheckExecutionRecord,
   type ExecutionHistory,
   type InterruptReason,
   type RuntimeContext,
+  type ScanAggressivity,
   type ScanConfig,
   type ScanEstimateResult,
   type ScanEvents,
@@ -32,9 +35,99 @@ import {
 } from "../types/runner";
 import { parseHtmlFromString } from "../utils/html/parser";
 import { type ParsedHtml } from "../utils/html/types";
+import { createPrefixedRandomId } from "../utils/random";
 
 import { createTaskExecutor } from "./execution";
 import { createRequestQueue } from "./request-queue";
+
+type CheckDedupeRecord = {
+  checkID: string;
+  key: string;
+};
+
+type CheckApplicabilityError =
+  | "severity"
+  | "aggressivity"
+  | "when"
+  | "duplicate-dedupe-key";
+
+type CheckApplicabilityResult = Result<
+  {
+    dedupeRecord?: CheckDedupeRecord;
+  },
+  CheckApplicabilityError
+>;
+
+const aggressivityPriority: Record<ScanAggressivity, number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+};
+
+const hasRequiredAggressivity = ({
+  minAggressivity,
+  aggressivity,
+}: {
+  minAggressivity?: ScanAggressivity;
+  aggressivity: ScanAggressivity;
+}): boolean => {
+  if (minAggressivity === undefined) {
+    return true;
+  }
+
+  return (
+    aggressivityPriority[minAggressivity] <= aggressivityPriority[aggressivity]
+  );
+};
+
+export const evaluateCheckApplicability = ({
+  check,
+  context,
+  dedupeKeys,
+}: {
+  check: Check;
+  context: RuntimeContext;
+  dedupeKeys: Map<string, Set<string>>;
+}): CheckApplicabilityResult => {
+  if (
+    !check.metadata.severities.some((severity) =>
+      context.config.severities.includes(severity),
+    )
+  ) {
+    return ResultHelpers.err("severity");
+  }
+
+  if (
+    !hasRequiredAggressivity({
+      minAggressivity: check.metadata.minAggressivity,
+      aggressivity: context.config.aggressivity,
+    })
+  ) {
+    return ResultHelpers.err("aggressivity");
+  }
+
+  if (check.when !== undefined && !check.when(context.target)) {
+    return ResultHelpers.err("when");
+  }
+
+  if (check.dedupeKey === undefined) {
+    return ResultHelpers.ok({});
+  }
+
+  const checkID = check.metadata.id;
+  const key = check.dedupeKey(context.target);
+  const checkCache = dedupeKeys.get(checkID);
+  if (checkCache !== undefined && checkCache.has(key)) {
+    return ResultHelpers.err("duplicate-dedupe-key");
+  }
+
+  return ResultHelpers.ok({
+    dedupeRecord: {
+      checkID,
+      key,
+    },
+  });
+};
 
 export const createRunnable = ({
   sdk,
@@ -71,6 +164,14 @@ export const createRunnable = ({
     getInterruptReason: () => interruptReason,
   });
 
+  const isTargetInScope = (request: Request): boolean => {
+    if (config.scopeIDs.length === 0) {
+      return true;
+    }
+
+    return sdk.requests.inScope(request, config.scopeIDs);
+  };
+
   const recordStepExecution = (
     checkId: string,
     targetRequestId: string,
@@ -106,40 +207,28 @@ export const createRunnable = ({
     context: RuntimeContext,
     targetDedupeKeys: Map<string, Set<string>> = dedupeKeys,
   ): boolean => {
-    if (
-      !check.metadata.severities.some((s) =>
-        context.config.severities.includes(s),
-      )
-    ) {
+    const applicability = evaluateCheckApplicability({
+      check,
+      context,
+      dedupeKeys: targetDedupeKeys,
+    });
+
+    if (ResultHelpers.isErr(applicability)) {
       return false;
     }
 
-    if (
-      check.metadata.minAggressivity !== undefined &&
-      check.metadata.minAggressivity > context.config.aggressivity
-    ) {
-      return false;
-    }
-
-    if (check.when !== undefined && !check.when(context.target)) {
-      return false;
-    }
-
-    if (check.dedupeKey !== undefined) {
-      const checkId = check.metadata.id;
-      const key = check.dedupeKey(context.target);
-
-      let checkCache = targetDedupeKeys.get(checkId);
+    if (applicability.value.dedupeRecord !== undefined) {
+      let checkCache = targetDedupeKeys.get(
+        applicability.value.dedupeRecord.checkID,
+      );
       if (checkCache === undefined) {
         checkCache = new Set<string>();
-        targetDedupeKeys.set(checkId, checkCache);
+        targetDedupeKeys.set(
+          applicability.value.dedupeRecord.checkID,
+          checkCache,
+        );
       }
-
-      if (checkCache.has(key)) {
-        return false;
-      }
-
-      checkCache.add(key);
+      checkCache.add(applicability.value.dedupeRecord.key);
     }
 
     return true;
@@ -216,7 +305,7 @@ export const createRunnable = ({
           return sdk.requests.get(id);
         },
         send: async (request: RequestSpec | RequestSpecRaw) => {
-          const pendingRequestID = Math.random().toString(36).substring(2, 15);
+          const pendingRequestID = createPrefixedRandomId("req-");
 
           emit("scan:request-pending", {
             pendingRequestID,
@@ -239,6 +328,39 @@ export const createRunnable = ({
     batch: Check[],
     context: RuntimeContext,
   ): Promise<void> => {
+    const recordCheckFailure = (
+      task: CheckTask,
+      errorCode: ScanRunnableErrorCode,
+      errorMessage: string,
+    ) => {
+      const targetRequestId = task.getTarget().request.getId();
+      const key = `${task.metadata.id}-${targetRequestId}`;
+      const activeRecord = activeCheckRecords.get(key);
+
+      if (activeRecord) {
+        const checkRecord: CheckExecutionRecord = {
+          checkId: activeRecord.checkId,
+          targetRequestId: activeRecord.targetRequestId,
+          steps: activeRecord.steps,
+          status: "failed",
+          error: {
+            code: errorCode,
+            message: errorMessage,
+          },
+        };
+
+        executionHistory.push(checkRecord);
+        activeCheckRecords.delete(key);
+      }
+
+      emit("scan:check-failed", {
+        checkID: task.metadata.id,
+        targetRequestID: targetRequestId,
+        errorCode,
+        errorMessage,
+      });
+    };
+
     const tasks = batch
       .filter((check) => isCheckApplicable(check, context))
       .map((check) => {
@@ -249,6 +371,10 @@ export const createRunnable = ({
         const taskContext = {
           ...context,
           sdk: wrappedSdk,
+          __v2Context: {
+            wrappedSdk,
+            getInterrupted: () => interruptReason !== undefined,
+          },
         };
         return check.create(taskContext);
       });
@@ -259,6 +385,18 @@ export const createRunnable = ({
       .handleError((error, _, pool) => {
         if (error instanceof ScanRunnableInterruptedError) {
           pool.stop();
+          return;
+        }
+        if (
+          error instanceof PromisePoolError &&
+          error.message.includes("timed out")
+        ) {
+          const errorMessage = `Check timed out after ${context.config.checkTimeout} seconds`;
+          recordCheckFailure(
+            error.item as CheckTask,
+            ScanRunnableErrorCode.RUNTIME_ERROR,
+            errorMessage,
+          );
           return;
         }
 
@@ -284,8 +422,15 @@ export const createRunnable = ({
       })
       .process(async (task) => {
         if (task.metadata.skipIfFoundBy) {
-          const existingFindings = findings.get(task.metadata.id) || [];
-          if (existingFindings.length > 0) {
+          const shouldSkip = task.metadata.skipIfFoundBy.some((checkId) => {
+            const existingFindings = findings.get(checkId);
+            return (
+              existingFindings !== undefined && existingFindings.length > 0
+            );
+          });
+          if (shouldSkip) {
+            const key = `${task.metadata.id}-${context.target.request.getId()}`;
+            activeCheckRecords.delete(key);
             return;
           }
         }
@@ -330,30 +475,7 @@ export const createRunnable = ({
         }
 
         if (result.status === "failed") {
-          const key = `${task.metadata.id}-${context.target.request.getId()}`;
-          const activeRecord = activeCheckRecords.get(key);
-
-          if (activeRecord) {
-            const checkRecord: CheckExecutionRecord = {
-              checkId: activeRecord.checkId,
-              targetRequestId: activeRecord.targetRequestId,
-              steps: activeRecord.steps,
-              status: "failed",
-              error: {
-                code: result.errorCode,
-                message: result.errorMessage,
-              },
-            };
-
-            executionHistory.push(checkRecord);
-            activeCheckRecords.delete(key);
-          }
-          emit("scan:check-failed", {
-            checkID: task.metadata.id,
-            targetRequestID: context.target.request.getId(),
-            errorCode: result.errorCode,
-            errorMessage: result.errorMessage,
-          });
+          recordCheckFailure(task, result.errorCode, result.errorMessage);
         }
 
         return result;
@@ -382,6 +504,9 @@ export const createRunnable = ({
                 `Request ${requestID} not found`,
                 ScanRunnableErrorCode.REQUEST_NOT_FOUND,
               );
+            }
+            if (!isTargetInScope(target.request)) {
+              return;
             }
 
             const context = createRuntimeContext(
@@ -440,20 +565,29 @@ export const createRunnable = ({
       };
 
       if (config.scanTimeout > 0) {
-        const timeoutPromise = new Promise<ScanResult>((resolve) => {
-          setTimeout(() => {
-            if (!interruptReason) {
+        let finished = false;
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        const timeoutPromise = new Promise<"timeout">((resolve) => {
+          timeoutId = setTimeout(() => {
+            if (!finished && !interruptReason) {
               interruptReason = "Timeout";
             }
-            resolve({
-              kind: "Interrupted",
-              reason: "Timeout",
-              findings: Array.from(findings.values()).flat(),
-            });
+            resolve("timeout");
           }, config.scanTimeout * 1000);
         });
 
-        return Promise.race([runScan(), timeoutPromise]);
+        const runPromise = runScan().finally(() => {
+          finished = true;
+          if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+          }
+        });
+
+        const result = await Promise.race([runPromise, timeoutPromise]);
+        if (result === "timeout") {
+          return await runPromise;
+        }
+        return result;
       } else {
         return runScan();
       }
@@ -465,6 +599,9 @@ export const createRunnable = ({
         const target = await sdk.requests.get(requestID);
         if (target === undefined) {
           return { kind: "Error", error: `Request ${requestID} not found` };
+        }
+        if (!isTargetInScope(target.request)) {
+          continue;
         }
 
         const context = createRuntimeContext(
@@ -484,7 +621,7 @@ export const createRunnable = ({
         checksTotal += tasks.flat().length;
       }
 
-      return { kind: "Success", checksTotal };
+      return { kind: "Ok", checksTotal };
     },
     cancel: async (reason) => {
       if (interruptReason || !hasRun) {
@@ -503,7 +640,7 @@ export const createRunnable = ({
   };
 };
 
-const getCheckBatches = (checks: Check[]): Check[][] => {
+export const getCheckBatches = (checks: Check[]): Check[][] => {
   const checkMap = new Map(checks.map((check) => [check.metadata.id, check]));
   const dag: Record<string, string[]> = {};
 

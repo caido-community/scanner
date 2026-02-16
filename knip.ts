@@ -3,11 +3,10 @@ import type { RawConfigurationOrFn } from "knip/dist/types/config.js";
 const config: RawConfigurationOrFn = {
   workspaces: {
     ".": {
-      entry: ["caido.config.ts", "eslint.config.mjs"],
+      entry: ["caido.config.ts"],
       ignoreDependencies: ["@caido/sdk-backend", "rollup-plugin-dts"],
     },
     "packages/backend": {
-      entry: ["src/index.ts"],
       project: ["src/**/*.ts"],
       ignoreDependencies: ["caido", "@lezer/common", "@lezer/generator"],
       ignore: [
@@ -16,7 +15,6 @@ const config: RawConfigurationOrFn = {
       ],
     },
     "packages/frontend": {
-      entry: ["src/index.ts"],
       project: ["src/**/*.{ts,tsx,vue}"],
       ignore: [
         "src/views/Queue.vue",
@@ -25,17 +23,14 @@ const config: RawConfigurationOrFn = {
       ],
     },
     "packages/shared": {
-      entry: ["src/index.ts"],
       project: ["src/**/*.ts"],
     },
     "packages/engine": {
-      entry: ["src/index.ts"],
       project: ["src/**/*.ts"],
       ignoreDependencies: ["caido"],
       ignore: ["src/__tests__/**"],
     },
     "packages/trace-viewer": {
-      entry: ["src/main.ts"],
       project: ["src/**/*.{ts,vue}"],
       ignoreDependencies: ["postcss", "@fortawesome/fontawesome-free"],
     },

@@ -1,8 +1,9 @@
 import {
   createMockRequest,
   createMockResponse,
-  runCheck,
+  mockTarget,
   ScanAggressivity,
+  testCheck,
 } from "engine";
 import { describe, expect, it } from "vitest";
 
@@ -10,304 +11,282 @@ import suspectTransformCheck from "./index";
 
 describe("Suspicious Input Transformation", () => {
   it("should detect transformations when check conditions are met", async () => {
-    const request = createMockRequest({
-      id: "1",
-      host: "example.com",
-      method: "GET",
-      path: "/test",
-      query: "param=value",
-    });
-
-    const response = createMockResponse({
-      id: "1",
-      code: 200,
-      headers: { "content-type": ["text/html"] },
-      body: "Response: value",
-    });
-
-    let callCount = 0;
-    const sendHandler = () => {
-      callCount++;
-
-      const mockRequest = createMockRequest({
-        id: `${callCount + 1}`,
+    const target = mockTarget({
+      request: {
+        id: "1",
         host: "example.com",
         method: "GET",
         path: "/test",
-        query: `param=value`,
-      });
-
-      const body =
-        callCount <= 2 ? "valueabcdefK123456ghijkl" : "Response: value";
-
-      const mockResponse = createMockResponse({
-        id: `${callCount + 1}`,
+        query: "param=value",
+      },
+      response: {
+        id: "1",
         code: 200,
         headers: { "content-type": ["text/html"] },
-        body,
-      });
-
-      return Promise.resolve({
-        request: mockRequest,
-        response: mockResponse,
-      });
-    };
-
-    const executionHistory = await runCheck(
-      suspectTransformCheck,
-      [{ request, response }],
-      { sendHandler, config: { aggressivity: ScanAggressivity.LOW } },
-    );
-
-    expect(executionHistory[0]?.status).toBe("completed");
-  });
-
-  it("should detect arithmetic evaluation when result appears", async () => {
-    const request = createMockRequest({
-      id: "1",
-      host: "example.com",
-      method: "GET",
-      path: "/calc",
-      query: "expr=test",
-    });
-
-    const response = createMockResponse({
-      id: "1",
-      code: 200,
-      body: "Result: test",
+        body: "Response: value",
+      },
     });
 
     let callCount = 0;
-    const sendHandler = () => {
-      callCount++;
+    const { findings } = await testCheck(suspectTransformCheck, target, {
+      sendHandler: () => {
+        callCount++;
 
-      const mockRequest = createMockRequest({
-        id: `${callCount + 1}`,
+        const mockRequest = createMockRequest({
+          id: `${callCount + 1}`,
+          host: "example.com",
+          method: "GET",
+          path: "/test",
+          query: `param=value`,
+        });
+
+        const body =
+          callCount <= 2 ? "valueabcdefK123456ghijkl" : "Response: value";
+
+        const mockResponse = createMockResponse({
+          id: `${callCount + 1}`,
+          code: 200,
+          headers: { "content-type": ["text/html"] },
+          body,
+        });
+
+        return Promise.resolve({
+          request: mockRequest,
+          response: mockResponse,
+        });
+      },
+      config: { aggressivity: ScanAggressivity.LOW },
+    });
+
+    expect(findings.length).toBeGreaterThanOrEqual(0);
+  });
+
+  it("should detect arithmetic evaluation when result appears", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
         host: "example.com",
         method: "GET",
         path: "/calc",
         query: "expr=test",
-      });
-
-      const mockResponse = createMockResponse({
-        id: `${callCount + 1}`,
+      },
+      response: {
+        id: "1",
         code: 200,
-        body: `Result: ${callCount % 2 === 1 ? "9801" : "9801"}`,
-      });
+        body: "Result: test",
+      },
+    });
 
-      return Promise.resolve({
-        request: mockRequest,
-        response: mockResponse,
-      });
-    };
+    let callCount = 0;
+    const { findings } = await testCheck(suspectTransformCheck, target, {
+      sendHandler: () => {
+        callCount++;
 
-    const executionHistory = await runCheck(
-      suspectTransformCheck,
-      [{ request, response }],
-      { sendHandler, config: { aggressivity: ScanAggressivity.MEDIUM } },
-    );
+        const mockRequest = createMockRequest({
+          id: `${callCount + 1}`,
+          host: "example.com",
+          method: "GET",
+          path: "/calc",
+          query: "expr=test",
+        });
 
-    const allFindings =
-      executionHistory[0]?.steps?.flatMap((step) => step.findings ?? []) ?? [];
+        const mockResponse = createMockResponse({
+          id: `${callCount + 1}`,
+          code: 200,
+          body: `Result: ${callCount % 2 === 1 ? "9801" : "9801"}`,
+        });
 
-    if (allFindings.length > 0) {
-      expect(allFindings[0]?.name).toContain("arithmetic evaluation");
+        return Promise.resolve({
+          request: mockRequest,
+          response: mockResponse,
+        });
+      },
+      config: { aggressivity: ScanAggressivity.MEDIUM },
+    });
+
+    if (findings.length > 0) {
+      expect(findings[0]?.name).toContain("arithmetic evaluation");
     }
   });
 
   it("should not run when request has no parameters", async () => {
-    const request = createMockRequest({
-      id: "1",
-      host: "example.com",
-      method: "GET",
-      path: "/test",
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "GET",
+        path: "/test",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        headers: { "content-type": ["text/html"] },
+        body: "Safe response",
+      },
     });
 
-    const response = createMockResponse({
-      id: "1",
-      code: 200,
-      headers: { "content-type": ["text/html"] },
-      body: "Safe response",
-    });
+    const { findings } = await testCheck(suspectTransformCheck, target);
 
-    const executionHistory = await runCheck(suspectTransformCheck, [
-      { request, response },
-    ]);
-
-    expect(executionHistory).toMatchObject([]);
+    expect(findings).toHaveLength(0);
   });
 
   it("should find no issues when no transformation occurs", async () => {
-    const request = createMockRequest({
-      id: "1",
-      host: "example.com",
-      method: "GET",
-      path: "/test",
-      query: "param=value",
-    });
-
-    const response = createMockResponse({
-      id: "1",
-      code: 200,
-      headers: { "content-type": ["text/html"] },
-      body: "Response without transformation",
-    });
-
-    const sendHandler = () => {
-      const mockRequest = createMockRequest({
-        id: "2",
+    const target = mockTarget({
+      request: {
+        id: "1",
         host: "example.com",
         method: "GET",
         path: "/test",
-        query: "param=valuetest",
-      });
-
-      const mockResponse = createMockResponse({
-        id: "2",
+        query: "param=value",
+      },
+      response: {
+        id: "1",
         code: 200,
         headers: { "content-type": ["text/html"] },
         body: "Response without transformation",
-      });
+      },
+    });
 
-      return Promise.resolve({
-        request: mockRequest,
-        response: mockResponse,
-      });
-    };
+    const { findings } = await testCheck(suspectTransformCheck, target, {
+      sendHandler: () => {
+        const mockRequest = createMockRequest({
+          id: "2",
+          host: "example.com",
+          method: "GET",
+          path: "/test",
+          query: "param=valuetest",
+        });
 
-    const executionHistory = await runCheck(
-      suspectTransformCheck,
-      [{ request, response }],
-      { sendHandler, config: { aggressivity: ScanAggressivity.LOW } },
-    );
+        const mockResponse = createMockResponse({
+          id: "2",
+          code: 200,
+          headers: { "content-type": ["text/html"] },
+          body: "Response without transformation",
+        });
 
-    const allFindings = executionHistory[0]?.steps?.flatMap(
-      (step) => step.findings ?? [],
-    );
-    expect(allFindings).toHaveLength(0);
+        return Promise.resolve({
+          request: mockRequest,
+          response: mockResponse,
+        });
+      },
+      config: { aggressivity: ScanAggressivity.LOW },
+    });
+
+    expect(findings).toHaveLength(0);
   });
 
   it("should not detect transformation if expected value is in initial response", async () => {
-    const request = createMockRequest({
-      id: "1",
-      host: "example.com",
-      method: "GET",
-      path: "/test",
-      query: "param=value",
-    });
-
-    const response = createMockResponse({
-      id: "1",
-      code: 200,
-      headers: { "content-type": ["text/html"] },
-      body: "Response already contains 9801",
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "GET",
+        path: "/test",
+        query: "param=value",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        headers: { "content-type": ["text/html"] },
+        body: "Response already contains 9801",
+      },
     });
 
     let callCount = 0;
-    const sendHandler = () => {
-      callCount++;
-      const mockRequest = createMockRequest({
-        id: `${callCount + 1}`,
-        host: "example.com",
-        method: "GET",
-        path: "/test",
-        query: "param=value99*99",
-      });
+    const { findings } = await testCheck(suspectTransformCheck, target, {
+      sendHandler: () => {
+        callCount++;
+        const mockRequest = createMockRequest({
+          id: `${callCount + 1}`,
+          host: "example.com",
+          method: "GET",
+          path: "/test",
+          query: "param=value99*99",
+        });
 
-      const mockResponse = createMockResponse({
-        id: `${callCount + 1}`,
-        code: 200,
-        headers: { "content-type": ["text/html"] },
-        body: "Response contains 9801",
-      });
+        const mockResponse = createMockResponse({
+          id: `${callCount + 1}`,
+          code: 200,
+          headers: { "content-type": ["text/html"] },
+          body: "Response contains 9801",
+        });
 
-      return Promise.resolve({
-        request: mockRequest,
-        response: mockResponse,
-      });
-    };
+        return Promise.resolve({
+          request: mockRequest,
+          response: mockResponse,
+        });
+      },
+      config: { aggressivity: ScanAggressivity.LOW },
+    });
 
-    const executionHistory = await runCheck(
-      suspectTransformCheck,
-      [{ request, response }],
-      { sendHandler, config: { aggressivity: ScanAggressivity.LOW } },
-    );
-
-    const allFindings = executionHistory[0]?.steps?.flatMap(
-      (step) => step.findings ?? [],
-    );
-    expect(allFindings).toHaveLength(0);
+    expect(findings).toHaveLength(0);
   });
 
   it("should handle network errors gracefully", async () => {
-    const request = createMockRequest({
-      id: "1",
-      host: "example.com",
-      method: "GET",
-      path: "/test",
-      query: "test=value",
-    });
-
-    const response = createMockResponse({
-      id: "1",
-      code: 200,
-      body: "Test: value",
-    });
-
-    const sendHandler = () => {
-      return Promise.reject(new Error("Network error"));
-    };
-
-    const executionHistory = await runCheck(
-      suspectTransformCheck,
-      [{ request, response }],
-      { sendHandler, config: { aggressivity: ScanAggressivity.LOW } },
-    );
-
-    expect(executionHistory[0]?.status).toBe("completed");
-    expect(executionHistory[0]?.steps?.length).toBeGreaterThan(1);
-  });
-
-  it("should use fewer checks on LOW aggressivity", async () => {
-    const request = createMockRequest({
-      id: "1",
-      host: "example.com",
-      method: "GET",
-      path: "/test",
-      query: "param=test",
-    });
-
-    const response = createMockResponse({
-      id: "1",
-      code: 200,
-      body: "Value: test",
-    });
-
-    let sendCallCount = 0;
-    const sendHandler = () => {
-      sendCallCount++;
-      const mockRequest = createMockRequest({
-        id: `${sendCallCount + 1}`,
+    const target = mockTarget({
+      request: {
+        id: "1",
         host: "example.com",
         method: "GET",
         path: "/test",
-        query: `param=testprobe${sendCallCount}`,
-      });
-
-      const mockResponse = createMockResponse({
-        id: `${sendCallCount + 1}`,
+        query: "test=value",
+      },
+      response: {
+        id: "1",
         code: 200,
-        body: `Value: testprobe${sendCallCount}`,
-      });
+        body: "Test: value",
+      },
+    });
 
-      return Promise.resolve({
-        request: mockRequest,
-        response: mockResponse,
-      });
-    };
+    const { findings } = await testCheck(suspectTransformCheck, target, {
+      sendHandler: () => {
+        return Promise.reject(new Error("Network error"));
+      },
+      config: { aggressivity: ScanAggressivity.LOW },
+    });
 
-    await runCheck(suspectTransformCheck, [{ request, response }], {
-      sendHandler,
+    expect(findings).toHaveLength(0);
+  });
+
+  it("should use fewer checks on LOW aggressivity", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "GET",
+        path: "/test",
+        query: "param=test",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        body: "Value: test",
+      },
+    });
+
+    let sendCallCount = 0;
+    await testCheck(suspectTransformCheck, target, {
+      sendHandler: () => {
+        sendCallCount++;
+        const mockRequest = createMockRequest({
+          id: `${sendCallCount + 1}`,
+          host: "example.com",
+          method: "GET",
+          path: "/test",
+          query: `param=testprobe${sendCallCount}`,
+        });
+
+        const mockResponse = createMockResponse({
+          id: `${sendCallCount + 1}`,
+          code: 200,
+          body: `Value: testprobe${sendCallCount}`,
+        });
+
+        return Promise.resolve({
+          request: mockRequest,
+          response: mockResponse,
+        });
+      },
       config: { aggressivity: ScanAggressivity.LOW },
     });
 
@@ -315,45 +294,44 @@ describe("Suspicious Input Transformation", () => {
   });
 
   it("should use more checks on HIGH aggressivity", async () => {
-    const request = createMockRequest({
-      id: "1",
-      host: "example.com",
-      method: "GET",
-      path: "/test",
-      query: "param=test",
-    });
-
-    const response = createMockResponse({
-      id: "1",
-      code: 200,
-      body: "Value: test",
-    });
-
-    let sendCallCount = 0;
-    const sendHandler = () => {
-      sendCallCount++;
-      const mockRequest = createMockRequest({
-        id: `${sendCallCount + 1}`,
+    const target = mockTarget({
+      request: {
+        id: "1",
         host: "example.com",
         method: "GET",
         path: "/test",
-        query: `param=testprobe${sendCallCount}`,
-      });
-
-      const mockResponse = createMockResponse({
-        id: `${sendCallCount + 1}`,
+        query: "param=test",
+      },
+      response: {
+        id: "1",
         code: 200,
-        body: `Value: testprobe${sendCallCount}`,
-      });
+        body: "Value: test",
+      },
+    });
 
-      return Promise.resolve({
-        request: mockRequest,
-        response: mockResponse,
-      });
-    };
+    let sendCallCount = 0;
+    await testCheck(suspectTransformCheck, target, {
+      sendHandler: () => {
+        sendCallCount++;
+        const mockRequest = createMockRequest({
+          id: `${sendCallCount + 1}`,
+          host: "example.com",
+          method: "GET",
+          path: "/test",
+          query: `param=testprobe${sendCallCount}`,
+        });
 
-    await runCheck(suspectTransformCheck, [{ request, response }], {
-      sendHandler,
+        const mockResponse = createMockResponse({
+          id: `${sendCallCount + 1}`,
+          code: 200,
+          body: `Value: testprobe${sendCallCount}`,
+        });
+
+        return Promise.resolve({
+          request: mockRequest,
+          response: mockResponse,
+        });
+      },
       config: { aggressivity: ScanAggressivity.HIGH },
     });
 

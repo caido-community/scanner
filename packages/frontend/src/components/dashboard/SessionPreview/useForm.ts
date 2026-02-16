@@ -1,12 +1,11 @@
 import { useTimestamp } from "@vueuse/core";
 import { Severity } from "engine";
 import { type Session } from "shared";
-import { computed, ref, toRefs } from "vue";
+import { computed, ref, type Ref } from "vue";
 
 import { useScannerService } from "@/services/scanner";
 
-export const useForm = (props: { session: Session }) => {
-  const { session } = toRefs(props);
+export const useForm = (session: Ref<Session>) => {
   const now = useTimestamp({ interval: 50 });
 
   const { cancelScanSession, deleteScanSession, rerunScanSession } =

@@ -15,7 +15,7 @@ export const useQueueService = defineStore("services.queue", () => {
     store.send({ type: "Start" });
 
     const result = await sdk.backend.getQueueTasks();
-    if (result.kind === "Success") {
+    if (result.kind === "Ok") {
       store.send({ type: "Success", tasks: result.value });
     } else {
       store.send({ type: "Error", error: result.error });
@@ -40,7 +40,7 @@ export const useQueueService = defineStore("services.queue", () => {
 
   const clearQueue = async () => {
     const result = await repository.clearQueueTasks();
-    if (result.kind === "Success") {
+    if (result.kind === "Ok") {
       store.send({ type: "Clear" });
     } else {
       store.send({ type: "Error", error: result.error });

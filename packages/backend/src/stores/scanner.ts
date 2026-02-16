@@ -1,8 +1,9 @@
-import type {
-  Finding,
-  InterruptReason,
-  ScanConfig,
-  ScanRunnable,
+import {
+  createPrefixedRandomId,
+  type Finding,
+  type InterruptReason,
+  type ScanConfig,
+  type ScanRunnable,
 } from "engine";
 import { create } from "mutative";
 import type { CheckExecution, Session } from "shared";
@@ -83,7 +84,7 @@ export class ScannerStore {
     requestIDs: string[],
     scanConfig: ScanConfig,
   ): Session {
-    const id = `ascan-${Math.random().toString(36).substring(2, 15)}`;
+    const id = createPrefixedRandomId("ascan-");
     const session: Session = {
       kind: "Pending",
       id,
@@ -275,7 +276,7 @@ export class ScannerStore {
 
       const newExecution: CheckExecution = {
         kind: "Running",
-        id: `check-${Math.random().toString(36).substring(2, 15)}`,
+        id: createPrefixedRandomId("check-"),
         checkID: checkId,
         targetRequestID: targetId,
         startedAt: Date.now(),

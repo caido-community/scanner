@@ -2,7 +2,6 @@ import { continueWith, defineCheck, done, Severity } from "engine";
 
 import { Tags } from "../../../types";
 import {
-  createRequestWithParameter,
   extractParameters,
   hasParameters,
   type Parameter,
@@ -81,11 +80,7 @@ export default defineCheck<State>(({ step }) => {
     }
 
     const testValue = currentParam.value + currentPayload;
-    const testRequestSpec = createRequestWithParameter(
-      context,
-      currentParam,
-      testValue,
-    );
+    const testRequestSpec = currentParam.inject(testValue);
     const { request: testRequest, response: testResponse } =
       await context.sdk.requests.send(testRequestSpec);
 

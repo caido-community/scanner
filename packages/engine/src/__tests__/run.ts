@@ -19,7 +19,7 @@ type RunCheckOptions = {
 
 const createFullConfig = (options?: RunCheckOptions): ScanConfig => ({
   aggressivity: ScanAggressivity.MEDIUM,
-  inScopeOnly: false,
+  scopeIDs: [],
   concurrentChecks: 1,
   concurrentRequests: 1,
   concurrentTargets: 1,

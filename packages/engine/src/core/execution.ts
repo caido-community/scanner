@@ -83,6 +83,9 @@ export const createTaskExecutor = ({
         output: result.status === "done" ? task.getOutput() : undefined,
       };
     } catch (error) {
+      if (error instanceof ScanRunnableInterruptedError) {
+        throw error;
+      }
       if (error instanceof ScanRunnableError) {
         return {
           findings: [],

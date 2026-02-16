@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import InputNumber from "primevue/inputnumber";
 import InputText from "primevue/inputtext";
+import MultiSelect from "primevue/multiselect";
 import SelectButton from "primevue/selectbutton";
 
 import { useForm } from "./useForm";
@@ -10,7 +11,6 @@ const {
   aggressivityOptions,
   severityOptions,
   scopeOptions,
-  inScopeOnly,
   readableTimeout,
 } = useForm();
 </script>
@@ -87,20 +87,17 @@ const {
             Scope
           </label>
           <small class="block text-sm text-surface-400">
-            Define the scope of the scan
+            Filter scan targets by selected scopes
           </small>
         </div>
-        <SelectButton
-          v-model="inScopeOnly"
+        <MultiSelect
+          v-model="form.config.scopeIDs"
           :options="scopeOptions"
           option-label="label"
           option-value="value"
-          :allow-empty="false"
-          :pt="{
-            root: {
-              style: 'width: fit-content; border-color: var(--p-surface-700)',
-            },
-          }"
+          display="comma"
+          placeholder="All requests (no scope filter)"
+          class="w-full"
         />
       </div>
 
@@ -157,9 +154,9 @@ const {
       <div class="flex flex-col gap-2">
         <div>
           <label
-            class="block text-sm font-medium text-surface-200 flex items-center gap-1"
+            class="flex items-center gap-1 text-sm font-medium text-surface-200"
           >
-            Timeout (seconds)
+            Scan Timeout (seconds)
             <span
               v-if="readableTimeout"
               class="text-surface-500 text-xs font-normal"
@@ -177,6 +174,23 @@ const {
           placeholder="600"
           class="w-full"
           @input="form.config.scanTimeout = Number($event.value)"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <div>
+          <label class="block text-sm font-medium text-surface-200">
+            Request Timeout (seconds)
+          </label>
+          <small class="block text-sm text-surface-400">
+            Maximum time to wait for a single HTTP request
+          </small>
+        </div>
+        <InputNumber
+          v-model="form.config.requestTimeout"
+          :min="1"
+          placeholder="120"
+          class="w-full"
         />
       </div>
 

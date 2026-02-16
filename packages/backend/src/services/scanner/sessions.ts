@@ -1,10 +1,5 @@
-import {
-  error,
-  ok,
-  type Result,
-  type ScanRequestPayload,
-  type Session,
-} from "shared";
+import { Result } from "engine";
+import type { Result as ResultType, ScanRequestPayload, Session } from "shared";
 
 import { IdSchema, SessionTitleSchema } from "../../schemas";
 import { ScannerStore } from "../../stores/scanner";
@@ -13,7 +8,10 @@ import { validateInput } from "../../utils/validation";
 
 import { startActiveScan } from "./execution";
 
-export const getScanSession = (_: BackendSDK, id: string): Result<Session> => {
+export const getScanSession = (
+  _: BackendSDK,
+  id: string,
+): ResultType<Session> => {
   const validation = validateInput(IdSchema, id);
   if (validation.kind === "Error") {
     return validation;
@@ -21,21 +19,21 @@ export const getScanSession = (_: BackendSDK, id: string): Result<Session> => {
 
   const session = ScannerStore.get().getSession(validation.value);
   if (!session) {
-    return error(`Session ${validation.value} not found`);
+    return Result.err(`Session ${validation.value} not found`);
   }
 
-  return ok(session);
+  return Result.ok(session);
 };
 
-export const getScanSessions = (_: BackendSDK): Result<Session[]> => {
+export const getScanSessions = (_: BackendSDK): ResultType<Session[]> => {
   const sessions = ScannerStore.get().listSessions();
-  return ok(sessions);
+  return Result.ok(sessions);
 };
 
 export const cancelScanSession = async (
   _: BackendSDK,
   id: string,
-): Promise<Result<boolean>> => {
+): Promise<ResultType<boolean>> => {
   const validation = validateInput(IdSchema, id);
   if (validation.kind === "Error") {
     return validation;
@@ -43,27 +41,27 @@ export const cancelScanSession = async (
 
   const store = ScannerStore.get();
   const result = await store.cancelRunnable(validation.value);
-  return ok(result);
+  return Result.ok(result);
 };
 
 export const deleteScanSession = (
   _: BackendSDK,
   id: string,
-): Result<boolean> => {
+): ResultType<boolean> => {
   const validation = validateInput(IdSchema, id);
   if (validation.kind === "Error") {
     return validation;
   }
 
   const result = ScannerStore.get().deleteSession(validation.value);
-  return ok(result);
+  return Result.ok(result);
 };
 
 export const updateSessionTitle = (
   sdk: BackendSDK,
   id: string,
   title: string,
-): Result<Session> => {
+): ResultType<Session> => {
   const idValidation = validateInput(IdSchema, id);
   if (idValidation.kind === "Error") {
     return idValidation;
@@ -79,17 +77,17 @@ export const updateSessionTitle = (
     titleValidation.value,
   );
   if (!result) {
-    return error(`Session ${idValidation.value} not found`);
+    return Result.err(`Session ${idValidation.value} not found`);
   }
 
   sdk.api.send("session:updated", idValidation.value, result);
-  return ok(result);
+  return Result.ok(result);
 };
 
 export const rerunScanSession = (
   sdk: BackendSDK,
   id: string,
-): Result<Session> => {
+): ResultType<Session> => {
   const validation = validateInput(IdSchema, id);
   if (validation.kind === "Error") {
     return validation;
@@ -97,7 +95,7 @@ export const rerunScanSession = (
 
   const session = ScannerStore.get().getSession(validation.value);
   if (!session) {
-    return error(`Session ${validation.value} not found`);
+    return Result.err(`Session ${validation.value} not found`);
   }
 
   const payload: ScanRequestPayload = {

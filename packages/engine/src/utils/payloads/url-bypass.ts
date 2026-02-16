@@ -1,3 +1,5 @@
+import { Result } from "../../types/result";
+
 export type UrlBypassTechnique =
   | "NormalUrl"
   | "UserInfoBypass"
@@ -153,6 +155,28 @@ const STRATEGIES: Readonly<Record<UrlBypassTechnique, BypassStrategy>> = {
   }),
 };
 
+export const validateUrlBypassGeneratorConfig = (
+  config: UrlBypassGeneratorConfig,
+): Result<void, string> => {
+  if (config.expectedHost.includes("/") || config.attackerHost.includes("/")) {
+    return Result.err(
+      "[createUrlBypassGenerator] Expected a valid hostname, not a URL",
+    );
+  }
+
+  if (!config.protocol.endsWith(":")) {
+    return Result.err(
+      "[createUrlBypassGenerator] Protocol must end with a colon",
+    );
+  }
+
+  return Result.ok(undefined);
+};
+
+export const getAllUrlBypassTechniques = (): UrlBypassTechnique[] => {
+  return Object.keys(STRATEGIES) as UrlBypassTechnique[];
+};
+
 export function createUrlBypassGenerator(input: {
   /** The host of the application we are testing */
   expectedHost: string;
@@ -162,26 +186,17 @@ export function createUrlBypassGenerator(input: {
   originalValue?: string;
   /** Optional: The protocol to use, must end with a colon. Defaults to "https:" if not provided. */
   protocol?: string;
-}): UrlBypassGenerator {
+}): Result<UrlBypassGenerator, string> {
   const config: UrlBypassGeneratorConfig = {
     protocol: "https:",
     ...input,
   };
 
-  // Basic validation to prevent bugs in the future
-  if (config.expectedHost.includes("/") || config.attackerHost.includes("/")) {
-    throw new Error(
-      "[createUrlBypassGenerator] Expected a valid hostname, not a URL",
-    );
+  const validation = validateUrlBypassGeneratorConfig(config);
+  if (Result.isErr(validation)) {
+    return validation;
   }
-
-  if (!config.protocol.endsWith(":")) {
-    throw new Error(
-      "[createUrlBypassGenerator] Protocol must end with a colon",
-    );
-  }
-
-  const ALL_TECHNIQUES = Object.keys(STRATEGIES) as UrlBypassTechnique[];
+  const ALL_TECHNIQUES = getAllUrlBypassTechniques();
 
   const createGenerator = (
     activeTechniques: UrlBypassTechnique[],
@@ -215,5 +230,5 @@ export function createUrlBypassGenerator(input: {
     };
   };
 
-  return createGenerator(ALL_TECHNIQUES);
+  return Result.ok(createGenerator(ALL_TECHNIQUES));
 }

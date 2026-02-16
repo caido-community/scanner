@@ -1,9 +1,7 @@
 import { type Session } from "shared";
-import { computed, toRefs } from "vue";
+import { computed, type Ref } from "vue";
 
-export const useTable = (props: { session: Session }) => {
-  const { session } = toRefs(props);
-
+export const useTable = (session: Ref<Session>) => {
   const checksHistory = computed(() => {
     if (
       session.value.kind !== "Running" &&
