@@ -105,7 +105,9 @@ const handleLabel = (
       </template>
     </MenuBar>
     <div class="flex-1 min-h-0">
-      <component :is="component" />
+      <KeepAlive>
+        <component :is="component" />
+      </KeepAlive>
     </div>
   </div>
 </template>

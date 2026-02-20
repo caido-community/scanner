@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Button from "primevue/button";
-import TabPanel from "primevue/tabpanel";
-import TabView from "primevue/tabview";
+import SelectButton from "primevue/selectbutton";
 
 import { useStepper } from "./useStepper";
 
@@ -12,6 +11,7 @@ import { type FrontendSDK } from "@/types";
 const {
   steps,
   currentStepIndex,
+  currentStep,
   canGoPrevious,
   isLastStep,
   goNext,
@@ -29,26 +29,20 @@ const launcher = useLauncher();
 </script>
 
 <template>
-  <div class="w-[900px] h-[500px] flex flex-col gap-2">
-    <TabView
-      v-model:active-index="currentStepIndex"
-      class="flex-1 overflow-hidden"
-      :pt="{
-        panelContainer: {
-          class: 'overflow-auto',
-          style: 'padding: 0; height: 90%',
-        },
-      }"
-    >
-      <TabPanel
-        v-for="step in steps"
-        :key="step.id"
-        :header="step.label"
-        :value="step.id"
+  <div id="plugin--scanner" class="w-[900px] h-[500px] flex flex-col gap-2">
+    <div class="flex-shrink-0">
+      <SelectButton
+        v-model="currentStepIndex"
+        :options="steps.map((_, index) => index)"
       >
-        <component :is="step.component" />
-      </TabPanel>
-    </TabView>
+        <template #option="{ option }">
+          {{ steps[option]?.label }}
+        </template>
+      </SelectButton>
+    </div>
+    <div class="flex-1 overflow-auto">
+      <component :is="currentStep?.component" />
+    </div>
     <div class="flex items-center justify-end gap-2 flex-shrink-0">
       <Button
         v-if="canGoPrevious"

@@ -13,6 +13,7 @@ export const useTable = (session: Ref<Session>) => {
 
     return session.value.progress.checksHistory.map((check) => {
       return {
+        id: check.id,
         name: check.checkID,
         status: check.kind,
         targetID: check.targetRequestID,

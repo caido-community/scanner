@@ -118,6 +118,9 @@ export class ConfigStore {
       return;
     }
 
+    const allScopeIDs = await this.getAllScopeIDs();
+    this.config.passive.scopeIDs = allScopeIDs;
+
     const defaultPreset = this.getDefaultPreset();
     if (defaultPreset) {
       this.config.active.overrides = defaultPreset.active;
