@@ -11,6 +11,7 @@ import App from "./views/App.vue";
 import { ScanLauncher } from "@/components/launcher";
 import { useConfigService } from "@/services/config";
 import { useLauncher } from "@/stores/launcher";
+import { getSelectedRequestFromDOM } from "@/utils/utils";
 
 export const init = (sdk: FrontendSDK) => {
   const app = createApp(App);
@@ -84,6 +85,16 @@ export const init = (sdk: FrontendSDK) => {
           sdk.window.showToast("No requests selected", { variant: "warning" });
           return;
         }
+      } else if (context.type === "BaseContext") {
+        const request = getSelectedRequestFromDOM();
+        if (request !== undefined) {
+          requests.push(request);
+        } else {
+          sdk.window.showToast("No request editor active or selected", {
+            variant: "warning",
+          });
+          return;
+        }
       } else {
         sdk.window.showToast("No requests selected", { variant: "warning" });
         return;
@@ -108,10 +119,11 @@ export const init = (sdk: FrontendSDK) => {
 
       const launcherStore = useLauncher();
       launcherStore.restart();
-      launcherStore.form.targets = requests.map((request) => ({
+      const targets = requests.map((request) => ({
         ...request,
         method: "GET",
       }));
+      launcherStore.form.targets = targets;
 
       const dialog = sdk.window.showDialog(
         {
@@ -139,9 +151,14 @@ export const init = (sdk: FrontendSDK) => {
       if (context.type === "RequestContext") {
         return context.request.type === "RequestFull";
       }
+      if (context.type === "BaseContext") {
+        return true;
+      }
       return false;
     },
   });
+
+  sdk.shortcuts.register("run-active-scanner", ["Control", "Shift", "S"]);
 
   sdk.menu.registerItem({
     type: "RequestRow",
