@@ -4,7 +4,7 @@ const config: RawConfigurationOrFn = {
   workspaces: {
     ".": {
       entry: ["caido.config.ts"],
-      ignoreDependencies: ["@caido/sdk-backend", "rollup-plugin-dts"],
+      ignoreDependencies: ["@caido/sdk-backend", "@vitest/coverage-v8", "rollup-plugin-dts"],
     },
     "packages/backend": {
       project: ["src/**/*.ts"],

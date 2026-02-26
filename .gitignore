@@ -5,3 +5,4 @@ dist
 test
 todo.md
 .DS_Store
+coverage
