@@ -27,7 +27,7 @@ importers:
         specifier: 6.0.1
         version: 6.0.1(vite@6.3.5(@types/node@25.2.1)(jiti@2.4.2)(yaml@2.8.0))(vue@3.5.27(typescript@5.8.3))
       '@vitest/coverage-v8':
-        specifier: ^3.2.3
+        specifier: 3.2.3
         version: 3.2.3(vitest@3.2.3)
       '@vitest/ui':
         specifier: 3.2.3
@@ -36,7 +36,7 @@ importers:
         specifier: 9.31.0
         version: 9.31.0(jiti@2.4.2)
       knip:
-        specifier: ^5.83.1
+        specifier: 5.83.1
         version: 5.83.1(@types/node@25.2.1)(typescript@5.8.3)
       postcss-prefixwrap:
         specifier: 1.57.2
@@ -2004,13 +2004,11 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
-    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@11.0.1:
     resolution: {integrity: sha512-zrQDm8XPnYEKawJScsnM0QzobJxlT/kHOOlRTio8IH/GrmxRE5fjllkzdaHclIuNjUQTJYH2xHNIGfdpJkDJUw==}
     engines: {node: 20 || >=22}
-    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   globals@14.0.0:
@@ -2962,7 +2960,6 @@ packages:
   source-map@0.8.0-beta.0:
     resolution: {integrity: sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA==}
     engines: {node: '>= 8'}
-    deprecated: The work that was done in this beta branch won't be included in future versions
 
   speakingurl@14.0.1:
     resolution: {integrity: sha512-1POYv7uv2gXoyGFpBCmpDVSNV74IfsWlDW216UPjbWufNf+bSU6GdbDsxdcxtfwb4xlI3yxzOTKClUosxARYrQ==}
