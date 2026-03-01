@@ -14,7 +14,6 @@ pnpm run validate         # Run typecheck + lint + test
 pnpm vitest run packages/backend/src/checks/<check-name>/index.spec.ts  # Run a single test file
 pnpm vitest run --coverage  # Run tests with code coverage report
 pnpm vitest run --coverage packages/backend/src/checks/<check-name>/index.spec.ts  # Coverage for a specific check
-lint-dev                  # Custom Caido linting (available in $PATH)
 ```
 
 ## Architecture
