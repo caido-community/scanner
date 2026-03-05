@@ -233,6 +233,109 @@ describe("reflected-css-injection check", () => {
     expect(findings).toHaveLength(0);
   });
 
+  it("should find no issues when sending the probe fails", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "GET",
+        path: "/page",
+        query: "theme=red",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        headers: { "content-type": ["text/html"] },
+        body: "<html><style>.box{color:red;}</style><body></body></html>",
+      },
+    });
+
+    const { findings } = await testCheck(reflectedCssInjectionCheck, target, {
+      sendHandler: async () => {
+        throw new Error("request failed");
+      },
+    });
+
+    expect(findings).toHaveLength(0);
+  });
+
+  it("should find no issues when probe response status code is not 200", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "GET",
+        path: "/page",
+        query: "theme=red",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        headers: { "content-type": ["text/html"] },
+        body: "<html><style>.box{color:red;}</style><body></body></html>",
+      },
+    });
+
+    const { findings } = await testCheck(reflectedCssInjectionCheck, target, {
+      sendHandler: (spec) => {
+        const styleNeedle =
+          extractStyleNeedle(spec.getQuery()) ?? "scanner-css-default.invalid";
+
+        const request = createSentRequest({
+          id: "2",
+          specQuery: spec.getQuery(),
+        });
+        const response = createMockResponse({
+          id: "2",
+          code: 302,
+          headers: { "content-type": ["text/html"] },
+          body: `<html><style>.box{color:red;${styleNeedle}}</style><body></body></html>`,
+        });
+
+        return Promise.resolve({ request, response });
+      },
+    });
+
+    expect(findings).toHaveLength(0);
+  });
+
+  it("should find no issues when probe response contains invalid html", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "GET",
+        path: "/page",
+        query: "theme=red",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        headers: { "content-type": ["text/html"] },
+        body: "<html><style>.box{color:red;}</style><body></body></html>",
+      },
+    });
+
+    const { findings } = await testCheck(reflectedCssInjectionCheck, target, {
+      sendHandler: (spec) => {
+        const request = createSentRequest({
+          id: "2",
+          specQuery: spec.getQuery(),
+        });
+        const response = createMockResponse({
+          id: "2",
+          code: 200,
+          headers: { "content-type": ["text/html"] },
+          body: "<html><style>\u0000",
+        });
+
+        return Promise.resolve({ request, response });
+      },
+    });
+
+    expect(findings).toHaveLength(0);
+  });
+
   it("should not run on non-HTML targets", async () => {
     const target = mockTarget({
       request: {
