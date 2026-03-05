@@ -1,4 +1,4 @@
-import { defineCheckV2, Result, type ScanTarget, Severity } from "engine";
+import { defineCheckV2, Result, Severity } from "engine";
 
 import { Tags } from "../../../types";
 import { keyStrategy } from "../../../utils/key";
@@ -9,6 +9,7 @@ import {
   formatInputVector,
 } from "../inputs";
 import { createMarker } from "../marker";
+import { hasResponseBody } from "../target";
 
 const QUERY_LIMITS = {
   low: 3,
@@ -27,16 +28,6 @@ const HEADER_LIMITS = {
   medium: 2,
   high: 3,
 } as const;
-
-const hasResponseBody = (target: ScanTarget): boolean => {
-  const response = target.response;
-  if (response === undefined) {
-    return false;
-  }
-
-  const body = response.getBody()?.toText();
-  return body !== undefined && body !== "";
-};
 
 export default defineCheckV2({
   id: "input-reflected",
@@ -114,7 +105,6 @@ export default defineCheckV2({
         },
         request: result.value.request,
       });
-      return;
     }
   },
 });
