@@ -26,6 +26,10 @@ export const BALANCED_PRESET: Preset = {
       enabled: true,
     },
     {
+      checkID: Checks.REFLECTED_CSS_INJECTION,
+      enabled: true,
+    },
+    {
       checkID: Checks.PHPINFO,
       enabled: true,
     },
@@ -105,6 +109,10 @@ export const BALANCED_PRESET: Preset = {
     },
     {
       checkID: Checks.BASIC_REFLECTED_XSS,
+      enabled: true,
+    },
+    {
+      checkID: Checks.REFLECTED_CSS_INJECTION,
       enabled: true,
     },
     {
