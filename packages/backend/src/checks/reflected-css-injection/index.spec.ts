@@ -251,7 +251,7 @@ describe("reflected-css-injection check", () => {
     });
 
     const { findings } = await testCheck(reflectedCssInjectionCheck, target, {
-      sendHandler: async () => {
+      sendHandler: () => {
         throw new Error("request failed");
       },
     });
