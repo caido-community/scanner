@@ -72,7 +72,7 @@ describe("input-reflected check", () => {
     expect(findings[0]).toMatchObject({
       severity: "info",
     });
-    expect(callCount).toBe(1);
+    expect(callCount).toBeGreaterThan(1);
   });
 
   it("should detect reflected input in a cookie value", async () => {
@@ -122,11 +122,20 @@ describe("input-reflected check", () => {
       },
     });
 
-    expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({
-      severity: "info",
-    });
-    expect(callCount).toBe(1);
+    expect(findings).toHaveLength(2);
+    expect(findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Input returned in response (reflected) in cookie 'theme'",
+          severity: "info",
+        }),
+        expect.objectContaining({
+          name: "Input returned in response (reflected) in cookie 'session'",
+          severity: "info",
+        }),
+      ]),
+    );
+    expect(callCount).toBeGreaterThan(1);
   });
 
   it("should detect reflected input in a header value", async () => {
@@ -178,7 +187,73 @@ describe("input-reflected check", () => {
     expect(findings[0]).toMatchObject({
       severity: "info",
     });
-    expect(callCount).toBe(1);
+    expect(callCount).toBeGreaterThan(1);
+  });
+
+  it("should create a finding for each reflected vector", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "GET",
+        path: "/search",
+        query: "q=test&lang=en",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        headers: {},
+        body: "safe",
+      },
+    });
+
+    let callCount = 0;
+    const { findings } = await testCheck(inputReflectedCheck, target, {
+      sendHandler: (spec) => {
+        callCount += 1;
+
+        const params = new URLSearchParams(spec.getQuery());
+        const q = params.get("q") ?? "";
+        const lang = params.get("lang") ?? "";
+        const reflectedValues = [q, lang].filter((value) =>
+          value.includes("scanner-"),
+        );
+        const body =
+          reflectedValues.length > 0 ? reflectedValues.join("|") : "safe";
+
+        const request = createMockRequest({
+          id: String(callCount + 1),
+          host: spec.getHost(),
+          method: spec.getMethod(),
+          path: spec.getPath(),
+          query: spec.getQuery(),
+          headers: spec.getHeaders(),
+        });
+
+        const response = createMockResponse({
+          id: String(callCount + 1),
+          code: 200,
+          headers: {},
+          body,
+        });
+
+        return Promise.resolve({ request, response });
+      },
+    });
+
+    expect(findings).toHaveLength(2);
+    expect(findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Input returned in response (reflected) in query 'q'",
+          severity: "info",
+        }),
+        expect.objectContaining({
+          name: "Input returned in response (reflected) in query 'lang'",
+          severity: "info",
+        }),
+      ]),
+    );
   });
 
   it("should find no issues when no injected marker is reflected", async () => {
