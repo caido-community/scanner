@@ -459,6 +459,56 @@ describe("Database Connection Disclosure Check", () => {
     );
   });
 
+  it("should detect semicolon-separated username and password pairs", async () => {
+    const request = createMockRequest({
+      id: "9a",
+      host: "example.com",
+      method: "GET",
+      path: "/",
+    });
+
+    const response = createMockResponse({
+      id: "9a",
+      code: 200,
+      headers: { "content-type": ["text/html"] },
+      body: "username=admin; password=secret123",
+    });
+
+    const executionHistory = await runCheck(
+      dbConnectionDisclosureScan,
+      [{ request, response }],
+      {
+        sendHandler: () => Promise.resolve({ request, response }),
+        config: { aggressivity: ScanAggressivity.LOW },
+      },
+    );
+
+    expect(executionHistory).toMatchObject([
+      {
+        checkId: "db-connection-disclosure",
+        targetRequestId: "9a",
+        status: "completed",
+        steps: [
+          {
+            stepName: "scanResponse",
+            findings: [
+              {
+                name: "Database Connection String Disclosed",
+                severity: "info",
+              },
+            ],
+            result: "done",
+          },
+        ],
+      },
+    ]);
+
+    const finding = executionHistory[0]?.steps[0]?.findings[0];
+    expect(finding?.description).toContain(
+      "username=admin; password=secret123",
+    );
+  });
+
   it("should not run on non-200 responses due to when clause", async () => {
     const request = createMockRequest({
       id: "10",
@@ -551,6 +601,43 @@ describe("Database Connection Disclosure Check", () => {
       {
         checkId: "db-connection-disclosure",
         targetRequestId: "12",
+        status: "completed",
+      },
+    ]);
+
+    const allFindings =
+      executionHistory[0]?.steps.flatMap((step) => step.findings) ?? [];
+    expect(allFindings).toEqual([]);
+  });
+
+  it("should not detect noise in comma-separated identifier pairs", async () => {
+    const request = createMockRequest({
+      id: "13",
+      host: "example.com",
+      method: "GET",
+      path: "/",
+    });
+
+    const response = createMockResponse({
+      id: "13",
+      code: 200,
+      headers: { "content-type": ["application/javascript"] },
+      body: "username:e,password:t",
+    });
+
+    const executionHistory = await runCheck(
+      dbConnectionDisclosureScan,
+      [{ request, response }],
+      {
+        sendHandler: () => Promise.resolve({ request, response }),
+        config: { aggressivity: ScanAggressivity.LOW },
+      },
+    );
+
+    expect(executionHistory).toMatchObject([
+      {
+        checkId: "db-connection-disclosure",
+        targetRequestId: "13",
         status: "completed",
       },
     ]);
