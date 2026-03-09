@@ -27,6 +27,7 @@ import pathTraversalScan from "./path-traversal";
 import phpinfoScan from "./phpinfo";
 import privateIpDisclosureScan from "./private-ip-disclosure";
 import privateKeyDisclosureScan from "./private-key-disclosure";
+import reflectedCssInjectionScan from "./reflected-css-injection";
 import { basicReflectedXSSScan } from "./reflected-xss";
 import robotsTxtScan from "./robots-txt";
 import springActuatorScan from "./spring-actuator";
@@ -70,6 +71,7 @@ export const Checks = {
   PHPINFO: "phpinfo",
   PRIVATE_IP_DISCLOSURE: "private-ip-disclosure",
   PRIVATE_KEY_DISCLOSURE: "private-key-disclosure",
+  REFLECTED_CSS_INJECTION: "reflected-css-injection",
   ROBOTS_TXT: "robots-txt",
   BASIC_REFLECTED_XSS: "basic-reflected-xss",
   MYSQL_ERROR_BASED_SQLI: "mysql-error-based-sqli",
@@ -115,6 +117,7 @@ export const checks = [
   phpinfoScan,
   privateIpDisclosureScan,
   privateKeyDisclosureScan,
+  reflectedCssInjectionScan,
   robotsTxtScan,
   basicReflectedXSSScan,
   mysqlErrorBased,
