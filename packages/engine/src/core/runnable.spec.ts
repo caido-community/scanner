@@ -6,6 +6,7 @@ import type { Check, RuntimeContext } from "../types";
 import { done } from "../utils/flow";
 
 import { defineCheck } from "./define-check";
+import { createRegistry } from "./registry";
 import { evaluateCheckApplicability, getCheckBatches } from "./runnable";
 
 const createCheck = (options: {
@@ -186,5 +187,84 @@ describe("getCheckBatches", () => {
     expect(() => getCheckBatches([check])).toThrow(
       "Check 'consumer' has unknown dependency 'missing'",
     );
+  });
+});
+
+describe("createRunnable", () => {
+  it("returns an interrupted timeout result when the scan timeout fires", async () => {
+    const check = defineCheck<{ complete: boolean }>(({ step }) => {
+      step("execute", async (state) => {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+
+        return done({
+          state: {
+            ...state,
+            complete: true,
+          },
+        });
+      });
+
+      return {
+        metadata: {
+          id: "slow-check",
+          name: "slow-check",
+          description: "slow-check",
+          type: "passive",
+          tags: [],
+          severities: ["info"],
+          aggressivity: {
+            minRequests: 0,
+            maxRequests: 0,
+          },
+        },
+        initState: () => ({ complete: false }),
+      };
+    });
+    const registry = createRegistry();
+    registry.register(check);
+
+    const request = createMockRequest({
+      id: "1",
+      host: "example.com",
+      method: "GET",
+      path: "/",
+      query: "",
+    });
+    const sdk = createTestSdk({
+      requests: {
+        [request.getId()]: {
+          request: {
+            id: request.getId(),
+            host: request.getHost(),
+            port: request.getPort(),
+            tls: request.getTls(),
+            method: request.getMethod(),
+            path: request.getPath(),
+            query: request.getQuery(),
+            headers: request.getHeaders(),
+            body: request.getBody()?.toText(),
+          },
+        },
+      },
+    });
+    const runnable = registry.create(sdk as unknown as RuntimeContext["sdk"], {
+      aggressivity: "medium",
+      scopeIDs: [],
+      concurrentChecks: 1,
+      concurrentRequests: 1,
+      concurrentTargets: 1,
+      requestsDelayMs: 0,
+      scanTimeout: 0.01,
+      checkTimeout: 1,
+      severities: ["info", "low", "medium", "high", "critical"],
+    });
+
+    const result = await runnable.run([request.getId()]);
+
+    expect(result).toEqual({
+      kind: "Interrupted",
+      reason: "Timeout",
+      findings: [],
+    });
   });
 });

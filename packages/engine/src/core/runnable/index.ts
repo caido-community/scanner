@@ -471,10 +471,12 @@ export const createRunnable = ({
       }
 
       let finished = false;
+      let timedOut = false;
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       const timeoutPromise = new Promise<"timeout">((resolve) => {
         timeoutId = setTimeout(() => {
           if (!finished && interruptController.getReason() === undefined) {
+            timedOut = true;
             interruptController.setReason("Timeout");
           }
           resolve("timeout");
@@ -490,7 +492,17 @@ export const createRunnable = ({
 
       const result = await Promise.race([runPromise, timeoutPromise]);
       if (result === "timeout") {
-        return await runPromise;
+        const finalResult = await runPromise;
+        if (finalResult.kind === "Finished" && timedOut) {
+          emit("scan:interrupted", { reason: "Timeout" });
+          return {
+            kind: "Interrupted",
+            reason: "Timeout",
+            findings: finalResult.findings,
+          };
+        }
+
+        return finalResult;
       }
       return result;
     },
