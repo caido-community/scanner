@@ -57,7 +57,7 @@ const getSeverityClasses = (severity: string) => {
       class="flex-1 min-h-0 min-w-0 grid grid-cols-1 lg:grid-cols-[minmax(20rem,0.9fr)_minmax(0,1.35fr)] gap-1"
     >
       <Card
-        class="h-full min-h-0"
+        class="h-80 min-h-80 overflow-hidden lg:h-full lg:min-h-0"
         :pt="{
           body: { class: 'h-full p-0 min-h-0' },
           content: { class: 'h-full min-h-0 flex flex-col' },
