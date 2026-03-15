@@ -90,7 +90,7 @@ const columnWidths = {
                 :class="index % 2 === 0 ? 'bg-surface-800' : 'bg-surface-900'"
               >
                 <td
-                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-top"
+                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-middle"
                   :style="{ width: columnWidths.targetID }"
                 >
                   <div class="text-sm font-mono truncate">
@@ -98,25 +98,25 @@ const columnWidths = {
                   </div>
                 </td>
                 <td
-                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-top"
+                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-middle"
                   :style="{ width: columnWidths.check }"
                 >
                   <div class="text-sm truncate">{{ item.name }}</div>
                 </td>
                 <td
-                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-top"
+                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-middle"
                   :style="{ width: columnWidths.requests }"
                 >
                   <div class="text-sm font-mono">{{ item.requestsSent }}</div>
                 </td>
                 <td
-                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-top"
+                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-middle"
                   :style="{ width: columnWidths.findings }"
                 >
                   <FindingsBySeverity :findings="item.findings" />
                 </td>
                 <td
-                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-top"
+                  class="leading-[normal] text-left border-0 py-[0.375rem] px-2 align-middle"
                   :style="{ width: columnWidths.status }"
                 >
                   <div class="text-sm">
