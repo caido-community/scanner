@@ -14,7 +14,6 @@ import { type JSONSerializable } from "../types/utils";
 
 import { CheckDefinitionError, CheckDefinitionErrorCode } from "./errors";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 /**
  * Defines a step-based check with an explicit state machine.
  *
@@ -22,7 +21,7 @@ import { CheckDefinitionError, CheckDefinitionErrorCode } from "./errors";
  * steps with `step(...)` and return the check metadata plus optional state helpers.
  * This is the main API for checks that need to carry state from one step to another.
  */
-export const defineCheck = <T = {}>(
+export const defineCheck = <T = Record<never, never>>(
   build: (api: CheckBuilder<T>) => CheckSpec<T>,
 ): Check => {
   const steps: Map<StepName, Step<T>> = new Map();

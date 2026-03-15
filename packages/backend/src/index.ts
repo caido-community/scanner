@@ -90,6 +90,7 @@ export async function init(sdk: BackendSDK) {
   queueStore.setPassiveTaskQueue(passiveTaskQueue);
   let passiveDedupeKeys = new Map<string, Set<string>>();
   let passiveQueueSnapshotTimeout: Timeout | undefined;
+
   const emitPassiveQueueSnapshot = () => {
     if (passiveQueueSnapshotTimeout !== undefined) {
       return;
@@ -100,6 +101,7 @@ export async function init(sdk: BackendSDK) {
       passiveQueueSnapshotTimeout = undefined;
     }, 150);
   };
+
   sdk.events.onInterceptResponse((sdk, request) => {
     const config = configStore.getUserConfig();
     if (!config.passive.enabled) return;
