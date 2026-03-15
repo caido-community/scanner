@@ -13,6 +13,11 @@ export const useQueueRepository = () => {
     return response;
   };
 
+  const getRequestResponse = async (requestId: string) => {
+    const response = await sdk.backend.getRequestResponse(requestId);
+    return response;
+  };
+
   const clearQueueTasks = async () => {
     const response = await sdk.backend.clearQueueTasks();
     return response;
@@ -21,6 +26,7 @@ export const useQueueRepository = () => {
   return {
     getQueueTasks,
     getQueueTask,
+    getRequestResponse,
     clearQueueTasks,
   };
 };

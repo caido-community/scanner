@@ -64,6 +64,12 @@ const createRequestsMap = (
   return requests;
 };
 
+/**
+ * Runs a single check against mocked request and response pairs.
+ *
+ * Use this in tests when you want to execute one check and assert on its execution
+ * history or findings without wiring the full plugin backend.
+ */
 export const runCheck = async (
   checkDefinition: Check,
   requestResponsePairs: { request: Request; response?: Response }[],
@@ -91,6 +97,12 @@ export const runCheck = async (
   return runnable.getExecutionHistory();
 };
 
+/**
+ * Runs multiple checks together against mocked request and response pairs.
+ *
+ * Use this in tests when behavior depends on multiple checks running together, such
+ * as dependencies, ordering, or interactions between findings.
+ */
 export const runChecks = async (
   checkDefinitions: Check[],
   requestResponsePairs: { request: Request; response?: Response }[],

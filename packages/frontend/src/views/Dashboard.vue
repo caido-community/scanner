@@ -35,6 +35,6 @@ const scannerState = computed(() => scannerService.getState());
       :state="scannerState"
     />
 
-    <SessionPreview v-if="scannerState.type === 'Success'" />
+    <SessionPreview v-if="scannerState.type !== 'Error'" />
   </div>
 </template>

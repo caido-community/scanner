@@ -17,8 +17,4 @@ export type QueueSelectionState =
         id: string;
         raw: string;
       };
-      response: {
-        id: string;
-        raw: string;
-      };
     };

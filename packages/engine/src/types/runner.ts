@@ -35,7 +35,11 @@ export type ScanRunnable = {
   emit: (event: keyof ScanEvents, data: ScanEvents[keyof ScanEvents]) => void;
 };
 
-export type InterruptReason = "Cancelled" | "Timeout";
+export type InterruptReason =
+  | "Cancelled"
+  | "Timeout"
+  | "ProjectChanged"
+  | "RuntimeStopped";
 export type ScanResult =
   | {
       kind: "Finished";

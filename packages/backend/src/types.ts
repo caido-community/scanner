@@ -1,5 +1,9 @@
 import { type DefineEvents, type SDK } from "caido:plugin";
-import { type DeepPartial, type Session, type SessionProgress } from "shared";
+import {
+  type QueueTask,
+  type Session,
+  type SessionProgressPatch,
+} from "shared";
 
 import { type API } from ".";
 
@@ -52,16 +56,17 @@ export type BackendEvents = DefineEvents<{
   "session:created": (
     sessionID: string,
     state: Session,
-    { checksTotal }: { checksTotal: number },
+    meta?: { checksTotal?: number },
   ) => void;
   "session:updated": (sessionID: string, state: Session) => void;
   "session:progress": (
     sessionID: string,
-    progress: DeepPartial<SessionProgress>,
+    progress: SessionProgressPatch,
   ) => void;
-  "passive:queue-new": (taskID: string, requestID: string) => void;
-  "passive:queue-started": (taskID: string) => void;
-  "passive:queue-finished": (taskID: string) => void;
-  "project:changed": (projectID: string | undefined) => void;
+  "passive:queue-updated": (tasks: QueueTask[]) => void;
+  "project:changed": (
+    projectID: string | undefined,
+    phase: "start" | "ready",
+  ) => void;
   "config:updated": (projectID: string | undefined) => void;
 }>;

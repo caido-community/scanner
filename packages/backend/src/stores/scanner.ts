@@ -11,6 +11,12 @@ import type { CheckExecution, Session } from "shared";
 import { SessionsStorage } from "../storage/sessions";
 import { type BackendSDK } from "../types";
 
+import {
+  createExecutionIndexKey,
+  hasSessionProgress,
+  recoverSession,
+} from "./scanner.utils";
+
 export class ScannerStore {
   private static instance?: ScannerStore;
 
@@ -20,11 +26,20 @@ export class ScannerStore {
   private currentProjectId?: string;
   private saveTimeouts: Map<string, Timeout>;
   private executionTraces: Map<string, string> = new Map();
+  private executionIndices: Map<string, Map<string, number>>;
+  private pendingRequestIndices: Map<
+    string,
+    { sessionId: string; executionKey: string }
+  >;
+  private sessionStopWaiters: Map<string, Set<() => void>>;
 
   private constructor() {
     this.sessions = new Map();
     this.runnables = new Map();
     this.saveTimeouts = new Map();
+    this.executionIndices = new Map();
+    this.pendingRequestIndices = new Map();
+    this.sessionStopWaiters = new Map();
   }
 
   static get(): ScannerStore {
@@ -46,10 +61,14 @@ export class ScannerStore {
   }
 
   async switchProject(projectId: string | undefined): Promise<void> {
+    this.clearScheduledSaves();
     this.currentProjectId = projectId;
     this.sessions.clear();
     this.runnables.clear();
-    this.saveTimeouts.clear();
+    this.executionTraces.clear();
+    this.executionIndices.clear();
+    this.pendingRequestIndices.clear();
+    this.sessionStopWaiters.clear();
 
     if (projectId !== undefined) {
       await this.loadSessions(projectId);
@@ -59,7 +78,12 @@ export class ScannerStore {
   private async loadSessions(projectId: string): Promise<void> {
     const sessions = await this.sessionsStorage.list(projectId);
     for (const session of sessions) {
-      this.sessions.set(session.id, session);
+      const recoveredSession = recoverSession(session);
+      this.sessions.set(recoveredSession.id, recoveredSession);
+      this.reindexSession(recoveredSession);
+      if (recoveredSession !== session) {
+        await this.sessionsStorage.save(projectId, recoveredSession);
+      }
     }
   }
 
@@ -67,16 +91,30 @@ export class ScannerStore {
     this.runnables.set(id, runnable);
   }
 
-  async cancelRunnable(id: string): Promise<boolean> {
+  async cancelRunnable(
+    id: string,
+    reason: InterruptReason = "Cancelled",
+  ): Promise<boolean> {
     const runnable = this.runnables.get(id);
     if (!runnable) return false;
 
-    await runnable.cancel("Cancelled");
+    await runnable.cancel(reason);
+    await this.waitForSessionStop(id);
     return true;
+  }
+
+  listRunningSessionIds(): string[] {
+    return Array.from(this.sessions.values())
+      .filter((session) => session.kind === "Running")
+      .map((session) => session.id);
   }
 
   unregisterRunnable(id: string): boolean {
     return this.runnables.delete(id);
+  }
+
+  getRunnable(id: string): ScanRunnable | undefined {
+    return this.runnables.get(id);
   }
 
   createSession(
@@ -115,6 +153,16 @@ export class ScannerStore {
       clearTimeout(timeout);
       this.saveTimeouts.delete(id);
     }
+    this.executionIndices.delete(id);
+    this.sessionStopWaiters.delete(id);
+    for (const [
+      pendingRequestID,
+      index,
+    ] of this.pendingRequestIndices.entries()) {
+      if (index.sessionId === id) {
+        this.pendingRequestIndices.delete(pendingRequestID);
+      }
+    }
 
     if (this.currentProjectId !== undefined) {
       this.sessionsStorage.delete(this.currentProjectId, id);
@@ -130,20 +178,24 @@ export class ScannerStore {
   }
 
   startSession(id: string, checksTotal: number): Session | undefined {
-    return this.updateSession(id, (draft) => {
-      if (draft.kind !== "Pending") {
-        throw new Error(`Cannot start session in state: ${draft.kind}`);
-      }
+    return this.updateSession(
+      id,
+      (draft) => {
+        if (draft.kind !== "Pending") {
+          throw new Error(`Cannot start session in state: ${draft.kind}`);
+        }
 
-      Object.assign(draft, {
-        kind: "Running" as const,
-        startedAt: Date.now(),
-        progress: {
-          checksTotal,
-          checksHistory: [],
-        },
-      });
-    });
+        Object.assign(draft, {
+          kind: "Running" as const,
+          startedAt: Date.now(),
+          progress: {
+            checksTotal,
+            checksHistory: [],
+          },
+        });
+      },
+      true,
+    );
   }
 
   addFinding(
@@ -157,11 +209,7 @@ export class ScannerStore {
         throw new Error(`Cannot add finding in state: ${draft.kind}`);
       }
 
-      const execution = this.findCheckExecution(
-        draft.progress.checksHistory,
-        checkId,
-        targetId,
-      );
+      const execution = this.getExecution(draft, sessionId, checkId, targetId);
 
       if (execution?.kind === "Running") {
         execution.findings.push(finding);
@@ -180,17 +228,21 @@ export class ScannerStore {
         throw new Error(`Cannot add request sent in state: ${draft.kind}`);
       }
 
-      const execution = this.findCheckExecution(
-        draft.progress.checksHistory,
-        checkId,
-        targetId,
-      );
+      const execution = this.getExecution(draft, sessionId, checkId, targetId);
 
       if (execution?.kind === "Running") {
         execution.requestsSent.push({
           status: "pending",
           pendingRequestID,
           sentAt: Date.now(),
+        });
+        this.pendingRequestIndices.set(pendingRequestID, {
+          sessionId,
+          executionKey: createExecutionIndexKey({
+            sessionId,
+            checkId,
+            targetId,
+          }),
         });
       }
     });
@@ -206,9 +258,20 @@ export class ScannerStore {
         throw new Error(`Cannot complete request in state: ${draft.kind}`);
       }
 
-      for (const execution of draft.progress.checksHistory) {
-        if (execution.kind !== "Running") continue;
+      const indexedRequest = this.pendingRequestIndices.get(pendingRequestID);
+      if (
+        indexedRequest === undefined ||
+        indexedRequest.sessionId !== sessionId
+      ) {
+        return;
+      }
 
+      const execution = this.getExecutionByKey(
+        draft,
+        sessionId,
+        indexedRequest.executionKey,
+      );
+      if (execution?.kind === "Running") {
         const requestIndex = execution.requestsSent.findIndex(
           (req) => req.pendingRequestID === pendingRequestID,
         );
@@ -224,9 +287,10 @@ export class ScannerStore {
               completedAt: Date.now(),
             };
           }
-          break;
         }
       }
+
+      this.pendingRequestIndices.delete(pendingRequestID);
     });
   }
 
@@ -240,9 +304,20 @@ export class ScannerStore {
         throw new Error(`Cannot fail request in state: ${draft.kind}`);
       }
 
-      for (const execution of draft.progress.checksHistory) {
-        if (execution.kind !== "Running") continue;
+      const indexedRequest = this.pendingRequestIndices.get(pendingRequestID);
+      if (
+        indexedRequest === undefined ||
+        indexedRequest.sessionId !== sessionId
+      ) {
+        return;
+      }
 
+      const execution = this.getExecutionByKey(
+        draft,
+        sessionId,
+        indexedRequest.executionKey,
+      );
+      if (execution?.kind === "Running") {
         const requestIndex = execution.requestsSent.findIndex(
           (req) => req.pendingRequestID === pendingRequestID,
         );
@@ -258,9 +333,10 @@ export class ScannerStore {
               completedAt: Date.now(),
             };
           }
-          break;
         }
       }
+
+      this.pendingRequestIndices.delete(pendingRequestID);
     });
   }
 
@@ -285,6 +361,17 @@ export class ScannerStore {
       };
 
       draft.progress.checksHistory.push(newExecution);
+      const sessionIndices =
+        this.executionIndices.get(sessionId) ?? new Map<string, number>();
+      sessionIndices.set(
+        createExecutionIndexKey({
+          sessionId,
+          checkId,
+          targetId,
+        }),
+        draft.progress.checksHistory.length - 1,
+      );
+      this.executionIndices.set(sessionId, sessionIndices);
     });
   }
 
@@ -298,11 +385,7 @@ export class ScannerStore {
         throw new Error(`Cannot complete check in state: ${draft.kind}`);
       }
 
-      const execution = this.findCheckExecution(
-        draft.progress.checksHistory,
-        checkId,
-        targetId,
-      );
+      const execution = this.getExecution(draft, sessionId, checkId, targetId);
 
       if (execution?.kind === "Running") {
         Object.assign(execution, {
@@ -324,11 +407,7 @@ export class ScannerStore {
         throw new Error(`Cannot fail check in state: ${draft.kind}`);
       }
 
-      const execution = this.findCheckExecution(
-        draft.progress.checksHistory,
-        checkId,
-        targetId,
-      );
+      const execution = this.getExecution(draft, sessionId, checkId, targetId);
 
       if (execution?.kind === "Running") {
         Object.assign(execution, {
@@ -342,20 +421,24 @@ export class ScannerStore {
 
   finishSession(sessionId: string, trace: string): Session | undefined {
     this.executionTraces.set(sessionId, trace);
-    return this.updateSession(sessionId, (draft) => {
-      if (draft.kind !== "Running") {
-        throw new Error(`Cannot finish session in state: ${draft.kind}`);
-      }
+    return this.updateSession(
+      sessionId,
+      (draft) => {
+        if (draft.kind !== "Running") {
+          throw new Error(`Cannot finish session in state: ${draft.kind}`);
+        }
 
-      const newSession: Session = {
-        ...draft,
-        kind: "Done" as const,
-        finishedAt: Date.now(),
-        hasExecutionTrace: true,
-      };
+        const newSession: Session = {
+          ...draft,
+          kind: "Done" as const,
+          finishedAt: Date.now(),
+          hasExecutionTrace: true,
+        };
 
-      Object.assign(draft, newSession);
-    });
+        Object.assign(draft, newSession);
+      },
+      true,
+    );
   }
 
   interruptSession(
@@ -364,20 +447,24 @@ export class ScannerStore {
     trace: string,
   ): Session | undefined {
     this.executionTraces.set(sessionId, trace);
-    return this.updateSession(sessionId, (draft) => {
-      if (draft.kind !== "Running") {
-        throw new Error(`Cannot interrupt session in state: ${draft.kind}`);
-      }
+    return this.updateSession(
+      sessionId,
+      (draft) => {
+        if (draft.kind !== "Running") {
+          throw new Error(`Cannot interrupt session in state: ${draft.kind}`);
+        }
 
-      const newSession: Session = {
-        ...draft,
-        kind: "Interrupted" as const,
-        reason,
-        hasExecutionTrace: true,
-      };
+        const newSession: Session = {
+          ...draft,
+          kind: "Interrupted" as const,
+          reason,
+          hasExecutionTrace: true,
+        };
 
-      Object.assign(draft, newSession);
-    });
+        Object.assign(draft, newSession);
+      },
+      true,
+    );
   }
 
   errorSession(
@@ -390,24 +477,28 @@ export class ScannerStore {
       this.executionTraces.set(sessionId, trace);
     }
 
-    return this.updateSession(sessionId, (draft) => {
-      if (
-        draft.kind === "Done" ||
-        draft.kind === "Error" ||
-        draft.kind === "Interrupted"
-      ) {
-        throw new Error(`Cannot error session in state: ${draft.kind}`);
-      }
+    return this.updateSession(
+      sessionId,
+      (draft) => {
+        if (
+          draft.kind === "Done" ||
+          draft.kind === "Error" ||
+          draft.kind === "Interrupted"
+        ) {
+          throw new Error(`Cannot error session in state: ${draft.kind}`);
+        }
 
-      const newSession: Session = {
-        ...draft,
-        kind: "Error" as const,
-        error,
-        hasExecutionTrace,
-      };
+        const newSession: Session = {
+          ...draft,
+          kind: "Error" as const,
+          error,
+          hasExecutionTrace,
+        };
 
-      Object.assign(draft, newSession);
-    });
+        Object.assign(draft, newSession);
+      },
+      true,
+    );
   }
 
   listSessions(): Session[] {
@@ -417,19 +508,16 @@ export class ScannerStore {
   private updateSession(
     id: string,
     updater: (draft: Session) => void,
+    immediate: boolean = false,
   ): Session | undefined {
     const session = this.sessions.get(id);
     if (!session) return undefined;
 
     const newSession = create(session, updater);
     this.sessions.set(id, newSession);
-
-    const shouldSaveImmediately =
-      newSession.kind === "Done" ||
-      newSession.kind === "Error" ||
-      newSession.kind === "Interrupted";
-
-    this.saveSession(id, newSession, shouldSaveImmediately);
+    this.reindexSession(newSession);
+    this.resolveSessionWaiters(newSession);
+    this.saveSession(id, newSession, immediate);
 
     return newSession;
   }
@@ -452,21 +540,8 @@ export class ScannerStore {
     session: Session,
     immediate: boolean = false,
   ): void {
-    if (this.currentProjectId === undefined) return;
-
-    const isFinishedState =
-      session.kind === "Done" ||
-      session.kind === "Error" ||
-      session.kind === "Interrupted";
-
-    if (!isFinishedState) {
-      const existingTimeout = this.saveTimeouts.get(id);
-      if (existingTimeout !== undefined) {
-        clearTimeout(existingTimeout);
-        this.saveTimeouts.delete(id);
-      }
-      return;
-    }
+    const projectId = this.currentProjectId;
+    if (projectId === undefined) return;
 
     const existingTimeout = this.saveTimeouts.get(id);
     if (existingTimeout !== undefined) {
@@ -474,27 +549,132 @@ export class ScannerStore {
     }
 
     if (immediate) {
-      this.sessionsStorage.save(this.currentProjectId, session);
+      this.sessionsStorage.save(projectId, session);
       this.saveTimeouts.delete(id);
     } else {
       const timeout = setTimeout(() => {
-        if (this.currentProjectId !== undefined) {
-          this.sessionsStorage.save(this.currentProjectId, session);
-        }
+        this.sessionsStorage.save(projectId, session);
         this.saveTimeouts.delete(id);
-      }, 2000);
+      }, 1000);
       this.saveTimeouts.set(id, timeout);
     }
   }
 
-  private findCheckExecution(
-    checksHistory: CheckExecution[],
+  private getExecution(
+    session: Extract<Session, { progress: unknown }>,
+    sessionId: string,
     checkId: string,
     targetId: string,
   ): CheckExecution | undefined {
-    return checksHistory.find(
-      (execution) =>
-        execution.checkID === checkId && execution.targetRequestID === targetId,
+    return this.getExecutionByKey(
+      session,
+      sessionId,
+      createExecutionIndexKey({
+        sessionId,
+        checkId,
+        targetId,
+      }),
     );
+  }
+
+  private getExecutionByKey(
+    session: Extract<Session, { progress: unknown }>,
+    sessionId: string,
+    executionKey: string,
+  ): CheckExecution | undefined {
+    const sessionIndices = this.executionIndices.get(sessionId);
+    const index = sessionIndices?.get(executionKey);
+    if (index === undefined) {
+      return undefined;
+    }
+
+    return session.progress.checksHistory[index];
+  }
+
+  getCheckExecution(
+    sessionId: string,
+    checkId: string,
+    targetId: string,
+  ): CheckExecution | undefined {
+    const session = this.sessions.get(sessionId);
+    if (session === undefined || !hasSessionProgress(session)) {
+      return undefined;
+    }
+
+    return this.getExecution(session, sessionId, checkId, targetId);
+  }
+
+  private reindexSession(session: Session): void {
+    this.executionIndices.delete(session.id);
+
+    for (const [
+      pendingRequestID,
+      index,
+    ] of this.pendingRequestIndices.entries()) {
+      if (index.sessionId === session.id) {
+        this.pendingRequestIndices.delete(pendingRequestID);
+      }
+    }
+
+    if (!hasSessionProgress(session)) {
+      return;
+    }
+
+    const sessionIndices = new Map<string, number>();
+    session.progress.checksHistory.forEach((execution, index) => {
+      const key = createExecutionIndexKey({
+        sessionId: session.id,
+        checkId: execution.checkID,
+        targetId: execution.targetRequestID,
+      });
+      sessionIndices.set(key, index);
+
+      for (const request of execution.requestsSent) {
+        if (request.status === "pending") {
+          this.pendingRequestIndices.set(request.pendingRequestID, {
+            sessionId: session.id,
+            executionKey: key,
+          });
+        }
+      }
+    });
+
+    this.executionIndices.set(session.id, sessionIndices);
+  }
+
+  private resolveSessionWaiters(session: Session): void {
+    if (session.kind === "Running") {
+      return;
+    }
+
+    const waiters = this.sessionStopWaiters.get(session.id);
+    if (waiters === undefined) {
+      return;
+    }
+
+    for (const resolve of waiters) {
+      resolve();
+    }
+    this.sessionStopWaiters.delete(session.id);
+  }
+
+  private waitForSessionStop(id: string): Promise<void> {
+    const session = this.sessions.get(id);
+    if (session === undefined || session.kind !== "Running") {
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
+      const waiters = this.sessionStopWaiters.get(id) ?? new Set<() => void>();
+      waiters.add(resolve);
+      this.sessionStopWaiters.set(id, waiters);
+    });
+  }
+
+  private clearScheduledSaves(): void {
+    for (const timeout of this.saveTimeouts.values()) {
+      clearTimeout(timeout);
+    }
+    this.saveTimeouts.clear();
   }
 }

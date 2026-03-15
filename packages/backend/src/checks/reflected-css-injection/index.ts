@@ -1,10 +1,10 @@
 import {
+  type CheckContext,
   defineCheckV2,
   generateRandomString,
   Result,
-  Severity,
-  type CheckContext,
   type ScanTarget,
+  Severity,
 } from "engine";
 
 import { Tags } from "../../types";
