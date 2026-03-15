@@ -1,6 +1,11 @@
 import type { DefineAPI } from "caido:plugin";
-import { createRegistry, Result } from "engine";
-import type { Result as ResultType } from "shared";
+import {
+  createPrefixedRandomId,
+  createRegistry,
+  createScheduler,
+  Result,
+} from "engine";
+import type { BasicRequest, Result as ResultType } from "shared";
 
 import { checks } from "./checks";
 import { IdSchema } from "./schemas";
@@ -21,7 +26,7 @@ import { ConfigStore } from "./stores/config";
 import { QueueStore } from "./stores/queue";
 import { ScannerStore } from "./stores/scanner";
 import { type BackendSDK } from "./types";
-import { TaskQueue } from "./utils/task-queue";
+import { packExecutionHistory } from "./utils/debug";
 import { validateInput } from "./utils/validation";
 
 export { type BackendEvents } from "./types";
@@ -77,17 +82,29 @@ export async function init(sdk: BackendSDK) {
 
   await configStore.initialize(sdk);
   await scannerStore.initialize(sdk);
+  const project = await sdk.projects.getCurrent();
+  queueStore.switchProject(project?.getId());
 
   const config = configStore.getUserConfig();
-  const passiveTaskQueue = new TaskQueue(config.passive.concurrentChecks);
+  const passiveTaskQueue = createScheduler(config.passive.concurrentTargets);
   queueStore.setPassiveTaskQueue(passiveTaskQueue);
+  let passiveDedupeKeys = new Map<string, Set<string>>();
+  let passiveQueueSnapshotTimeout: Timeout | undefined;
+  const emitPassiveQueueSnapshot = () => {
+    if (passiveQueueSnapshotTimeout !== undefined) {
+      return;
+    }
 
-  const passiveDedupeKeys = new Map<string, Set<string>>();
+    passiveQueueSnapshotTimeout = setTimeout(() => {
+      sdk.api.send("passive:queue-updated", queueStore.getTasks());
+      passiveQueueSnapshotTimeout = undefined;
+    }, 150);
+  };
   sdk.events.onInterceptResponse((sdk, request) => {
     const config = configStore.getUserConfig();
     if (!config.passive.enabled) return;
 
-    passiveTaskQueue.setConcurrency(config.passive.concurrentChecks);
+    passiveTaskQueue.setConcurrency(config.passive.concurrentTargets);
 
     if (config.passive.scopeIDs.length > 0) {
       const inScope = sdk.requests.inScope(request, config.passive.scopeIDs);
@@ -103,75 +120,127 @@ export async function init(sdk: BackendSDK) {
       return;
     }
 
-    const passiveTaskID =
-      "pscan-" + Math.random().toString(36).substring(2, 15);
-    queueStore.addTask(passiveTaskID, request.getId());
-    sdk.api.send("passive:queue-new", passiveTaskID, request.getId());
+    const passiveTaskID = createPrefixedRandomId("pscan-");
+    queueStore.addTask(passiveTaskID, toBasicRequest(request));
+    emitPassiveQueueSnapshot();
 
-    passiveTaskQueue.add(async () => {
-      const registry = createRegistry();
-      for (const check of passiveChecks) {
-        registry.register(check);
-      }
+    void passiveTaskQueue
+      .schedule(async () => {
+        const registry = createRegistry();
+        for (const check of passiveChecks) {
+          registry.register(check);
+        }
 
-      const requestTimeout = config.requestTimeout ?? 2 * 60;
-      const runnable = registry.create(sdk, {
-        aggressivity: config.passive.aggressivity,
-        scopeIDs: config.passive.scopeIDs,
-        concurrentChecks: config.passive.concurrentChecks,
-        concurrentRequests: config.passive.concurrentRequests,
-        concurrentTargets: 1,
-        severities: config.passive.severities,
-        scanTimeout: 5 * 60,
-        checkTimeout: 2 * 60,
-        requestTimeout,
-        requestsDelayMs: 0,
-      });
-
-      runnable.externalDedupeKeys(passiveDedupeKeys);
-
-      try {
-        queueStore.addActiveRunnable(passiveTaskID, runnable);
-        queueStore.updateTaskStatus(passiveTaskID, "running");
-        sdk.api.send("passive:queue-started", passiveTaskID);
-
-        runnable.on("scan:finding", async ({ finding, checkID }) => {
-          const request = await sdk.requests.get(finding.correlation.requestID);
-          if (!request) return;
-          if (!config.passive.severities.includes(finding.severity)) return;
-
-          const wrappedDescription = `This finding has been assessed as \`${finding.severity.toUpperCase()}\` severity and was discovered by the \`${checkID}\` check.\n\n${
-            finding.description
-          }`;
-
-          sdk.findings.create({
-            reporter: "Scanner: Passive",
-            request: request.request,
-            title: finding.name,
-            description: wrappedDescription,
-          });
+        const requestTimeout = config.requestTimeout ?? 2 * 60;
+        const runnable = registry.create(sdk, {
+          aggressivity: config.passive.aggressivity,
+          scopeIDs: config.passive.scopeIDs,
+          concurrentChecks: 2,
+          concurrentRequests: config.passive.concurrentRequests,
+          concurrentTargets: 1,
+          severities: config.passive.severities,
+          scanTimeout: 5 * 60,
+          checkTimeout: 2 * 60,
+          requestTimeout,
+          requestsDelayMs: 0,
         });
 
-        // TODO: handle error, show UI warnings if result kind is not finished
-        await runnable.run([request.getId()]);
-      } catch (error) {
-        // TODO: handle error, show UI warnings
-        sdk.console.log("error=", error);
-      } finally {
-        queueStore.removeActiveRunnable(passiveTaskID);
-        queueStore.removeTask(passiveTaskID);
-        sdk.api.send("passive:queue-finished", passiveTaskID);
-      }
-    });
+        runnable.externalDedupeKeys(passiveDedupeKeys);
+
+        try {
+          queueStore.addActiveRunnable(passiveTaskID, runnable);
+          queueStore.updateTaskStatus(passiveTaskID, "running");
+          emitPassiveQueueSnapshot();
+
+          runnable.on("scan:check-started", ({ checkID }) => {
+            queueStore.addExecutedCheck(passiveTaskID, checkID);
+            emitPassiveQueueSnapshot();
+          });
+
+          runnable.on("scan:finding", async ({ finding, checkID }) => {
+            const request = await sdk.requests.get(
+              finding.correlation.requestID,
+            );
+            if (!request) return;
+            if (!config.passive.severities.includes(finding.severity)) return;
+
+            const wrappedDescription = `This finding has been assessed as \`${finding.severity.toUpperCase()}\` severity and was discovered by the \`${checkID}\` check.\n\n${
+              finding.description
+            }`;
+
+            sdk.findings.create({
+              reporter: "Scanner: Passive",
+              request: request.request,
+              title: finding.name,
+              description: wrappedDescription,
+            });
+          });
+
+          const result = await runnable.run([request.getId()]);
+          switch (result.kind) {
+            case "Finished":
+              queueStore.updateTaskStatus(passiveTaskID, "completed");
+              break;
+            case "Interrupted":
+              queueStore.updateTaskStatus(
+                passiveTaskID,
+                "cancelled",
+                result.reason,
+              );
+              break;
+            case "Error":
+              queueStore.updateTaskStatus(
+                passiveTaskID,
+                "failed",
+                result.error,
+              );
+              break;
+          }
+        } catch (error) {
+          queueStore.updateTaskStatus(
+            passiveTaskID,
+            "failed",
+            error instanceof Error ? error.message : "Unknown error",
+          );
+        } finally {
+          queueStore.removeActiveRunnable(passiveTaskID);
+          emitPassiveQueueSnapshot();
+        }
+      })
+      .promise.catch((error: unknown) => {
+        queueStore.updateTaskStatus(
+          passiveTaskID,
+          "cancelled",
+          error instanceof Error ? error.message : "Cancelled",
+        );
+        emitPassiveQueueSnapshot();
+      });
   });
 
   sdk.events.onProjectChange(async (sdk, project) => {
     const projectId = project?.getId();
+    sdk.api.send("project:changed", projectId, "start");
+    queueStore.clearTasks();
+    emitPassiveQueueSnapshot();
+    passiveDedupeKeys = new Map<string, Set<string>>();
+
+    const runningSessionIds = scannerStore.listRunningSessionIds();
+    for (const sessionId of runningSessionIds) {
+      const runnable = scannerStore.getRunnable(sessionId);
+      const trace =
+        runnable === undefined
+          ? ""
+          : packExecutionHistory(runnable.getExecutionHistory());
+      scannerStore.interruptSession(sessionId, "ProjectChanged", trace);
+      void runnable?.cancel("ProjectChanged");
+    }
 
     await configStore.switchProject(projectId);
     await scannerStore.switchProject(projectId);
+    queueStore.switchProject(projectId);
+    emitPassiveQueueSnapshot();
 
-    sdk.api.send("project:changed", projectId);
+    sdk.api.send("project:changed", projectId, "ready");
   });
 }
 
@@ -212,6 +281,22 @@ export const getRequestResponse = async (
     },
   });
 };
+
+const toBasicRequest = (request: {
+  getId: () => string;
+  getHost: () => string;
+  getPort: () => number;
+  getPath: () => string;
+  getQuery: () => string;
+  getMethod: () => string;
+}): BasicRequest => ({
+  id: request.getId(),
+  host: request.getHost(),
+  port: request.getPort(),
+  path: request.getPath(),
+  query: request.getQuery(),
+  method: request.getMethod().toUpperCase(),
+});
 
 export const getExecutionTrace = (
   sdk: BackendSDK,

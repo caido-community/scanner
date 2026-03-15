@@ -14,7 +14,6 @@ type Message =
       type: "Success";
       taskId: string;
       request: { id: string; raw: string };
-      response: { id: string; raw: string };
     };
 
 export const useSelectionState = () => {
@@ -84,7 +83,6 @@ const processLoading = (
         type: "Success",
         taskId: message.taskId,
         request: message.request,
-        response: message.response,
       };
     case "Reset":
       return { type: "None" };

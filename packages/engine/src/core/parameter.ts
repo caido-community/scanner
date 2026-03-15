@@ -78,6 +78,14 @@ function createInject(
   };
 }
 
+/**
+ * Extracts injectable request parameters for active checks.
+ *
+ * Use this to enumerate parameters that a check can mutate. Each returned parameter
+ * includes its name, current value, source, and an `inject(newValue)` helper for
+ * building a new `RequestSpec`. With `reflected: true`, only reflected parameters
+ * are returned.
+ */
 export function extractParameters(
   request: Request,
   options: { reflected?: boolean; responseBody?: string } = {},

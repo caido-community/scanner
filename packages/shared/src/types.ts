@@ -22,7 +22,7 @@ export type PassiveConfig = {
   enabled: boolean;
   aggressivity: ScanAggressivity;
   scopeIDs: string[];
-  concurrentChecks: number;
+  concurrentTargets: number;
   concurrentRequests: number;
   overrides: Override[];
   severities: Severity[];
@@ -122,6 +122,11 @@ export type SessionProgress = {
   checksHistory: CheckExecution[];
 };
 
+export type SessionProgressPatch = {
+  type: "upsertExecution";
+  execution: CheckExecution;
+};
+
 export type Session =
   | {
       kind: "Pending";
@@ -191,11 +196,38 @@ export type BasicRequest = {
   method: string;
 };
 
-export type QueueTask = {
+type QueueTaskBase = {
   id: string;
-  requestID: string;
-  status: "pending" | "running";
+  request: BasicRequest;
+  executedCheckIDs: string[];
+  createdAt: number;
 };
+
+export type QueueTask =
+  | (QueueTaskBase & {
+      status: "pending";
+    })
+  | (QueueTaskBase & {
+      status: "running";
+      startedAt: number;
+    })
+  | (QueueTaskBase & {
+      status: "completed";
+      startedAt: number;
+      finishedAt: number;
+    })
+  | (QueueTaskBase & {
+      status: "failed";
+      finishedAt: number;
+      error: string;
+      startedAt?: number;
+    })
+  | (QueueTaskBase & {
+      status: "cancelled";
+      finishedAt: number;
+      error: string;
+      startedAt?: number;
+    });
 
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];

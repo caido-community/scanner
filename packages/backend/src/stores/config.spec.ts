@@ -58,7 +58,7 @@ describe("migratePassiveConfig", () => {
       [],
     );
 
-    expect(result.concurrentChecks).toBe(10);
+    expect(result.concurrentTargets).toBe(10);
     expect(result.concurrentRequests).toBe(3);
     expect(result.severities).toEqual([
       "critical",
@@ -67,6 +67,18 @@ describe("migratePassiveConfig", () => {
       "low",
       "info",
     ]);
+  });
+
+  it("preserves explicit concurrentTargets when present", () => {
+    const result = migratePassiveConfig(
+      {
+        concurrentChecks: 10,
+        concurrentTargets: 4,
+      },
+      [],
+    );
+
+    expect(result.concurrentTargets).toBe(4);
   });
 });
 

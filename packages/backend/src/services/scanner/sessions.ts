@@ -84,10 +84,10 @@ export const updateSessionTitle = (
   return Result.ok(result);
 };
 
-export const rerunScanSession = (
+export const rerunScanSession = async (
   sdk: BackendSDK,
   id: string,
-): ResultType<Session> => {
+): Promise<ResultType<Session>> => {
   const validation = validateInput(IdSchema, id);
   if (validation.kind === "Error") {
     return validation;
@@ -104,5 +104,5 @@ export const rerunScanSession = (
     title: `${session.title} (Rerun)`,
   };
 
-  return startActiveScan(sdk, payload);
+  return await startActiveScan(sdk, payload);
 };

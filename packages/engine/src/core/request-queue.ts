@@ -10,6 +10,7 @@ import {
   type ScanConfig,
   type ScanEvents,
 } from "../types/runner";
+import { createScheduler } from "../utils/scheduler";
 
 import {
   ScanRunnableError,
@@ -33,6 +34,8 @@ type RequestQueue = {
     targetRequestID: string,
     checkID: string,
   ) => Promise<RequestResponse>;
+  clearPending: (reason: string) => void;
+  onIdle: () => Promise<void>;
 };
 
 export const computeDelayNeeded = ({
@@ -70,21 +73,9 @@ export const createRequestQueue = ({
   emit: (event: keyof ScanEvents, data: ScanEvents[keyof ScanEvents]) => void;
   getInterruptReason: () => InterruptReason | undefined;
 }): RequestQueue => {
-  const queue: QueuedRequest[] = [];
-  let activeRequests = 0;
   let lastRequestTime = 0;
   let requestLock = Promise.resolve();
-  let processingPromise: Promise<void> | undefined;
-
-  const rejectAllPending = (): void => {
-    const interruptReason = getInterruptReason();
-    while (queue.length > 0) {
-      const item = queue.shift();
-      if (item) {
-        item.reject(new ScanRunnableInterruptedError(interruptReason!));
-      }
-    }
-  };
+  const scheduler = createScheduler(config.concurrentRequests);
 
   const processRequest = async (item: QueuedRequest): Promise<void> => {
     try {
@@ -170,72 +161,54 @@ export const createRequestQueue = ({
     }
   };
 
-  const processQueue = async (): Promise<void> => {
-    while (queue.length > 0 || activeRequests > 0) {
-      if (getInterruptReason()) {
-        rejectAllPending();
-        break;
-      }
-
-      if (queue.length === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        continue;
-      }
-
-      if (
-        !canStartQueuedRequest({
-          queueLength: queue.length,
-          activeRequests,
-          concurrentRequests: config.concurrentRequests,
-        })
-      ) {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        continue;
-      }
-
-      const item = queue.shift();
-      if (!item) {
-        continue;
-      }
-
-      activeRequests++;
-      processRequest(item).finally(() => {
-        activeRequests--;
-      });
-    }
-
-    processingPromise = undefined;
-  };
-
-  const startProcessing = (): void => {
-    if (processingPromise) {
-      return;
-    }
-
-    processingPromise = processQueue();
-  };
-
   const enqueue = async (
     request: RequestSpec | RequestSpecRaw,
     pendingRequestID: string,
     targetRequestID: string,
     checkID: string,
   ): Promise<RequestResponse> => {
-    return new Promise((resolve, reject) => {
-      queue.push({
-        request,
-        pendingRequestID,
-        targetRequestID,
-        checkID,
-        resolve,
-        reject,
-      });
+    if (getInterruptReason()) {
+      throw new ScanRunnableInterruptedError(getInterruptReason()!);
+    }
 
-      startProcessing();
-    });
+    const item: QueuedRequest = {
+      request,
+      pendingRequestID,
+      targetRequestID,
+      checkID,
+      resolve: () => undefined,
+      reject: () => undefined,
+    };
+
+    return scheduler
+      .schedule(async () => {
+        return await new Promise<RequestResponse>((resolve, reject) => {
+          item.resolve = resolve;
+          item.reject = reject;
+          void processRequest(item);
+        });
+      })
+      .promise.catch((error: unknown) => {
+        const interruptReason = getInterruptReason();
+        if (
+          interruptReason !== undefined &&
+          error instanceof Error &&
+          error.message === interruptReason
+        ) {
+          throw new ScanRunnableInterruptedError(interruptReason);
+        }
+
+        throw error;
+      });
   };
 
   return {
     enqueue,
+    clearPending: (reason: string) => {
+      scheduler.clearPending(reason);
+    },
+    onIdle: async () => {
+      await scheduler.onIdle();
+    },
   };
 };
