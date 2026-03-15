@@ -251,7 +251,7 @@ export const getRequestResponse = async (
   requestId: string,
 ): Promise<
   ResultType<{
-    request: { id: string; raw: string };
+    request: BasicRequest & { raw: string };
     response: { id: string; raw: string };
   }>
 > => {
@@ -274,7 +274,7 @@ export const getRequestResponse = async (
 
   return Result.ok({
     request: {
-      id: request.getId(),
+      ...toBasicRequest(request),
       raw: Uint8ArrayToString(request.toSpecRaw().getRaw()),
     },
     response: {

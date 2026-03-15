@@ -30,6 +30,11 @@ export const useScannerRepository = () => {
     return response;
   };
 
+  const getRequestResponse = async (requestId: string) => {
+    const response = await sdk.backend.getRequestResponse(requestId);
+    return response;
+  };
+
   const updateSessionTitle = async (sessionId: string, title: string) => {
     const response = await sdk.backend.updateSessionTitle(sessionId, title);
     return response;
@@ -51,6 +56,7 @@ export const useScannerRepository = () => {
     getScanSessions,
     cancelScanSession,
     deleteScanSession,
+    getRequestResponse,
     updateSessionTitle,
     getExecutionTrace,
     rerunScanSession,

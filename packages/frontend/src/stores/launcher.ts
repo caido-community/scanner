@@ -15,6 +15,7 @@ type FormState = {
   title: string;
 };
 
+const DEFAULT_SCAN_TIMEOUT = 30 * 60;
 const DEFAULT_REQUEST_TIMEOUT = 2 * 60;
 
 export const useLauncher = defineStore("stores.launcher", () => {
@@ -26,7 +27,7 @@ export const useLauncher = defineStore("stores.launcher", () => {
     config: {
       aggressivity: ScanAggressivity.MEDIUM,
       scopeIDs: [],
-      scanTimeout: 10 * 60,
+      scanTimeout: DEFAULT_SCAN_TIMEOUT,
       checkTimeout: 2 * 60,
       requestTimeout: DEFAULT_REQUEST_TIMEOUT,
       concurrentChecks: 2,

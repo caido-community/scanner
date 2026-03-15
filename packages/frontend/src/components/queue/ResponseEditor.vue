@@ -31,7 +31,7 @@ const initializeEditor = () => {
     return;
   }
 
-  const editor = sdk.ui.httpRequestEditor();
+  const editor = sdk.ui.httpResponseEditor();
   root.value.appendChild(editor.getElement());
   editorView.value = editor.getEditorView();
   updateEditorContent(raw);
