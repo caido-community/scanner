@@ -9,7 +9,7 @@ import {
   type ScanAggressivity,
 } from "../../types/runner";
 
-export type CheckDedupeRecord = {
+type CheckDedupeRecord = {
   checkID: string;
   key: string;
 };
