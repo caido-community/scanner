@@ -26,6 +26,12 @@ const createUserConfig = (): UserConfig => ({
 });
 
 describe("migratePassiveConfig", () => {
+  it("defaults passive scanning to disabled", () => {
+    const result = createDefaultPassiveConfig();
+
+    expect(result.enabled).toBe(false);
+  });
+
   it("uses legacy scope IDs when inScopeOnly is true and scopeIDs is missing", () => {
     const result = migratePassiveConfig(
       {

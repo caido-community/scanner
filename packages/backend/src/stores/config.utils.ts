@@ -2,7 +2,7 @@ import { ScanAggressivity } from "engine";
 import type { ActiveConfig, PassiveConfig, Preset, UserConfig } from "shared";
 
 export const createDefaultPassiveConfig = (): PassiveConfig => ({
-  enabled: true,
+  enabled: false,
   aggressivity: ScanAggressivity.LOW,
   scopeIDs: [],
   concurrentTargets: 2,
