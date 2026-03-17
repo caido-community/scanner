@@ -20,6 +20,13 @@ type CreateTaskContext = {
   getInterrupted: () => boolean;
 };
 
+/**
+ * Defines a single-execution check using the simpler V2 API.
+ *
+ * Use this when one `execute(ctx)` function is enough for the whole check. The
+ * context gives you helpers like `send()`, `finding()`, `parameters()`, and
+ * `target`, so simple checks can be written without defining explicit steps.
+ */
 export function defineCheckV2(config: CheckDefinitionV2): Check {
   const metadata: CheckMetadata = {
     id: config.id,
@@ -87,6 +94,12 @@ export function defineCheckV2(config: CheckDefinitionV2): Check {
   };
 }
 
+/**
+ * Convenience helper for passive body-matching checks.
+ *
+ * Use this for checks that look for one or more regex matches in the response body
+ * and convert the matches into a finding with `toFinding(...)`.
+ */
 export function defineRegexCheck(config: RegexCheckDefinition): Check {
   return defineCheckV2({
     id: config.id,

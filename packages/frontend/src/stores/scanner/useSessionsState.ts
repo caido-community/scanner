@@ -1,5 +1,4 @@
-import { type DeepPartial, type Session, type SessionProgress } from "shared";
-import { merge } from "ts-deepmerge";
+import { type Session, type SessionProgressPatch } from "shared";
 import { reactive } from "vue";
 
 import { type SessionsState } from "@/types/scanner";
@@ -17,7 +16,7 @@ type Message =
   | {
       type: "UpdateSessionProgress";
       sessionId: string;
-      progress: DeepPartial<SessionProgress>;
+      patch: SessionProgressPatch;
     }
   | { type: "CancelSession"; sessionId: string }
   | { type: "DeleteSession"; sessionId: string }
@@ -50,6 +49,23 @@ export const useSessionsState = () => {
   };
 
   return { getState, send };
+};
+
+const upsertSession = (
+  sessions: Session[],
+  nextSession: Session,
+): Session[] => {
+  const existingIndex = sessions.findIndex(
+    (session) => session.id === nextSession.id,
+  );
+
+  if (existingIndex === -1) {
+    return [...sessions, nextSession];
+  }
+
+  return sessions.map((session, index) =>
+    index === existingIndex ? nextSession : session,
+  );
 };
 
 const processIdle = (
@@ -99,14 +115,12 @@ const processSuccess = (
     case "AddSession":
       return {
         ...state,
-        sessions: [...state.sessions, message.session],
+        sessions: upsertSession(state.sessions, message.session),
       };
     case "UpdateSession":
       return {
         ...state,
-        sessions: state.sessions.map((session) =>
-          session.id === message.session.id ? message.session : session,
-        ),
+        sessions: upsertSession(state.sessions, message.session),
       };
     case "UpdateSessionProgress":
       return {
@@ -116,9 +130,31 @@ const processSuccess = (
             return session;
           }
 
-          return merge.withOptions({ mergeArrays: false }, session, {
-            progress: message.progress,
-          }) as Session;
+          if (
+            session.kind !== "Running" &&
+            session.kind !== "Done" &&
+            session.kind !== "Interrupted"
+          ) {
+            return session;
+          }
+
+          const existingIndex = session.progress.checksHistory.findIndex(
+            (execution) => execution.id === message.patch.execution.id,
+          );
+          const nextChecksHistory =
+            existingIndex === -1
+              ? [...session.progress.checksHistory, message.patch.execution]
+              : session.progress.checksHistory.map((execution, index) =>
+                  index === existingIndex ? message.patch.execution : execution,
+                );
+
+          return {
+            ...session,
+            progress: {
+              ...session.progress,
+              checksHistory: nextChecksHistory,
+            },
+          };
         }),
       };
     case "DeleteSession":
@@ -156,6 +192,6 @@ const processLoading = (
     case "CancelSession":
     case "DeleteSession":
     case "Clear":
-      return state;
+      return { type: "Idle" };
   }
 };

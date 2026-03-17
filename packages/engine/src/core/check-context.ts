@@ -27,6 +27,13 @@ export type CheckContextOptions = {
   getInterrupted: () => boolean;
 };
 
+/**
+ * Creates the high-level context object exposed to V2 checks.
+ *
+ * V2 checks receive this shape in `execute(ctx)`. It combines the current runtime
+ * data with helpers for sending requests, creating findings, reading parameters,
+ * and checking whether the scan was interrupted.
+ */
 export function createCheckContext(options: CheckContextOptions): CheckContext {
   const { runtimeContext, wrappedSdk, findings, getInterrupted } = options;
   const targetAccessor = createTargetAccessor(runtimeContext.target);

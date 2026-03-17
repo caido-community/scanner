@@ -31,7 +31,12 @@ export const useConfigService = defineStore("services.config", () => {
   const initialize = async () => {
     await refresh();
 
-    sdk.backend.onEvent("project:changed", async () => {
+    sdk.backend.onEvent("project:changed", async (_, phase) => {
+      if (phase === "start") {
+        store.send({ type: "Start" });
+        return;
+      }
+
       store.send({ type: "Start" });
       const result = await repository.getConfig();
 

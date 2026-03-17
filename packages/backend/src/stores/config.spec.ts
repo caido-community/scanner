@@ -26,6 +26,12 @@ const createUserConfig = (): UserConfig => ({
 });
 
 describe("migratePassiveConfig", () => {
+  it("defaults passive scanning to disabled", () => {
+    const result = createDefaultPassiveConfig();
+
+    expect(result.enabled).toBe(false);
+  });
+
   it("uses legacy scope IDs when inScopeOnly is true and scopeIDs is missing", () => {
     const result = migratePassiveConfig(
       {
@@ -58,7 +64,7 @@ describe("migratePassiveConfig", () => {
       [],
     );
 
-    expect(result.concurrentChecks).toBe(10);
+    expect(result.concurrentTargets).toBe(10);
     expect(result.concurrentRequests).toBe(3);
     expect(result.severities).toEqual([
       "critical",
@@ -67,6 +73,18 @@ describe("migratePassiveConfig", () => {
       "low",
       "info",
     ]);
+  });
+
+  it("preserves explicit concurrentTargets when present", () => {
+    const result = migratePassiveConfig(
+      {
+        concurrentChecks: 10,
+        concurrentTargets: 4,
+      },
+      [],
+    );
+
+    expect(result.concurrentTargets).toBe(4);
   });
 });
 

@@ -1,7 +1,9 @@
 import { type EditorView } from "@codemirror/view";
 
 export function getSelectedRequestFromDOM() {
-  const requestEditor = document.querySelector("[data-language='http-request']");
+  const requestEditor = document.querySelector(
+    "[data-language='http-request']",
+  );
 
   if (requestEditor === null) {
     return undefined;

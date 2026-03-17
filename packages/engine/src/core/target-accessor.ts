@@ -1,6 +1,12 @@
 import type { TargetAccessor } from "../types/check-v2";
 import type { ScanTarget } from "../types/runner";
 
+/**
+ * Wraps a raw scan target with convenience helpers used by V2 checks.
+ *
+ * V2 checks use this through `ctx.target` for common checks like request method,
+ * response header lookup, response body text, and whether the target has parameters.
+ */
 export function createTargetAccessor(target: ScanTarget): TargetAccessor {
   return {
     ...target,

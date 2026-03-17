@@ -1,10 +1,5 @@
 import { createRegistry, Result } from "engine";
-import type {
-  Result as ResultType,
-  ScanRequestPayload,
-  Session,
-  SessionProgress,
-} from "shared";
+import type { Result as ResultType, ScanRequestPayload, Session } from "shared";
 
 import { ScanRequestPayloadSchema } from "../../schemas";
 import { ChecksStore } from "../../stores/checks";
@@ -14,19 +9,10 @@ import { type BackendSDK } from "../../types";
 import { packExecutionHistory } from "../../utils/debug";
 import { validateInput } from "../../utils/validation";
 
-function getRunningSessionProgress(
-  session: Session | undefined,
-): SessionProgress | undefined {
-  if (session === undefined || session.kind !== "Running") {
-    return undefined;
-  }
-  return session.progress;
-}
-
-export const startActiveScan = (
+export const startActiveScan = async (
   sdk: BackendSDK,
   payload: ScanRequestPayload,
-): ResultType<Session> => {
+): Promise<ResultType<Session>> => {
   const validation = validateInput(ScanRequestPayloadSchema, payload);
   if (validation.kind === "Error") {
     return validation;
@@ -46,12 +32,20 @@ export const startActiveScan = (
     return Result.err("No active scans available");
   }
 
+  for (const requestID of requestIDs) {
+    const request = await sdk.requests.get(requestID);
+    if (!request) {
+      return Result.err(`Request ${requestID} not found`);
+    }
+  }
+
   const scannerStore = ScannerStore.get();
   const initialSession = scannerStore.createSession(
     title,
     requestIDs,
     scanConfig,
   );
+  sdk.api.send("session:created", initialSession.id, initialSession);
 
   (async () => {
     const { id } = initialSession;
@@ -64,6 +58,21 @@ export const startActiveScan = (
 
       const runnable = registry.create(sdk, scanConfig);
       scannerStore.registerRunnable(id, runnable);
+      const emitExecutionPatch = (checkID: string, targetRequestID: string) => {
+        const execution = scannerStore.getCheckExecution(
+          id,
+          checkID,
+          targetRequestID,
+        );
+        if (execution === undefined) {
+          return;
+        }
+
+        sdk.api.send("session:progress", id, {
+          type: "upsertExecution",
+          execution,
+        });
+      };
 
       const estimate = await runnable.estimate(requestIDs);
       if (estimate.kind === "Error") {
@@ -78,9 +87,7 @@ export const startActiveScan = (
         throw new Error("Failed to start session");
       }
 
-      sdk.api.send("session:created", id, startedSession, {
-        checksTotal: estimate.checksTotal,
-      });
+      sdk.api.send("session:updated", id, startedSession);
 
       runnable.on(
         "scan:finding",
@@ -96,8 +103,7 @@ export const startActiveScan = (
             finding,
           );
           if (!findingAddedSession) return;
-
-          sdk.api.send("session:updated", id, findingAddedSession);
+          emitExecutionPatch(checkID, targetRequestID);
 
           const result = await sdk.requests.get(finding.correlation.requestID);
           if (!result) return;
@@ -119,9 +125,8 @@ export const startActiveScan = (
           checkID,
           targetRequestID,
         );
-        const progress = getRunningSessionProgress(checkFinishedSession);
-        if (progress === undefined) return;
-        sdk.api.send("session:progress", id, progress);
+        if (checkFinishedSession === undefined) return;
+        emitExecutionPatch(checkID, targetRequestID);
       });
 
       runnable.on(
@@ -133,36 +138,36 @@ export const startActiveScan = (
             targetRequestID,
             pendingRequestID,
           );
-          const progress = getRunningSessionProgress(requestPendingSession);
-          if (progress === undefined) return;
-          sdk.api.send("session:progress", id, progress);
+          if (requestPendingSession === undefined) return;
+          emitExecutionPatch(checkID, targetRequestID);
         },
       );
 
       runnable.on(
         "scan:request-completed",
-        ({ pendingRequestID, requestID }) => {
+        ({ pendingRequestID, requestID, checkID, targetRequestID }) => {
           const requestCompletedSession = scannerStore.completeRequest(
             id,
             pendingRequestID,
             requestID,
           );
-          const progress = getRunningSessionProgress(requestCompletedSession);
-          if (progress === undefined) return;
-          sdk.api.send("session:progress", id, progress);
+          if (requestCompletedSession === undefined) return;
+          emitExecutionPatch(checkID, targetRequestID);
         },
       );
 
-      runnable.on("scan:request-failed", ({ error, pendingRequestID }) => {
-        const requestFailedSession = scannerStore.failRequest(
-          id,
-          pendingRequestID,
-          error,
-        );
-        const progress = getRunningSessionProgress(requestFailedSession);
-        if (progress === undefined) return;
-        sdk.api.send("session:progress", id, progress);
-      });
+      runnable.on(
+        "scan:request-failed",
+        ({ error, pendingRequestID, checkID, targetRequestID }) => {
+          const requestFailedSession = scannerStore.failRequest(
+            id,
+            pendingRequestID,
+            error,
+          );
+          if (requestFailedSession === undefined) return;
+          emitExecutionPatch(checkID, targetRequestID);
+        },
+      );
 
       runnable.on("scan:check-started", ({ checkID, targetRequestID }) => {
         const checkRunningSession = scannerStore.startCheck(
@@ -170,9 +175,8 @@ export const startActiveScan = (
           checkID,
           targetRequestID,
         );
-        const progress = getRunningSessionProgress(checkRunningSession);
-        if (progress === undefined) return;
-        sdk.api.send("session:progress", id, progress);
+        if (checkRunningSession === undefined) return;
+        emitExecutionPatch(checkID, targetRequestID);
       });
 
       runnable.on(
@@ -184,9 +188,8 @@ export const startActiveScan = (
             targetRequestID,
             errorMessage || "Unknown error",
           );
-          const progress = getRunningSessionProgress(checkFailedSession);
-          if (progress === undefined) return;
-          sdk.api.send("session:progress", id, progress);
+          if (checkFailedSession === undefined) return;
+          emitExecutionPatch(checkID, targetRequestID);
         },
       );
 

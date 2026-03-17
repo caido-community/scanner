@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Button from "primevue/button";
 import MenuBar from "primevue/menubar";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 import { useChecksService } from "@/services/checks";
 import { useConfigService } from "@/services/config";
@@ -9,6 +9,7 @@ import { useQueueService } from "@/services/queue";
 import { useScannerService } from "@/services/scanner";
 import Checks from "@/views/Checks.vue";
 import Dashboard from "@/views/Dashboard.vue";
+import Queue from "@/views/Queue.vue";
 import Settings from "@/views/Settings.vue";
 
 const page = ref<"Dashboard" | "Queue" | "Checks" | "Settings">("Dashboard");
@@ -21,14 +22,14 @@ const items = [
       page.value = "Dashboard";
     },
   },
-  // {
-  //   label: "Queue",
-  //   class: "mx-1",
-  //   isActive: () => page.value === "Queue",
-  //   command: () => {
-  //     page.value = "Queue";
-  //   },
-  // },
+  {
+    label: "Queue",
+    class: "mx-1",
+    isActive: () => page.value === "Queue",
+    command: () => {
+      page.value = "Queue";
+    },
+  },
   {
     label: "Checks",
     class: "mx-1",
@@ -51,8 +52,8 @@ const component = computed(() => {
   switch (page.value) {
     case "Dashboard":
       return Dashboard;
-    // case "Queue":
-    //   return Queue;
+    case "Queue":
+      return Queue;
     case "Checks":
       return Checks;
     case "Settings":
@@ -72,6 +73,10 @@ onMounted(() => {
   checksService.initialize();
   configService.initialize();
   queueService.initialize();
+});
+
+onUnmounted(() => {
+  queueService.dispose();
 });
 
 // PrimeVue update broke types and we can't just do :label="item.label"

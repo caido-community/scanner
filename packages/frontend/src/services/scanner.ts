@@ -1,10 +1,5 @@
-import { useThrottleFn } from "@vueuse/core";
 import { defineStore } from "pinia";
-import {
-  type DeepPartial,
-  type ScanRequestPayload,
-  type SessionProgress,
-} from "shared";
+import { type ScanRequestPayload } from "shared";
 import { computed } from "vue";
 
 import { useSDK } from "@/plugins/sdk";
@@ -52,18 +47,17 @@ export const useScannerService = defineStore("services.scanner", () => {
       store.send({ type: "AddSession", session: state });
     });
 
-    const throttledProgressUpdate = useThrottleFn(
-      (id: string, progress: DeepPartial<SessionProgress>) => {
-        store.send({ type: "UpdateSessionProgress", sessionId: id, progress });
-      },
-      200,
-    );
-
-    sdk.backend.onEvent("session:progress", (id, progress) => {
-      throttledProgressUpdate(id, progress);
+    sdk.backend.onEvent("session:progress", (id, patch) => {
+      store.send({ type: "UpdateSessionProgress", sessionId: id, patch });
     });
 
-    sdk.backend.onEvent("project:changed", async () => {
+    sdk.backend.onEvent("project:changed", async (_, phase) => {
+      if (phase === "start") {
+        clearSelection();
+        store.send({ type: "Clear" });
+        return;
+      }
+
       store.send({ type: "Start" });
       const result = await repository.getScanSessions();
 

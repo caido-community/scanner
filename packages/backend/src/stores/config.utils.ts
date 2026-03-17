@@ -2,10 +2,10 @@ import { ScanAggressivity } from "engine";
 import type { ActiveConfig, PassiveConfig, Preset, UserConfig } from "shared";
 
 export const createDefaultPassiveConfig = (): PassiveConfig => ({
-  enabled: true,
+  enabled: false,
   aggressivity: ScanAggressivity.LOW,
   scopeIDs: [],
-  concurrentChecks: 2,
+  concurrentTargets: 2,
   concurrentRequests: 3,
   overrides: [],
   severities: ["critical", "high", "medium", "low", "info"],
@@ -13,6 +13,7 @@ export const createDefaultPassiveConfig = (): PassiveConfig => ({
 
 type LegacyPassiveConfig = Partial<PassiveConfig> & {
   inScopeOnly?: boolean;
+  concurrentChecks?: number;
 };
 
 export const migratePassiveConfig = (
@@ -32,6 +33,8 @@ export const migratePassiveConfig = (
   return {
     ...createDefaultPassiveConfig(),
     ...restPassive,
+    concurrentTargets:
+      passive.concurrentTargets ?? passive.concurrentChecks ?? 2,
     scopeIDs,
   };
 };

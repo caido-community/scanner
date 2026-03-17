@@ -1,4 +1,4 @@
-import { type QueueTask } from "shared";
+import { type BasicRequest, type QueueTask } from "shared";
 import { reactive } from "vue";
 
 import { type QueueState } from "@/types/queue";
@@ -11,7 +11,12 @@ type Message =
   | { type: "Start" }
   | { type: "Error"; error: string }
   | { type: "Success"; tasks: QueueTask[] }
-  | { type: "AddTask"; taskId: string; requestID: string }
+  | {
+      type: "AddTask";
+      taskId: string;
+      request: BasicRequest;
+      createdAt: number;
+    }
   | { type: "StartTask"; taskId: string }
   | { type: "FinishTask"; taskId: string }
   | { type: "Clear" };
@@ -52,19 +57,22 @@ const processIdle = (
   switch (message.type) {
     case "Start":
       return { type: "Loading" };
+    case "Success":
+      return { type: "Success", tasks: message.tasks };
     case "AddTask":
       return {
         type: "Success",
         tasks: [
           {
             id: message.taskId,
-            requestID: message.requestID,
+            request: message.request,
+            executedCheckIDs: [],
             status: "pending",
+            createdAt: message.createdAt,
           },
         ],
       };
     case "Error":
-    case "Success":
     case "StartTask":
     case "FinishTask":
     case "Clear":
@@ -97,8 +105,9 @@ const processError = (
   switch (message.type) {
     case "Start":
       return { type: "Loading" };
-    case "Error":
     case "Success":
+      return { type: "Success", tasks: message.tasks };
+    case "Error":
     case "AddTask":
     case "StartTask":
     case "FinishTask":
@@ -111,6 +120,8 @@ const processSuccess = (
   message: Message,
 ): QueueState => {
   switch (message.type) {
+    case "Success":
+      return { type: "Success", tasks: message.tasks };
     case "AddTask":
       return {
         ...state,
@@ -118,8 +129,10 @@ const processSuccess = (
           ...state.tasks,
           {
             id: message.taskId,
-            requestID: message.requestID,
+            request: message.request,
+            executedCheckIDs: [],
             status: "pending",
+            createdAt: message.createdAt,
           },
         ],
       };
@@ -127,7 +140,16 @@ const processSuccess = (
       return {
         ...state,
         tasks: state.tasks.map((task) =>
-          task.id === message.taskId ? { ...task, status: "running" } : task,
+          task.id === message.taskId
+            ? {
+                ...task,
+                status: "running",
+                startedAt:
+                  task.status === "running" || task.status === "completed"
+                    ? task.startedAt
+                    : Date.now(),
+              }
+            : task,
         ),
       };
     case "FinishTask": {
@@ -140,7 +162,6 @@ const processSuccess = (
       return { ...state, tasks: [] };
     case "Start":
     case "Error":
-    case "Success":
       return state;
   }
 };

@@ -1,14 +1,24 @@
 import type { ScanRunnable } from "engine";
-import type { QueueTask } from "shared";
+import type { BasicRequest, QueueTask } from "shared";
 
-import type { TaskQueue } from "../utils/task-queue";
+import {
+  addExecutedCheck,
+  createQueueTask,
+  pruneQueueTasks,
+  updateQueueTask,
+} from "./queue.utils";
+
+type PassiveTaskQueue = {
+  clearPending: (reason: string) => void;
+  setConcurrency: (concurrency: number) => void;
+};
 
 export class QueueStore {
   private static instance?: QueueStore;
 
   private tasks: QueueTask[];
   private cancelFunctions: Map<string, () => void>;
-  private passiveTaskQueue?: TaskQueue;
+  private passiveTaskQueue?: PassiveTaskQueue;
 
   private constructor() {
     this.tasks = [];
@@ -23,18 +33,26 @@ export class QueueStore {
     return QueueStore.instance;
   }
 
-  setPassiveTaskQueue(queue: TaskQueue): void {
+  setPassiveTaskQueue(queue: PassiveTaskQueue): void {
     this.passiveTaskQueue = queue;
   }
 
-  addTask(id: string, requestID: string): QueueTask {
-    const task: QueueTask = {
-      id,
-      requestID,
-      status: "pending",
-    };
+  switchProject(_: string | undefined): void {
+    this.tasks = [];
+    this.cancelFunctions.clear();
+  }
 
-    this.tasks.push(task);
+  addTask(id: string, request: BasicRequest): QueueTask {
+    const task = createQueueTask({
+      id,
+      request,
+      now: Date.now(),
+    });
+
+    this.tasks = pruneQueueTasks({
+      tasks: [...this.tasks, task],
+      maxTasks: 100,
+    });
     return task;
   }
 
@@ -46,25 +64,50 @@ export class QueueStore {
     this.cancelFunctions.delete(id);
   }
 
+  addExecutedCheck(id: string, checkID: string): QueueTask | undefined {
+    const index = this.tasks.findIndex((task) => task.id === id);
+    if (index === -1) {
+      return undefined;
+    }
+
+    const task = this.tasks[index];
+    if (task === undefined) {
+      return undefined;
+    }
+
+    const nextTask = addExecutedCheck({
+      task,
+      checkID,
+    });
+    this.tasks[index] = nextTask;
+    return nextTask;
+  }
+
   updateTaskStatus(
     id: string,
     status: QueueTask["status"],
+    error?: string,
   ): QueueTask | undefined {
-    const task = this.tasks.find((t) => t.id === id);
-    if (task !== undefined) {
-      task.status = status;
-    }
-    return task;
-  }
-
-  removeTask(id: string): boolean {
-    const index = this.tasks.findIndex((t) => t.id === id);
+    const index = this.tasks.findIndex((task) => task.id === id);
     if (index !== -1) {
-      this.tasks.splice(index, 1);
-      return true;
+      const task = this.tasks[index];
+      if (task !== undefined) {
+        const nextTask = updateQueueTask({
+          task,
+          status,
+          now: Date.now(),
+          error,
+        });
+        this.tasks[index] = nextTask;
+        this.tasks = pruneQueueTasks({
+          tasks: this.tasks,
+          maxTasks: 100,
+        });
+        return nextTask;
+      }
     }
 
-    return false;
+    return undefined;
   }
 
   getTasks(): QueueTask[] {
@@ -81,7 +124,7 @@ export class QueueStore {
     }
     this.cancelFunctions.clear();
 
-    this.passiveTaskQueue?.clear();
+    this.passiveTaskQueue?.clearPending("Cancelled");
     this.tasks = [];
   }
 }

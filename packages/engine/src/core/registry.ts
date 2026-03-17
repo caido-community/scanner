@@ -10,6 +10,12 @@ import {
 import { ScanRegistryError, ScanRegistryErrorCode } from "./errors";
 import { createRunnable } from "./runnable";
 
+/**
+ * Creates an in-memory registry for scan checks.
+ *
+ * Register checks first, then call `create(sdk, config)` to get a runnable scan.
+ * This is the usual entry point when wiring the engine into the backend or tests.
+ */
 export const createRegistry = (): ScanRegistry => {
   const checks: Check[] = [];
 
