@@ -2,18 +2,16 @@
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import { type Session } from "shared";
-import { computed, toRef } from "vue";
-
-import { useForm } from "./useForm";
+import { computed } from "vue";
 
 import { useScannerService } from "@/services/scanner";
 
-const { session } = defineProps<{
-  session: Session;
-}>();
-
 const {
-  getStatusColor,
+  session,
+  activeView,
+  canShowFindings,
+  onOpenFindings,
+  onBack,
   onCancel,
   onDelete,
   onRerun,
@@ -26,7 +24,27 @@ const {
   isRerunning,
   showDeleteDialog,
   showRerunDialog,
-} = useForm(toRef(() => session));
+  getStatusColor,
+} = defineProps<{
+  session: Session;
+  activeView: "summary" | "findings";
+  canShowFindings: boolean;
+  onOpenFindings: () => void;
+  onBack: () => void;
+  onCancel: () => Promise<void>;
+  onDelete: () => void;
+  onRerun: () => void;
+  onConfirmDelete: () => void;
+  onCancelDelete: () => void;
+  onConfirmRerun: () => Promise<void>;
+  onCancelRerun: () => void;
+  isCancelling: boolean;
+  isDeleting: boolean;
+  isRerunning: boolean;
+  showDeleteDialog: boolean;
+  showRerunDialog: boolean;
+  getStatusColor: (kind: string) => string;
+}>();
 
 const scannerService = useScannerService();
 
@@ -44,7 +62,7 @@ const onDownloadTrace = () => {
 </script>
 
 <template>
-  <div class="flex items-center justify-between gap-4 px-4 pt-4">
+  <div class="flex items-center justify-between gap-4 p-4">
     <div class="flex items-center gap-3">
       <div class="flex items-center gap-2">
         <span class="text-base font-medium">{{ session.title }}</span>
@@ -79,6 +97,15 @@ const onDownloadTrace = () => {
         outlined
         size="small"
         @click="onCancel"
+      />
+
+      <Button
+        v-if="canShowFindings"
+        :label="activeView === 'findings' ? 'Back' : 'Findings'"
+        severity="secondary"
+        outlined
+        size="small"
+        @click="activeView === 'findings' ? onBack() : onOpenFindings()"
       />
 
       <Button
@@ -117,10 +144,11 @@ const onDownloadTrace = () => {
   </div>
 
   <Dialog
-    v-model:visible="showDeleteDialog"
+    :visible="showDeleteDialog"
     modal
     header="Delete Session"
     :style="{ width: '25rem' }"
+    @hide="onCancelDelete"
   >
     <div class="flex flex-col gap-4">
       <p class="text-surface-300">Do you want to delete this session?</p>
@@ -139,10 +167,11 @@ const onDownloadTrace = () => {
   </Dialog>
 
   <Dialog
-    v-model:visible="showRerunDialog"
+    :visible="showRerunDialog"
     modal
     header="Rerun Session"
     :style="{ width: '25rem' }"
+    @hide="onCancelRerun"
   >
     <div class="flex flex-col gap-4">
       <p class="text-surface-300">
