@@ -81,6 +81,54 @@ export const BUGBOUNTY_PRESET: Preset = {
       checkID: Checks.SPRING_ACTUATOR,
       enabled: false,
     },
+    {
+      checkID: Checks.HOST_HEADER_INJECTION,
+      enabled: true,
+    },
+    {
+      checkID: Checks.TRACE_METHOD_ENABLED,
+      enabled: true,
+    },
+    {
+      checkID: Checks.GRAPHQL_INTROSPECTION,
+      enabled: true,
+    },
+    {
+      checkID: Checks.XML_INPUT_DETECTION,
+      enabled: true,
+    },
+    {
+      checkID: Checks.DS_STORE_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.SVN_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.NPM_DEBUG_LOG,
+      enabled: true,
+    },
+    {
+      checkID: Checks.WEB_CONFIG_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.WORDPRESS_README,
+      enabled: false,
+    },
+    {
+      checkID: Checks.SECURITY_TXT,
+      enabled: false,
+    },
+    {
+      checkID: Checks.LARAVEL_DEBUG,
+      enabled: true,
+    },
+    {
+      checkID: Checks.SYMFONY_PROFILER,
+      enabled: true,
+    },
   ],
   passive: [
     {
@@ -230,6 +278,82 @@ export const BUGBOUNTY_PRESET: Preset = {
     {
       checkID: Checks.SPRING_ACTUATOR,
       enabled: true,
+    },
+    {
+      checkID: Checks.COOKIE_HTTPONLY,
+      enabled: false,
+    },
+    {
+      checkID: Checks.COOKIE_SECURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.SOURCEMAP_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.DJANGO_DEBUG,
+      enabled: false,
+    },
+    {
+      checkID: Checks.SUBDOMAIN_TAKEOVER,
+      enabled: true,
+    },
+    {
+      checkID: Checks.AWS_KEY_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.GCP_KEY_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.AZURE_KEY_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.GITHUB_TOKEN_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.GITLAB_TOKEN_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.SLACK_TOKEN_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.STRIPE_KEY_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.JWT_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.AI_KEY_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.CICD_TOKEN_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.FIREBASE_CONFIG_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.MESSAGING_TOKEN_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.PAYMENT_KEY_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.GENERIC_API_KEY,
+      enabled: false,
     },
   ],
 };

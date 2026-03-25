@@ -77,6 +77,54 @@ export const LIGHT_PRESET: Preset = {
       checkID: Checks.SUSPECT_TRANSFORM,
       enabled: false,
     },
+    {
+      checkID: Checks.SECURITY_TXT,
+      enabled: false,
+    },
+    {
+      checkID: Checks.DS_STORE_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.SVN_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.NPM_DEBUG_LOG,
+      enabled: false,
+    },
+    {
+      checkID: Checks.WEB_CONFIG_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.WORDPRESS_README,
+      enabled: false,
+    },
+    {
+      checkID: Checks.HOST_HEADER_INJECTION,
+      enabled: false,
+    },
+    {
+      checkID: Checks.TRACE_METHOD_ENABLED,
+      enabled: false,
+    },
+    {
+      checkID: Checks.GRAPHQL_INTROSPECTION,
+      enabled: false,
+    },
+    {
+      checkID: Checks.XML_INPUT_DETECTION,
+      enabled: false,
+    },
+    {
+      checkID: Checks.LARAVEL_DEBUG,
+      enabled: false,
+    },
+    {
+      checkID: Checks.SYMFONY_PROFILER,
+      enabled: false,
+    },
   ],
   passive: [
     {
@@ -103,14 +151,14 @@ export const LIGHT_PRESET: Preset = {
       checkID: Checks.ANTI_CLICKJACKING,
       enabled: false,
     },
-    // {
-    //   checkID: Checks.COOKIE_HTTPONLY,
-    //   enabled: true,
-    // },
-    // {
-    //   checkID: Checks.COOKIE_SECURE,
-    //   enabled: true,
-    // },
+    {
+      checkID: Checks.COOKIE_HTTPONLY,
+      enabled: true,
+    },
+    {
+      checkID: Checks.COOKIE_SECURE,
+      enabled: true,
+    },
     {
       checkID: Checks.SQL_STATEMENT_IN_PARAMS,
       enabled: false,
@@ -190,6 +238,74 @@ export const LIGHT_PRESET: Preset = {
     {
       checkID: Checks.MISSING_CONTENT_TYPE,
       enabled: true,
+    },
+    {
+      checkID: Checks.SOURCEMAP_DISCLOSURE,
+      enabled: true,
+    },
+    {
+      checkID: Checks.AWS_KEY_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.GCP_KEY_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.AZURE_KEY_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.GITHUB_TOKEN_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.GITLAB_TOKEN_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.SLACK_TOKEN_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.STRIPE_KEY_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.JWT_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.AI_KEY_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.CICD_TOKEN_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.GENERIC_API_KEY,
+      enabled: false,
+    },
+    {
+      checkID: Checks.FIREBASE_CONFIG_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.MESSAGING_TOKEN_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.PAYMENT_KEY_DISCLOSURE,
+      enabled: false,
+    },
+    {
+      checkID: Checks.SUBDOMAIN_TAKEOVER,
+      enabled: false,
+    },
+    {
+      checkID: Checks.DJANGO_DEBUG,
+      enabled: false,
     },
   ],
 };

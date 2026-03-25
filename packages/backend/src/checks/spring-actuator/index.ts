@@ -51,6 +51,64 @@ const ACTUATOR_ENDPOINTS: EndpointConfig[] = [
       "Attackers can create malicious routes to access internal services, cloud metadata endpoints (IMDS), or exploit RCE vulnerabilities.",
     validator: isValidGatewayRoutesContent,
   },
+  {
+    path: "actuator/metrics",
+    name: "Spring Actuator Metrics",
+    severity: Severity.MEDIUM,
+    description:
+      "The metrics endpoint is publicly accessible and exposes application performance metrics including JVM stats, HTTP request counts, and resource utilization.",
+    impact:
+      "Attackers can enumerate internal services, monitor application behavior, and gather information for further attacks.",
+    validator: (body: string, ct: string) =>
+      isJsonContentType(ct) && body.includes('"names"'),
+  },
+  {
+    path: "actuator/beans",
+    name: "Spring Actuator Beans",
+    severity: Severity.HIGH,
+    description:
+      "The beans endpoint is publicly accessible and lists all Spring beans, their types, scopes, and dependencies.",
+    impact:
+      "Exposes internal application structure, bean configurations, and dependency injection graph that can guide targeted attacks.",
+    validator: (body: string, ct: string) =>
+      isJsonContentType(ct) && body.includes('"contexts"'),
+  },
+  {
+    path: "actuator/mappings",
+    name: "Spring Actuator Mappings",
+    severity: Severity.HIGH,
+    description:
+      "The mappings endpoint is publicly accessible and lists all URL path mappings and their handler methods.",
+    impact:
+      "Exposes all API endpoints including hidden or internal routes and their handler classes.",
+    validator: (body: string, ct: string) =>
+      isJsonContentType(ct) &&
+      (body.includes('"dispatcherServlets"') ||
+        body.includes('"dispatcherHandlers"')),
+  },
+  {
+    path: "actuator/loggers",
+    name: "Spring Actuator Loggers",
+    severity: Severity.HIGH,
+    description:
+      "The loggers endpoint is publicly accessible and allows viewing and modifying application log levels at runtime.",
+    impact:
+      "Attackers can change log levels to expose sensitive debug information or suppress security logging.",
+    validator: (body: string, ct: string) =>
+      isJsonContentType(ct) && body.includes('"levels"'),
+  },
+  {
+    path: "actuator/threaddump",
+    name: "Spring Actuator Thread Dump",
+    severity: Severity.HIGH,
+    description:
+      "The threaddump endpoint is publicly accessible and exposes JVM thread state information.",
+    impact:
+      "Reveals internal execution state, potentially including sensitive data in thread stacks and class paths.",
+    validator: (body: string, ct: string) =>
+      body.includes("java.lang.Thread") ||
+      (isJsonContentType(ct) && body.includes('"threads"')),
+  },
 ];
 
 type BypassTechnique = {
@@ -306,7 +364,7 @@ export default defineCheck<State>(({ step }) => {
         "Detects exposed Spring Boot Actuator endpoints that can leak sensitive information and credentials",
       type: "active",
       tags: [Tags.INFORMATION_DISCLOSURE, Tags.RCE],
-      severities: [Severity.CRITICAL],
+      severities: [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM],
       aggressivity: {
         minRequests: ACTUATOR_ENDPOINTS.length,
         maxRequests: ACTUATOR_ENDPOINTS.length * BYPASS_TECHNIQUES.length,

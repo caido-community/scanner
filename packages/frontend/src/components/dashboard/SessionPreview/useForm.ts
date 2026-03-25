@@ -3,10 +3,7 @@ import { Severity } from "engine";
 import { type Session } from "shared";
 import { computed, type Ref, ref, watch } from "vue";
 
-import {
-  createSessionFindings,
-  type RequestPreviewState,
-} from "./utils";
+import { createSessionFindings, type RequestPreviewState } from "./utils";
 
 import { useScannerRepository } from "@/repositories/scanner";
 import { useScannerService } from "@/services/scanner";

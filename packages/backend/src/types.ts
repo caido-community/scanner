@@ -49,6 +49,14 @@ export const Tags = {
   VALIDATION: "validation",
   XSS: "xss",
   X_FRAME_OPTIONS: "x-frame-options",
+  HOST_HEADER: "host-header",
+  INFRASTRUCTURE: "infrastructure",
+  FRAMEWORK: "framework",
+  CLOUD: "cloud",
+  JAVASCRIPT: "javascript",
+  CICD: "cicd",
+  SECRET: "secret",
+  XXE: "xxe",
 } as const;
 
 export type BackendSDK = SDK<API, BackendEvents>;
