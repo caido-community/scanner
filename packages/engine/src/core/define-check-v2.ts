@@ -119,7 +119,10 @@ export function defineRegexCheck(config: RegexCheckDefinition): Check {
       const allMatches = new Set<string>();
 
       for (const pattern of config.patterns) {
-        const matches = body.matchAll(new RegExp(pattern, "g"));
+        const flags = pattern.flags.includes("g")
+          ? pattern.flags
+          : pattern.flags + "g";
+        const matches = body.matchAll(new RegExp(pattern.source, flags));
         for (const match of matches) {
           if (match[0] !== undefined) {
             allMatches.add(match[0]);

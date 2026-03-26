@@ -13,6 +13,10 @@ type KeyStrategy = {
   build: () => KeyFn;
 };
 
+export function getBasePath(path: string): string {
+  return path.split("/").slice(0, -1).join("/");
+}
+
 export const keyStrategy = (): KeyStrategy => {
   const parts: KeyFn[] = [];
 
