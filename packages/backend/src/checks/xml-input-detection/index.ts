@@ -57,8 +57,7 @@ export default defineCheckV2({
       xmlBody.includes("XMLSyntaxError") ||
       xmlBody.includes("lxml.etree") ||
       xmlBody.includes("XML parsing error") ||
-      xmlBody.includes("simplexml_load") ||
-      /^<[a-zA-Z]/.test(xmlBody.trim());
+      xmlBody.includes("simplexml_load");
 
     const codesDiffer = xmlCode !== controlCode;
 

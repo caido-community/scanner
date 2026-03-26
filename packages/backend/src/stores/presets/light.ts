@@ -153,11 +153,11 @@ export const LIGHT_PRESET: Preset = {
     },
     {
       checkID: Checks.COOKIE_HTTPONLY,
-      enabled: true,
+      enabled: false,
     },
     {
       checkID: Checks.COOKIE_SECURE,
-      enabled: true,
+      enabled: false,
     },
     {
       checkID: Checks.SQL_STATEMENT_IN_PARAMS,

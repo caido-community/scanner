@@ -12,7 +12,7 @@ export default defineRegexCheck({
   tags: [Tags.SECRET],
   severity: Severity.LOW,
   patterns: [
-    /(?:api[_-]?key|api[_-]?secret|secret[_-]?key|access[_-]?token)["']?\s{0,5}[:=]\s{0,5}["']([A-Za-z0-9_-]{20,64})["']/i,
+    /(?:api[_-]?key|api[_-]?secret|secret[_-]?key|access[_-]?token)["']?\s{0,5}[:=]\s{0,5}["']?([A-Za-z0-9_-]{20,64})(?:["']|\b)/i,
   ],
   dedupeKey: keyStrategy().withHost().withPort().withPath().build(),
   when: whenTextResponse,

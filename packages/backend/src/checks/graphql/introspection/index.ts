@@ -1,4 +1,5 @@
 import { defineCheckV2, Result, Severity } from "engine";
+import { z } from "zod";
 
 import { Tags } from "../../../types";
 import { keyStrategy } from "../../../utils/key";
@@ -6,35 +7,17 @@ import { keyStrategy } from "../../../utils/key";
 const INTROSPECTION_QUERY = '{"query":"{ __schema { types { name } } }"}';
 const GET_INTROSPECTION_QUERY = "query={__schema{types{name}}}";
 
+const IntrospectionSchema = z.object({
+  data: z.object({
+    __schema: z.object({
+      types: z.array(z.unknown()),
+    }),
+  }),
+});
+
 function hasIntrospectionResult(body: string): boolean {
   try {
-    const parsed = JSON.parse(body) as {
-      data?: { __schema?: { types?: unknown[] } };
-    };
-
-    if (typeof parsed !== "object" || parsed === null) {
-      return false;
-    }
-
-    if (!("data" in parsed)) {
-      return false;
-    }
-
-    const data = parsed.data;
-    if (typeof data !== "object" || data === null) {
-      return false;
-    }
-
-    if (!("__schema" in data)) {
-      return false;
-    }
-
-    const schema = data.__schema;
-    if (typeof schema !== "object" || schema === null) {
-      return false;
-    }
-
-    return "types" in schema && Array.isArray(schema.types);
+    return IntrospectionSchema.safeParse(JSON.parse(body)).success;
   } catch {
     return false;
   }

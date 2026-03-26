@@ -103,6 +103,26 @@ describe("generic-api-key", () => {
     expect(history[0]?.steps[0]?.findings).toHaveLength(1);
   });
 
+  it("detects unquoted api_key value", async () => {
+    const history = await runCheck(check, [
+      {
+        request: createMockRequest({
+          id: "1",
+          host: "example.com",
+          method: "GET",
+          path: "/",
+        }),
+        response: createMockResponse({
+          id: "1",
+          code: 200,
+          body: "api_key=ABCDEFGHIJKLMNOPQRSTUVWXyz",
+        }),
+      },
+    ]);
+    expect(history).toHaveLength(1);
+    expect(history[0]?.steps[0]?.findings).toHaveLength(1);
+  });
+
   it("ignores short values", async () => {
     const history = await runCheck(check, [
       {

@@ -20,6 +20,34 @@ type EndpointConfig = {
   validator: (body: string, contentType: string) => boolean;
 };
 
+function parseJsonObject(
+  body: string,
+  contentType: string,
+): Record<string, unknown> | undefined {
+  if (!isJsonContentType(contentType)) {
+    return undefined;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(body);
+
+    if (typeof parsed !== "object" || parsed === null) {
+      return undefined;
+    }
+
+    return parsed as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+}
+
+function hasAnyKey(
+  value: Record<string, unknown>,
+  keys: readonly string[],
+): boolean {
+  return keys.some((key) => key in value);
+}
+
 const LARAVEL_ENDPOINTS: EndpointConfig[] = [
   {
     path: "_ignition/health-check",
@@ -30,19 +58,10 @@ const LARAVEL_ENDPOINTS: EndpointConfig[] = [
     impact:
       "Attackers can confirm the application uses Laravel with Ignition debug mode enabled, and in vulnerable versions execute arbitrary code on the server.",
     validator: (body: string, contentType: string) => {
-      if (!isJsonContentType(contentType)) {
-        return false;
-      }
-      try {
-        const parsed = JSON.parse(body) as Record<string, unknown>;
-        return (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          "can_execute_commands" in parsed
-        );
-      } catch {
-        return false;
-      }
+      const parsed = parseJsonObject(body, contentType);
+      return (
+        parsed !== undefined && hasAnyKey(parsed, ["can_execute_commands"])
+      );
     },
   },
   {
@@ -54,22 +73,11 @@ const LARAVEL_ENDPOINTS: EndpointConfig[] = [
     impact:
       "Attackers can access detailed profiling information including SQL queries with parameters, session data, authentication details, and application configuration.",
     validator: (body: string, contentType: string) => {
-      if (!isJsonContentType(contentType)) {
-        return false;
-      }
-      try {
-        const parsed = JSON.parse(body) as Record<string, unknown>;
-        return (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          ("id" in parsed ||
-            "method" in parsed ||
-            "uri" in parsed ||
-            "time" in parsed)
-        );
-      } catch {
-        return false;
-      }
+      const parsed = parseJsonObject(body, contentType);
+      return (
+        parsed !== undefined &&
+        hasAnyKey(parsed, ["id", "method", "uri", "time"])
+      );
     },
   },
   {
@@ -81,19 +89,10 @@ const LARAVEL_ENDPOINTS: EndpointConfig[] = [
     impact:
       "Attackers can view all application requests, exceptions with stack traces, database queries, log entries, and scheduled tasks.",
     validator: (body: string, contentType: string) => {
-      if (!isJsonContentType(contentType)) {
-        return false;
-      }
-      try {
-        const parsed = JSON.parse(body) as Record<string, unknown>;
-        return (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          ("data" in parsed || "entries" in parsed || "type" in parsed)
-        );
-      } catch {
-        return false;
-      }
+      const parsed = parseJsonObject(body, contentType);
+      return (
+        parsed !== undefined && hasAnyKey(parsed, ["data", "entries", "type"])
+      );
     },
   },
 ];

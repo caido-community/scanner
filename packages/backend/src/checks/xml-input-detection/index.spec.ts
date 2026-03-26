@@ -149,6 +149,48 @@ describe("xml-input-detection check", () => {
     expect(findings).toHaveLength(0);
   });
 
+  it("should not detect when XML response body is HTML", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "POST",
+        path: "/api/data",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        headers: {},
+        body: "OK",
+      },
+    });
+
+    const sendHandler = () => {
+      const mockRequest = createMockRequest({
+        id: "2",
+        host: "example.com",
+        method: "POST",
+        path: "/api/data",
+      });
+
+      const mockResponse = createMockResponse({
+        id: "2",
+        code: 200,
+        headers: {},
+        body: "<html><body>Hello World</body></html>",
+      });
+
+      return Promise.resolve({ request: mockRequest, response: mockResponse });
+    };
+
+    const { findings } = await testCheck(xmlInputDetectionCheck, target, {
+      sendHandler,
+      config: { aggressivity: ScanAggressivity.MEDIUM },
+    });
+
+    expect(findings).toHaveLength(0);
+  });
+
   it("should run for PUT method", async () => {
     const target = mockTarget({
       request: {
