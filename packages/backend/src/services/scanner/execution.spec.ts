@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import * as sdkModule from "../../sdk";
 import { ChecksStore } from "../../stores/checks";
 import { ConfigStore } from "../../stores/config";
 import { ScannerStore } from "../../stores/scanner";
@@ -57,13 +58,13 @@ describe("startActiveScan", () => {
       createSession,
     } as unknown as ScannerStore);
 
-    const sdk = {
+    vi.spyOn(sdkModule, "requireSDK").mockReturnValue({
       requests: {
         get: getRequest,
       },
-    } as never;
+    } as never);
 
-    const result = await startActiveScan(sdk, payload);
+    const result = await startActiveScan(payload);
 
     expect(result).toEqual({
       kind: "Error",

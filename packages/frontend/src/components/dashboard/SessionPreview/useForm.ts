@@ -1,5 +1,5 @@
 import { useTimestamp } from "@vueuse/core";
-import { Severity } from "engine";
+import { Severity } from "shared";
 import { type Session } from "shared";
 import { computed, type Ref, ref, watch } from "vue";
 

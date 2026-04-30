@@ -1,43 +1,10 @@
-import { type Finding, type Severity } from "./finding";
-import {
-  type RuntimeContext,
-  type ScanAggressivity,
-  type ScanTarget,
-} from "./runner";
+import type { CheckAggressivity, CheckMetadata, CheckType } from "shared";
+
+import { type Finding } from "./finding";
+import { type RuntimeContext, type ScanTarget } from "./runner";
 import { type JSONSerializable } from "./utils";
 
-export type CheckAggressivity = {
-  minRequests: number;
-  maxRequests: number | "Infinity";
-};
-
-export type CheckType = "passive" | "active";
-export type CheckMetadata = {
-  /** Unique identifier for the check */
-  id: string;
-  /** Human-readable name displayed in the UI */
-  name: string;
-  /** Detailed description of what the check does and what vulnerabilities it detects */
-  description: string;
-  /** Array of tags used for categorization and filtering */
-  tags: string[];
-  /** Defines the request limits for this check. Please use Infinity if it's dynamic. */
-  aggressivity: CheckAggressivity;
-  /** Whether this is a passive or active check */
-  type: CheckType;
-  /**
-   * Array of possible severity levels this check can report.
-   * This is used for filtering.
-   * Engine will throw an error if you return a finding with a severity that is not in this array.
-   **/
-  severities: Severity[];
-  /** Optional: Array of check IDs that must run before this check */
-  dependsOn?: string[];
-  /** Optional: Minimum scan aggressivity level required for this check to run */
-  minAggressivity?: ScanAggressivity;
-  /** Optional: array of check IDs - if any of these check IDs have found any findings during the scan, skip this check */
-  skipIfFoundBy?: string[];
-};
+export type { CheckAggressivity, CheckMetadata, CheckType };
 
 type CheckBase = {
   /** Metadata for the check. This contains all the information about the check. */

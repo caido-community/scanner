@@ -6,9 +6,9 @@ import {
   Severity,
 } from "engine";
 
-import { Tags } from "../../types";
 import { extractReflectedParameters, type Parameter } from "../../utils";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const MARKER = "__ssti_probe__";
 

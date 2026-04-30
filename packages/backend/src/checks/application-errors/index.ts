@@ -1,8 +1,8 @@
 import { defineCheck, done, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { bodyMatchesAny } from "../../utils";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 // Common application error patterns that indicate sensitive information disclosure
 const ERROR_PATTERNS = [

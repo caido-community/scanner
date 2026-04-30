@@ -1,7 +1,7 @@
 import { defineCheckV2, Result, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils";
+import { Tags } from "../tags";
 
 const USER_AGENTS = [
   {

@@ -1,11 +1,10 @@
-import { Result } from "engine";
-import type { Result as ResultType } from "shared";
+import { Result } from "shared";
 import { ZodError, type ZodType } from "zod";
 
 export function validateInput<T>(
   schema: ZodType<T>,
   input: unknown,
-): ResultType<T> {
+): Result<T> {
   try {
     const result = schema.parse(input);
     return Result.ok(result);

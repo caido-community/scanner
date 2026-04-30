@@ -7,12 +7,14 @@ env:
   NODE_VERSION: 20
   PNPM_VERSION: 9
 
+permissions:
+  id-token: write
+  contents: write
+
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Verify main branch
@@ -29,6 +31,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -56,6 +59,13 @@ jobs:
         run: |
           VERSION=$(unzip -p plugin_package.zip manifest.json | jq -r .version)
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Publish package
+        working-directory: packages/shared
+        run: |
+          pnpm run build
+          npm pkg set "version=${{ steps.meta.outputs.version }}"
+          npm publish --access public --provenance
 
       - name: Create release
         uses: caido/action-release@v1

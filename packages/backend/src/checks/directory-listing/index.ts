@@ -6,8 +6,8 @@ import {
   Severity,
 } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 type State = {
   candidates: string[];

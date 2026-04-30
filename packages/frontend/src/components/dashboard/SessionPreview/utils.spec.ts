@@ -1,4 +1,4 @@
-import { Severity } from "engine";
+import { Severity } from "shared";
 import { describe, expect, it } from "vitest";
 
 import { createSessionFindings } from "./utils";

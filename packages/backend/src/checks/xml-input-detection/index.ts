@@ -1,7 +1,7 @@
 import { defineCheckV2, Result, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const XML_BODY = '<?xml version="1.0"?><test>1</test>';
 

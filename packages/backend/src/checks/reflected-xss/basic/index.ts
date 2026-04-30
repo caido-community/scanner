@@ -7,9 +7,9 @@ import {
   Severity,
 } from "engine";
 
-import { Tags } from "../../../types";
 import { extractReflectedParameters, type Parameter } from "../../../utils";
 import { keyStrategy } from "../../../utils/key";
+import { Tags } from "../../tags";
 
 function isHtmlResponse(response: Response): boolean {
   const contentType = response.getHeader("Content-Type")?.[0]?.toLowerCase();

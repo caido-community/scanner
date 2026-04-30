@@ -4,11 +4,16 @@ const config: RawConfigurationOrFn = {
   workspaces: {
     ".": {
       entry: ["caido.config.ts"],
-      ignoreDependencies: ["@caido/sdk-backend", "@vitest/coverage-v8", "rollup-plugin-dts"],
+      ignoreDependencies: ["@vitest/coverage-v8", "rollup-plugin-dts"],
     },
     "packages/backend": {
       project: ["src/**/*.ts"],
-      ignoreDependencies: ["caido", "@lezer/common", "@lezer/generator"],
+      ignoreDependencies: [
+        "caido",
+        "shared",
+        "@lezer/common",
+        "@lezer/generator",
+      ],
       ignore: [
         "src/parsers/**/__generated__*",
         "src/checks/sql-injection/mysql-time-based/**",
@@ -16,6 +21,7 @@ const config: RawConfigurationOrFn = {
     },
     "packages/frontend": {
       project: ["src/**/*.{ts,tsx,vue}"],
+      ignoreDependencies: ["shared"],
       ignore: [
         "src/views/Queue.vue",
         "src/components/queue/**",
@@ -27,7 +33,7 @@ const config: RawConfigurationOrFn = {
     },
     "packages/engine": {
       project: ["src/**/*.ts"],
-      ignoreDependencies: ["caido"],
+      ignoreDependencies: ["caido", "shared"],
       ignore: ["src/__tests__/**"],
     },
     "packages/trace-viewer": {

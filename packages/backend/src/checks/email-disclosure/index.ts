@@ -1,7 +1,7 @@
 import { Severity } from "engine";
 
-import { Tags } from "../../types";
 import { defineResponseRegexCheck } from "../../utils/check";
+import { Tags } from "../tags";
 
 // Email address regex pattern
 const EMAIL_PATTERNS = [/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g];

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CheckMetadata } from "engine";
+import type { CheckMetadata } from "shared";
 
 import { useTable } from "./useTable";
 

@@ -1,8 +1,8 @@
 import { defineCheck, done, Severity } from "engine";
 
 import { CSPParser } from "../../parsers/csp";
-import { Tags } from "../../types";
 import { findingBuilder, keyStrategy } from "../../utils";
+import { Tags } from "../tags";
 
 export default defineCheck(({ step }) => {
   step("checkCspFormHijacking", (state, context) => {

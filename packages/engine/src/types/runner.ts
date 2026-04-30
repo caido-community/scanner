@@ -1,21 +1,19 @@
 import { type SDK } from "caido:plugin";
 import { type Request, type Response } from "caido:utils";
+import {
+  type InterruptReason,
+  ScanAggressivity,
+  type ScanConfig,
+} from "shared";
 
 import { type ScanRunnableErrorCode } from "../core/errors";
 import { type ParsedHtml } from "../utils/html/types";
 
 import { type Check, type CheckOutput } from "./check";
-import { type Finding, type Severity } from "./finding";
+import { type Finding } from "./finding";
 import { type JSONSerializable } from "./utils";
 
-export const ScanAggressivity = {
-  LOW: "low",
-  MEDIUM: "medium",
-  HIGH: "high",
-} as const;
-
-export type ScanAggressivity =
-  (typeof ScanAggressivity)[keyof typeof ScanAggressivity];
+export { ScanAggressivity, type InterruptReason, type ScanConfig };
 
 export type ScanRegistry = {
   register: (check: Check) => void;
@@ -35,11 +33,6 @@ export type ScanRunnable = {
   emit: (event: keyof ScanEvents, data: ScanEvents[keyof ScanEvents]) => void;
 };
 
-export type InterruptReason =
-  | "Cancelled"
-  | "Timeout"
-  | "ProjectChanged"
-  | "RuntimeStopped";
 export type ScanResult =
   | {
       kind: "Finished";
@@ -155,16 +148,3 @@ export type CheckExecutionRecord = {
 );
 
 export type ExecutionHistory = CheckExecutionRecord[];
-
-export type ScanConfig = {
-  aggressivity: ScanAggressivity;
-  scopeIDs: string[];
-  concurrentChecks: number;
-  concurrentRequests: number;
-  concurrentTargets: number;
-  requestsDelayMs: number;
-  scanTimeout: number;
-  checkTimeout: number;
-  requestTimeout?: number;
-  severities: Severity[];
-};

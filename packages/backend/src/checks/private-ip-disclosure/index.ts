@@ -1,7 +1,7 @@
 import { Severity } from "engine";
 
-import { Tags } from "../../types";
 import { defineResponseRegexCheck } from "../../utils/check";
+import { Tags } from "../tags";
 
 // Private IP address regex patterns
 const PRIVATE_IP_PATTERNS = [

@@ -6,8 +6,8 @@ import {
   Severity,
 } from "engine";
 
-import { Tags } from "../../types";
 import { getBasePath, keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const WEB_CONFIG_FILES = ["web.config", "Web.config"];
 

@@ -1,7 +1,7 @@
 import { defineCheck, done, type ScanTarget, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { extractParameters, keyStrategy, type Parameter } from "../../utils";
+import { Tags } from "../tags";
 
 type ReflectionType = "full" | "partial";
 

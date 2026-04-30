@@ -8,6 +8,7 @@
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "build": "caido-dev build",
+    "build:shared": "pnpm --filter @caido-community/scanner run build",
     "watch": "caido-dev watch",
     "lint": "eslint --fix packages/*/src",
     "knip": "knip",
@@ -19,7 +20,7 @@
   "devDependencies": {
     "@caido-community/dev": "0.1.6",
     "@caido/eslint-config": "0.8.0",
-    "@caido/sdk-backend": "0.55.3",
+    "@caido/sdk-backend": "0.56.0",
     "@caido/tailwindcss": "0.0.1",
     "@types/node": "25.2.1",
     "@vitejs/plugin-vue": "6.0.1",
@@ -34,5 +35,10 @@
     "typescript": "5.8.3",
     "vite": "6.3.5",
     "vitest": "3.2.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@caido/sdk-shared": "0.2.2"
+    }
   }
 }

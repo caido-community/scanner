@@ -1,9 +1,9 @@
 import { defineCheck, done, Severity } from "engine";
 
 import { CSPParser } from "../../parsers/csp";
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils";
 import { findingBuilder } from "../../utils/findings";
+import { Tags } from "../tags";
 
 export default defineCheck(({ step }) => {
   step("checkCspAllowlistedScripts", (state, context) => {

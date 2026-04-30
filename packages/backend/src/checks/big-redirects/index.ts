@@ -7,8 +7,8 @@ import {
   type StepAction,
 } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const isRedirectResponse = (statusCode: number): boolean => {
   return statusCode >= 300 && statusCode < 400 && statusCode !== 304;

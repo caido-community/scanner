@@ -1,5 +1,5 @@
-import { type CheckMetadata } from "engine";
 import { defineStore } from "pinia";
+import { type CheckMetadata } from "shared";
 import { reactive } from "vue";
 
 import { type ChecksState } from "@/types/checks";

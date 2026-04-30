@@ -1,7 +1,7 @@
 import { defineCheck, done, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 export default defineCheck<unknown>(({ step }) => {
   step("checkAntiClickjacking", (state, context) => {

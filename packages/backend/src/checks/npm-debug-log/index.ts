@@ -1,7 +1,7 @@
 import { continueWith, defineCheck, done, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { getBasePath, keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const isValidNpmDebugLog = (bodyText: string): boolean => {
   if (bodyText.includes("npm ERR!")) {

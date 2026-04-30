@@ -1,8 +1,8 @@
 import { defineCheck, done, type Finding, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { extractParameters } from "../../utils";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const hasTokenPair = (
   value: string,

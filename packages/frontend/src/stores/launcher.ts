@@ -1,7 +1,12 @@
 import { type Dialog } from "@caido/sdk-frontend/src/types/types/window";
-import { ScanAggressivity, type ScanConfig, Severity } from "engine";
 import { defineStore } from "pinia";
-import { type BasicRequest, type ScanRequestPayload } from "shared";
+import {
+  type BasicRequest,
+  ScanAggressivity,
+  type ScanConfig,
+  type ScanRequestPayload,
+  Severity,
+} from "shared";
 import { reactive, ref } from "vue";
 
 import { useSDK } from "@/plugins/sdk";

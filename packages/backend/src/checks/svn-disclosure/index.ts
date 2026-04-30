@@ -6,8 +6,8 @@ import {
   Severity,
 } from "engine";
 
-import { Tags } from "../../types";
 import { getBasePath, keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const SVN_FILES = [".svn/entries", ".svn/wc.db"];
 

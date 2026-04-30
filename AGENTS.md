@@ -20,12 +20,20 @@ pnpm vitest run --coverage packages/backend/src/checks/<check-name>/index.spec.t
 
 This is a **Caido vulnerability scanner plugin** organized as a pnpm monorepo with four packages:
 
-- **`packages/engine`** — Core scanning engine. Defines the check execution model (step-based), types (`CheckDefinition`, `Finding`, `Severity`), and test utilities (`runCheck`, `createMockRequest`, `createMockResponse`). Imported as `"engine"` by other packages.
-- **`packages/backend`** — Backend plugin. Contains 40+ vulnerability checks in `src/checks/`, plus services, stores, and storage layers. Registers API endpoints and hooks into Caido SDK events (intercepted responses for passive scanning, `sdk.requests.send()` for active scanning).
-- **`packages/frontend`** — Vue 3 + Pinia + PrimeVue + TailwindCSS frontend. Registers a sidebar page at `/scanner` and a keyboard shortcut (Ctrl+Shift+S) for active scanning.
-- **`packages/shared`** — Shared TypeScript types between frontend and backend.
+- **`packages/shared`** — Published as `@caido-community/scanner` on NPM. Type-only contract: `API`, `Events`, `Spec`, plus all public types (`Session`, `UserConfig`, `Finding`, `Severity`, `ScanConfig`, `CheckMetadata`, ...). Self-contained, zero workspace deps. Built with `tsdown` via the `prepare` script. Backend, frontend, and external CI/CD clients all consume `Spec`.
+- **`packages/engine`** — Core scanning engine. Defines the check execution model (step-based), runtime helpers (`defineCheck`, `defineCheckV2`, `runCheck`, `createRegistry`, `createScheduler`, `keyStrategy`, `createMockRequest`, `createMockResponse`). Imports its public types from `shared` and re-exports them for backwards compatibility with existing checks.
+- **`packages/backend`** — Backend plugin. Contains 40+ vulnerability checks in `src/checks/`. RPC handlers live in `src/api/{checks,config,queue,scanner}.ts` and delegate to services in `src/services/`. The SDK is set once via `setSDK(sdk)` in `src/sdk.ts`; services pull it via `requireSDK()`. Hooks into Caido SDK events (intercepted responses for passive scanning, `sdk.requests.send()` for active scanning).
+- **`packages/frontend`** — Vue 3 + Pinia + PrimeVue + TailwindCSS frontend. Depends on `shared` only — never on `backend` or `engine`. Registers a sidebar page at `/scanner` and a keyboard shortcut (Ctrl+Shift+S) for active scanning.
 
-Plugin configuration lives in `caido.config.ts`. The plugin is built using `@caido-community/dev`.
+The frontend↔backend contract is `Spec = DefinePluginPackageSpec<{ manifestId: "scanner"; api: API; events: Events }>` from `packages/shared/src/index.ts`. Backend uses `SDK<Spec>`, frontend uses `Caido<Spec>`. Plugin configuration lives in `caido.config.ts`. The plugin is built using `@caido-community/dev`.
+
+### Adding an API endpoint
+
+1. Add the method signature to `packages/shared/src/api.ts` (no `SDK` first param — args only).
+2. Implement the service in `packages/backend/src/services/<domain>.ts`. Call `requireSDK()` if you need the SDK; never accept it as a parameter.
+3. Add the wrapper in `packages/backend/src/api/<domain>.ts` (`(_sdk: SDK, ...args) => service(...args)`) and re-export from `src/api/index.ts`.
+4. Register it in `packages/backend/src/index.ts` via `sdk.api.register("methodName", api.apiMethodName)`.
+5. Add a unit test in `packages/backend/src/api/<domain>.test.ts` that mocks the relevant store and asserts the result.
 
 ## Check Architecture
 

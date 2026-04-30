@@ -1,7 +1,7 @@
 import { continueWith, defineCheck, done, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { getBasePath, keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const DS_STORE_MAGIC = "\x00\x00\x00\x01";
 const BUD1_MAGIC = "Bud1";

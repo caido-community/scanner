@@ -1,5 +1,5 @@
-import { ScanAggressivity, Severity } from "engine";
 import prettyMs from "pretty-ms";
+import { ScanAggressivity, Severity } from "shared";
 import { computed } from "vue";
 
 import { useSDK } from "@/plugins/sdk";

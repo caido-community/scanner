@@ -1,30 +1,27 @@
-import { createRegistry, Result } from "engine";
-import type { Result as ResultType, ScanRequestPayload, Session } from "shared";
+import { createRegistry } from "engine";
+import { Result, type ScanRequestPayload, type Session } from "shared";
 
 import { ScanRequestPayloadSchema } from "../../schemas";
+import { requireSDK } from "../../sdk";
 import { ChecksStore } from "../../stores/checks";
 import { ConfigStore } from "../../stores/config";
 import { ScannerStore } from "../../stores/scanner";
-import { type BackendSDK } from "../../types";
 import { packExecutionHistory } from "../../utils/debug";
 import { validateInput } from "../../utils/validation";
 
 export const startActiveScan = async (
-  sdk: BackendSDK,
   payload: ScanRequestPayload,
-): Promise<ResultType<Session>> => {
+): Promise<Result<Session>> => {
   const validation = validateInput(ScanRequestPayloadSchema, payload);
   if (validation.kind === "Error") {
     return validation;
   }
 
+  const sdk = requireSDK();
   const { requestIDs, scanConfig, title } = validation.value;
 
-  const configStore = ConfigStore.get();
-  const userConfig = configStore.getUserConfig();
-
-  const checksStore = ChecksStore.get();
-  const activeChecks = checksStore.select({
+  const userConfig = ConfigStore.get().getUserConfig();
+  const activeChecks = ChecksStore.get().select({
     overrides: userConfig.active.overrides,
   });
 
@@ -47,199 +44,194 @@ export const startActiveScan = async (
   );
   sdk.api.send("session:created", initialSession.id, initialSession);
 
-  (async () => {
-    const { id } = initialSession;
+  void runSession(initialSession.id, requestIDs, scanConfig, activeChecks);
 
-    try {
-      const registry = createRegistry();
-      for (const check of activeChecks) {
-        registry.register(check);
+  return Result.ok(initialSession);
+};
+
+const runSession = async (
+  id: string,
+  requestIDs: string[],
+  scanConfig: ScanRequestPayload["scanConfig"],
+  activeChecks: ReturnType<ChecksStore["select"]>,
+): Promise<void> => {
+  const sdk = requireSDK();
+  const scannerStore = ScannerStore.get();
+
+  try {
+    const registry = createRegistry();
+    for (const check of activeChecks) {
+      registry.register(check);
+    }
+
+    const runnable = registry.create(sdk, scanConfig);
+    scannerStore.registerRunnable(id, runnable);
+
+    const emitExecutionPatch = (checkID: string, targetRequestID: string) => {
+      const execution = scannerStore.getCheckExecution(
+        id,
+        checkID,
+        targetRequestID,
+      );
+      if (execution === undefined) {
+        return;
       }
 
-      const runnable = registry.create(sdk, scanConfig);
-      scannerStore.registerRunnable(id, runnable);
-      const emitExecutionPatch = (checkID: string, targetRequestID: string) => {
-        const execution = scannerStore.getCheckExecution(
-          id,
-          checkID,
-          targetRequestID,
-        );
-        if (execution === undefined) {
+      sdk.api.send("session:progress", id, {
+        type: "upsertExecution",
+        execution,
+      });
+    };
+
+    const estimate = await runnable.estimate(requestIDs);
+    if (estimate.kind === "Error") {
+      throw new Error(estimate.error);
+    }
+
+    const startedSession = scannerStore.startSession(id, estimate.checksTotal);
+    if (!startedSession) {
+      throw new Error("Failed to start session");
+    }
+
+    sdk.api.send("session:updated", id, startedSession);
+
+    runnable.on(
+      "scan:finding",
+      async ({ finding, targetRequestID, checkID }) => {
+        if (!scanConfig.severities.includes(finding.severity)) {
           return;
         }
 
-        sdk.api.send("session:progress", id, {
-          type: "upsertExecution",
-          execution,
+        const findingAddedSession = scannerStore.addFinding(
+          id,
+          checkID,
+          targetRequestID,
+          finding,
+        );
+        if (!findingAddedSession) return;
+        emitExecutionPatch(checkID, targetRequestID);
+
+        const result = await sdk.requests.get(finding.correlation.requestID);
+        if (!result) return;
+
+        const wrappedDescription = `This finding has been assessed as \`${finding.severity.toUpperCase()}\` severity and was discovered by the \`${checkID}\` check.\n\n${finding.description}`;
+
+        sdk.findings.create({
+          request: result.request,
+          reporter: "Scanner: Active",
+          title: finding.name,
+          description: wrappedDescription,
         });
-      };
+      },
+    );
 
-      const estimate = await runnable.estimate(requestIDs);
-      if (estimate.kind === "Error") {
-        throw new Error(estimate.error);
-      }
+    runnable.on("scan:check-finished", ({ checkID, targetRequestID }) => {
+      if (
+        scannerStore.completeCheck(id, checkID, targetRequestID) === undefined
+      )
+        return;
+      emitExecutionPatch(checkID, targetRequestID);
+    });
 
-      const startedSession = scannerStore.startSession(
-        id,
-        estimate.checksTotal,
-      );
-      if (!startedSession) {
-        throw new Error("Failed to start session");
-      }
-
-      sdk.api.send("session:updated", id, startedSession);
-
-      runnable.on(
-        "scan:finding",
-        async ({ finding, targetRequestID, checkID }) => {
-          if (!scanConfig.severities.includes(finding.severity)) {
-            return;
-          }
-
-          const findingAddedSession = scannerStore.addFinding(
-            id,
-            checkID,
-            targetRequestID,
-            finding,
-          );
-          if (!findingAddedSession) return;
-          emitExecutionPatch(checkID, targetRequestID);
-
-          const result = await sdk.requests.get(finding.correlation.requestID);
-          if (!result) return;
-
-          const wrappedDescription = `This finding has been assessed as \`${finding.severity.toUpperCase()}\` severity and was discovered by the \`${checkID}\` check.\n\n${finding.description}`;
-
-          sdk.findings.create({
-            request: result.request,
-            reporter: "Scanner: Active",
-            title: finding.name,
-            description: wrappedDescription,
-          });
-        },
-      );
-
-      runnable.on("scan:check-finished", ({ checkID, targetRequestID }) => {
-        const checkFinishedSession = scannerStore.completeCheck(
-          id,
-          checkID,
-          targetRequestID,
-        );
-        if (checkFinishedSession === undefined) return;
-        emitExecutionPatch(checkID, targetRequestID);
-      });
-
-      runnable.on(
-        "scan:request-pending",
-        ({ pendingRequestID, targetRequestID, checkID }) => {
-          const requestPendingSession = scannerStore.addRequestSent(
+    runnable.on(
+      "scan:request-pending",
+      ({ pendingRequestID, targetRequestID, checkID }) => {
+        if (
+          scannerStore.addRequestSent(
             id,
             checkID,
             targetRequestID,
             pendingRequestID,
-          );
-          if (requestPendingSession === undefined) return;
-          emitExecutionPatch(checkID, targetRequestID);
-        },
-      );
-
-      runnable.on(
-        "scan:request-completed",
-        ({ pendingRequestID, requestID, checkID, targetRequestID }) => {
-          const requestCompletedSession = scannerStore.completeRequest(
-            id,
-            pendingRequestID,
-            requestID,
-          );
-          if (requestCompletedSession === undefined) return;
-          emitExecutionPatch(checkID, targetRequestID);
-        },
-      );
-
-      runnable.on(
-        "scan:request-failed",
-        ({ error, pendingRequestID, checkID, targetRequestID }) => {
-          const requestFailedSession = scannerStore.failRequest(
-            id,
-            pendingRequestID,
-            error,
-          );
-          if (requestFailedSession === undefined) return;
-          emitExecutionPatch(checkID, targetRequestID);
-        },
-      );
-
-      runnable.on("scan:check-started", ({ checkID, targetRequestID }) => {
-        const checkRunningSession = scannerStore.startCheck(
-          id,
-          checkID,
-          targetRequestID,
-        );
-        if (checkRunningSession === undefined) return;
+          ) === undefined
+        )
+          return;
         emitExecutionPatch(checkID, targetRequestID);
-      });
+      },
+    );
 
-      runnable.on(
-        "scan:check-failed",
-        ({ checkID, errorMessage, targetRequestID }) => {
-          const checkFailedSession = scannerStore.failCheck(
+    runnable.on(
+      "scan:request-completed",
+      ({ pendingRequestID, requestID, checkID, targetRequestID }) => {
+        if (
+          scannerStore.completeRequest(id, pendingRequestID, requestID) ===
+          undefined
+        )
+          return;
+        emitExecutionPatch(checkID, targetRequestID);
+      },
+    );
+
+    runnable.on(
+      "scan:request-failed",
+      ({ error, pendingRequestID, checkID, targetRequestID }) => {
+        if (scannerStore.failRequest(id, pendingRequestID, error) === undefined)
+          return;
+        emitExecutionPatch(checkID, targetRequestID);
+      },
+    );
+
+    runnable.on("scan:check-started", ({ checkID, targetRequestID }) => {
+      if (scannerStore.startCheck(id, checkID, targetRequestID) === undefined)
+        return;
+      emitExecutionPatch(checkID, targetRequestID);
+    });
+
+    runnable.on(
+      "scan:check-failed",
+      ({ checkID, errorMessage, targetRequestID }) => {
+        if (
+          scannerStore.failCheck(
             id,
             checkID,
             targetRequestID,
             errorMessage || "Unknown error",
-          );
-          if (checkFailedSession === undefined) return;
-          emitExecutionPatch(checkID, targetRequestID);
-        },
-      );
+          ) === undefined
+        )
+          return;
+        emitExecutionPatch(checkID, targetRequestID);
+      },
+    );
 
-      const result = await runnable.run(requestIDs);
-      const executionHistory = runnable.getExecutionHistory();
-      const trace = packExecutionHistory(executionHistory);
+    const result = await runnable.run(requestIDs);
+    const trace = packExecutionHistory(runnable.getExecutionHistory());
 
-      switch (result.kind) {
-        case "Finished": {
-          const finishedSession = scannerStore.finishSession(id, trace);
-          if (!finishedSession) break;
-
+    switch (result.kind) {
+      case "Finished": {
+        const finishedSession = scannerStore.finishSession(id, trace);
+        if (finishedSession) {
           sdk.api.send("session:updated", id, finishedSession);
-          break;
         }
-        case "Interrupted": {
-          const interruptedSession = scannerStore.interruptSession(
-            id,
-            result.reason,
-            trace,
-          );
-          if (!interruptedSession) break;
-
-          sdk.api.send("session:updated", id, interruptedSession);
-          break;
-        }
-        case "Error": {
-          const errorSession = scannerStore.errorSession(
-            id,
-            result.error,
-            trace,
-          );
-          if (!errorSession) break;
-
-          sdk.api.send("session:updated", id, errorSession);
-          break;
-        }
+        break;
       }
-    } catch (err) {
-      const errorSession = scannerStore.errorSession(
-        id,
-        err instanceof Error ? err.message : "Unknown error",
-        undefined,
-      );
-      if (!errorSession) return;
-      sdk.api.send("session:updated", id, errorSession);
-    } finally {
-      scannerStore.unregisterRunnable(id);
+      case "Interrupted": {
+        const interruptedSession = scannerStore.interruptSession(
+          id,
+          result.reason,
+          trace,
+        );
+        if (interruptedSession) {
+          sdk.api.send("session:updated", id, interruptedSession);
+        }
+        break;
+      }
+      case "Error": {
+        const errorSession = scannerStore.errorSession(id, result.error, trace);
+        if (errorSession) {
+          sdk.api.send("session:updated", id, errorSession);
+        }
+        break;
+      }
     }
-  })();
-
-  return Result.ok(initialSession);
+  } catch (err) {
+    const errorSession = scannerStore.errorSession(
+      id,
+      err instanceof Error ? err.message : "Unknown error",
+      undefined,
+    );
+    if (errorSession) {
+      sdk.api.send("session:updated", id, errorSession);
+    }
+  } finally {
+    scannerStore.unregisterRunnable(id);
+  }
 };
