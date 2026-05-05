@@ -7,8 +7,8 @@ import {
   type Severity as SeverityType,
 } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const GIT_FILES = [
   ".git/config",

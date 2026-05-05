@@ -6,7 +6,6 @@ import {
   Severity,
 } from "engine";
 
-import { Tags } from "../../types";
 import {
   bodyMatchesAny,
   extractParameters,
@@ -14,6 +13,7 @@ import {
   type Parameter,
 } from "../../utils";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 type PayloadList = {
   payloads: string[];

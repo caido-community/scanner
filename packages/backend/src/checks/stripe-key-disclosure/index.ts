@@ -1,8 +1,8 @@
 import { defineRegexCheck, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
 import { whenTextResponse } from "../../utils/when";
+import { Tags } from "../tags";
 
 export default defineRegexCheck({
   id: "stripe-key-disclosure",

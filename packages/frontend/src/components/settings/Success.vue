@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ScanAggressivity, Severity } from "engine";
 import Card from "primevue/card";
 import InputNumber from "primevue/inputnumber";
 import Select from "primevue/select";
 import SelectButton from "primevue/selectbutton";
 import ToggleSwitch from "primevue/toggleswitch";
+import { ScanAggressivity, Severity } from "shared";
 import { computed, ref, toRef } from "vue";
 
 import { useForm } from "./useForm";

@@ -1,7 +1,7 @@
 import { defineCheck, done, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { findingBuilder, keyStrategy } from "../../utils";
+import { Tags } from "../tags";
 
 export default defineCheck(({ step }) => {
   step("checkCspNotEnforced", (state, context) => {

@@ -1,4 +1,4 @@
-import { type CheckMetadata } from "engine";
+import { type CheckMetadata } from "shared";
 
 export type ChecksState =
   | { type: "Idle" }

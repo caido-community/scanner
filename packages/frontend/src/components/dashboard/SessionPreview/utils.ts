@@ -1,5 +1,4 @@
-import { type Severity } from "engine";
-import { type BasicRequest, type Session } from "shared";
+import { type BasicRequest, type Session, type Severity } from "shared";
 
 export type SessionFinding = {
   id: string;

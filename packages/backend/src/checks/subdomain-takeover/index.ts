@@ -1,7 +1,7 @@
 import { defineCheckV2, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const TAKEOVER_FINGERPRINTS = [
   "There isn't a GitHub Pages site here",

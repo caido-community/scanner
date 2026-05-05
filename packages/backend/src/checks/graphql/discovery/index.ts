@@ -1,7 +1,7 @@
 import { defineCheck, done, type ScanTarget, Severity } from "engine";
 
-import { Tags } from "../../../types";
 import { keyStrategy } from "../../../utils/key";
+import { Tags } from "../../tags";
 
 const GRAPHQL_PATH_PATTERNS = [
   /\/graphql\/?$/i,

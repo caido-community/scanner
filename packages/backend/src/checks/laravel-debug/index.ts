@@ -7,9 +7,9 @@ import {
   type Severity as SeverityType,
 } from "engine";
 
-import { Tags } from "../../types";
 import { findingBuilder, isJsonContentType } from "../../utils";
 import { getBasePath, keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 type EndpointConfig = {
   path: string;

@@ -1,5 +1,4 @@
-import type { CheckMetadata } from "engine";
-import type { QueueTask } from "shared";
+import type { CheckMetadata, QueueTask } from "shared";
 
 export const formatTaskId = (taskId: string): string => {
   return taskId.replace(/^pscan-/, "");

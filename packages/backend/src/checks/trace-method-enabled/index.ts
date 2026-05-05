@@ -1,8 +1,8 @@
 import { defineCheckV2, Result, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { containsCanary, generateCanary } from "../../utils/canary";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 export default defineCheckV2({
   id: "trace-method-enabled",

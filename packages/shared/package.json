@@ -1,16 +1,32 @@
 {
-  "name": "shared",
+  "name": "@caido-community/scanner",
   "version": "0.0.0",
+  "description": "Specification for the Caido Scanner plugin",
+  "author": "Caido Labs Inc. <dev@caido.io>",
+  "repository": "https://github.com/caido-community/scanner",
+  "license": "MIT",
   "type": "module",
-  "types": "src/index.ts",
-  "main": "src/index.ts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsdown",
+    "prepare": "pnpm run build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "engine": "workspace:*"
+    "@caido/sdk-shared": "0.2.2"
   },
   "devDependencies": {
-    "@caido/sdk-backend": "0.55.3"
+    "tsdown": "^0.21.7"
   }
 }

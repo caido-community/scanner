@@ -7,21 +7,18 @@
   },
   "dependencies": {
     "@caido/primevue": "0.3.3",
-    "@caido/sdk-frontend": "0.55.3",
+    "@caido/sdk-frontend": "0.56.1-beta.1",
     "@vueuse/core": "14.2.0",
     "pinia": "3.0.4",
     "pretty-ms": "9.3.0",
     "primevue": "4.1.0",
-    "shared": "workspace:*",
+    "shared": "workspace:@caido-community/scanner@*",
     "ts-deepmerge": "7.0.3",
     "vue": "3.5.27",
     "vue-virtual-scroller": "2.0.0-beta.8"
   },
   "devDependencies": {
-    "@caido/sdk-backend": "0.55.3",
     "@codemirror/view": "6.39.12",
-    "backend": "workspace:*",
-    "engine": "workspace:*",
     "vue-tsc": "3.2.4"
   }
 }

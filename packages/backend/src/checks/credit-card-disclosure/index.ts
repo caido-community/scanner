@@ -1,7 +1,7 @@
 import { Severity } from "engine";
 
-import { Tags } from "../../types";
 import { defineResponseRegexCheck } from "../../utils/check";
+import { Tags } from "../tags";
 
 // Credit card regex patterns based on Valibot implementation
 const CREDIT_CARD_PATTERNS = [

@@ -1,77 +1,38 @@
-import type { DefineAPI } from "caido:plugin";
 import {
   createPrefixedRandomId,
   createRegistry,
   createScheduler,
-  Result,
 } from "engine";
-import type { BasicRequest, Result as ResultType } from "shared";
 
+import * as api from "./api";
 import { checks } from "./checks";
-import { IdSchema } from "./schemas";
-import { getChecks } from "./services/checks";
-import { getUserConfig, updateUserConfig } from "./services/config";
-import { clearQueueTasks, getQueueTask, getQueueTasks } from "./services/queue";
-import {
-  cancelScanSession,
-  deleteScanSession,
-  getScanSession,
-  getScanSessions,
-  rerunScanSession,
-  startActiveScan,
-  updateSessionTitle,
-} from "./services/scanner";
+import { setSDK } from "./sdk";
 import { ChecksStore } from "./stores/checks";
 import { ConfigStore } from "./stores/config";
 import { QueueStore } from "./stores/queue";
 import { ScannerStore } from "./stores/scanner";
 import { type BackendSDK } from "./types";
 import { packExecutionHistory } from "./utils/debug";
-import { validateInput } from "./utils/validation";
-
-export { type BackendEvents } from "./types";
-
-export type API = DefineAPI<{
-  // Checks
-  getChecks: typeof getChecks;
-
-  // Config
-  getUserConfig: typeof getUserConfig;
-  updateUserConfig: typeof updateUserConfig;
-
-  // Queue
-  getQueueTasks: typeof getQueueTasks;
-  getQueueTask: typeof getQueueTask;
-  clearQueueTasks: typeof clearQueueTasks;
-
-  // Scanner
-  startActiveScan: typeof startActiveScan;
-  getScanSession: typeof getScanSession;
-  getScanSessions: typeof getScanSessions;
-  cancelScanSession: typeof cancelScanSession;
-  deleteScanSession: typeof deleteScanSession;
-  getRequestResponse: typeof getRequestResponse;
-  updateSessionTitle: typeof updateSessionTitle;
-  getExecutionTrace: typeof getExecutionTrace;
-  rerunScanSession: typeof rerunScanSession;
-}>;
+import { toBasicRequest } from "./utils/request";
 
 export async function init(sdk: BackendSDK) {
-  sdk.api.register("getChecks", getChecks);
-  sdk.api.register("getUserConfig", getUserConfig);
-  sdk.api.register("updateUserConfig", updateUserConfig);
-  sdk.api.register("getQueueTasks", getQueueTasks);
-  sdk.api.register("getQueueTask", getQueueTask);
-  sdk.api.register("clearQueueTasks", clearQueueTasks);
-  sdk.api.register("startActiveScan", startActiveScan);
-  sdk.api.register("getScanSession", getScanSession);
-  sdk.api.register("getScanSessions", getScanSessions);
-  sdk.api.register("cancelScanSession", cancelScanSession);
-  sdk.api.register("deleteScanSession", deleteScanSession);
-  sdk.api.register("getRequestResponse", getRequestResponse);
-  sdk.api.register("updateSessionTitle", updateSessionTitle);
-  sdk.api.register("getExecutionTrace", getExecutionTrace);
-  sdk.api.register("rerunScanSession", rerunScanSession);
+  setSDK(sdk);
+
+  sdk.api.register("getChecks", api.apiGetChecks);
+  sdk.api.register("getUserConfig", api.apiGetUserConfig);
+  sdk.api.register("updateUserConfig", api.apiUpdateUserConfig);
+  sdk.api.register("getQueueTasks", api.apiGetQueueTasks);
+  sdk.api.register("getQueueTask", api.apiGetQueueTask);
+  sdk.api.register("clearQueueTasks", api.apiClearQueueTasks);
+  sdk.api.register("startActiveScan", api.apiStartActiveScan);
+  sdk.api.register("getScanSession", api.apiGetScanSession);
+  sdk.api.register("getScanSessions", api.apiGetScanSessions);
+  sdk.api.register("cancelScanSession", api.apiCancelScanSession);
+  sdk.api.register("deleteScanSession", api.apiDeleteScanSession);
+  sdk.api.register("updateSessionTitle", api.apiUpdateSessionTitle);
+  sdk.api.register("rerunScanSession", api.apiRerunScanSession);
+  sdk.api.register("getRequestResponse", api.apiGetRequestResponse);
+  sdk.api.register("getExecutionTrace", api.apiGetExecutionTrace);
 
   const checksStore = ChecksStore.get();
   checksStore.register(...checks);
@@ -245,86 +206,3 @@ export async function init(sdk: BackendSDK) {
     sdk.api.send("project:changed", projectId, "ready");
   });
 }
-
-export const getRequestResponse = async (
-  sdk: BackendSDK,
-  requestId: string,
-): Promise<
-  ResultType<{
-    request: BasicRequest & { raw: string };
-    response: { id: string; raw: string };
-  }>
-> => {
-  const validation = validateInput(IdSchema, requestId);
-  if (validation.kind === "Error") {
-    return validation;
-  }
-
-  const result = await sdk.requests.get(validation.value);
-
-  if (!result) {
-    return Result.err("Request not found");
-  }
-
-  const { request, response } = result;
-
-  if (!response) {
-    return Result.err("Response not found");
-  }
-
-  return Result.ok({
-    request: {
-      ...toBasicRequest(request),
-      raw: Uint8ArrayToString(request.toSpecRaw().getRaw()),
-    },
-    response: {
-      id: response.getId(),
-      raw: response.getRaw().toText(),
-    },
-  });
-};
-
-const toBasicRequest = (request: {
-  getId: () => string;
-  getHost: () => string;
-  getPort: () => number;
-  getPath: () => string;
-  getQuery: () => string;
-  getMethod: () => string;
-}): BasicRequest => ({
-  id: request.getId(),
-  host: request.getHost(),
-  port: request.getPort(),
-  path: request.getPath(),
-  query: request.getQuery(),
-  method: request.getMethod().toUpperCase(),
-});
-
-export const getExecutionTrace = (
-  sdk: BackendSDK,
-  sessionId: string,
-): ResultType<string> => {
-  const validation = validateInput(IdSchema, sessionId);
-  if (validation.kind === "Error") {
-    return validation;
-  }
-
-  const scannerStore = ScannerStore.get();
-  const trace = scannerStore.getExecutionTrace(validation.value);
-
-  if (trace === undefined) {
-    return Result.err("Execution trace not found");
-  }
-
-  return Result.ok(trace);
-};
-
-const Uint8ArrayToString = (data: Uint8Array) => {
-  let output = "";
-  const chunkSize = 256;
-  for (let i = 0; i < data.length; i += chunkSize) {
-    output += String.fromCharCode(...data.subarray(i, i + chunkSize));
-  }
-
-  return output;
-};

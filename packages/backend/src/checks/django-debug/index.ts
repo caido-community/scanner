@@ -1,7 +1,7 @@
 import { defineCheckV2, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const DJANGO_DEBUG_SIGNATURES = [
   "You're seeing this error because you have <code>DEBUG = True</code>",

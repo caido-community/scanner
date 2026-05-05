@@ -6,9 +6,9 @@ import {
   Severity,
 } from "engine";
 
-import { Tags } from "../../types";
 import { containsCanary, generateCanary } from "../../utils/canary";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 type HostVariant = {
   name: string;

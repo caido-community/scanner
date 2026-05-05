@@ -1,7 +1,7 @@
 import { Severity } from "engine";
 
-import { Tags } from "../../types";
 import { defineResponseRegexCheck } from "../../utils/check";
+import { Tags } from "../tags";
 
 // Database connection string regex patterns
 const DB_CONNECTION_PATTERNS = [

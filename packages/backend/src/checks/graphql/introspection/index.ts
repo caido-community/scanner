@@ -1,8 +1,8 @@
 import { defineCheckV2, Result, Severity } from "engine";
 import { z } from "zod";
 
-import { Tags } from "../../../types";
 import { keyStrategy } from "../../../utils/key";
+import { Tags } from "../../tags";
 
 const INTROSPECTION_QUERY = '{"query":"{ __schema { types { name } } }"}';
 const GET_INTROSPECTION_QUERY = "query={__schema{types{name}}}";

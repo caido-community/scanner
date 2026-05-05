@@ -1,8 +1,8 @@
 import { continueWith, defineCheck, done, Severity } from "engine";
 import { z } from "zod";
 
-import { Tags } from "../../../types";
 import { keyStrategy } from "../../../utils/key";
+import { Tags } from "../../tags";
 
 const SIMPLE_CONTENT_TYPES = [
   {

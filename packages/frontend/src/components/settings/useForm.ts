@@ -1,5 +1,4 @@
-import { type ScanAggressivity, type Severity } from "engine";
-import type { Preset } from "shared";
+import { type Preset, type ScanAggressivity, type Severity } from "shared";
 import { computed, type Ref } from "vue";
 
 import { useSDK } from "@/plugins/sdk";

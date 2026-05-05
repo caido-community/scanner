@@ -1,9 +1,9 @@
 import { RequestSpec } from "caido:utils";
 import { continueWith, defineCheck, done, Severity } from "engine";
 
-import { Tags } from "../../types";
 import { bodyMatchesAny } from "../../utils/body";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const ROBOTS_TXT_PATHS = [
   "/robots.txt",

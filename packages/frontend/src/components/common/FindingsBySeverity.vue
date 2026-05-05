@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Finding, Severity } from "engine";
+import { type Finding, Severity } from "shared";
 import { computed } from "vue";
 
 const { findings } = defineProps<{

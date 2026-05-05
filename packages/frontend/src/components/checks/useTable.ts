@@ -1,4 +1,4 @@
-import type { CheckAggressivity, CheckMetadata } from "engine";
+import type { CheckAggressivity, CheckMetadata } from "shared";
 import { computed, ref } from "vue";
 
 import { useChecksService } from "@/services/checks";

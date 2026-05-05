@@ -1,12 +1,12 @@
 import { continueWith, defineCheck, done, Severity } from "engine";
 
-import { Tags } from "../../../types";
 import {
   extractParameters,
   hasParameters,
   type Parameter,
 } from "../../../utils";
 import { keyStrategy } from "../../../utils/key";
+import { Tags } from "../../tags";
 
 type State = {
   testParams: Parameter[];

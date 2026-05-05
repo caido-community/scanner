@@ -6,8 +6,8 @@ import {
   Severity,
 } from "engine";
 
-import { Tags } from "../../types";
 import { keyStrategy } from "../../utils/key";
+import { Tags } from "../tags";
 
 const SECURITY_TXT_PATHS = [".well-known/security.txt", "security.txt"];
 
