@@ -3,10 +3,6 @@ name: 🚀 Release
 on:
   workflow_dispatch:
 
-env:
-  NODE_VERSION: 20
-  PNPM_VERSION: 9
-
 permissions:
   id-token: write
   contents: write
@@ -25,19 +21,16 @@ jobs:
           fi
 
       - name: Checkout project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Install Mise
+        uses: caido/action-mise-action@v3.2.0
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
+          working_directory: .
+          version: ${{ vars.CI__MISE_VERSION }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: true
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Build package
         run: pnpm build
@@ -47,6 +40,7 @@ jobs:
         run: |
           if [[ -z "${{ secrets.PRIVATE_KEY }}" ]]; then
             echo "Set an ed25519 key as PRIVATE_KEY in GitHub Action secret to sign."
+            exit 1
           else
             echo "${{ secrets.PRIVATE_KEY }}" > private_key.pem
             openssl pkeyutl -sign -inkey private_key.pem -out plugin_package.zip.sig -rawin -in plugin_package.zip
