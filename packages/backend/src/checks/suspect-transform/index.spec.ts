@@ -109,6 +109,109 @@ describe("Suspicious Input Transformation", () => {
     }
   });
 
+  it("should detect the additional Unicode and URL transformations", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "POST",
+        path: "/transform",
+        headers: { "content-type": ["application/json"] },
+        body: JSON.stringify({ param: "value" }),
+      },
+      response: {
+        id: "1",
+        code: 200,
+        body: "Original response",
+      },
+    });
+
+    let callCount = 0;
+    const { findings } = await testCheck(suspectTransformCheck, target, {
+      sendHandler: (spec) => {
+        callCount++;
+
+        const body = spec.getBody()?.toText() ?? "{}";
+        const { param: injectedValue } = JSON.parse(body) as { param: string };
+        const transformedValue = injectedValue
+          .replace("%ff", "\u00ff")
+          .replace("\udc2a", "?")
+          .replace("\u8336", "6")
+          .replace("\u2000", " ");
+
+        const request = createMockRequest({
+          id: `${callCount + 1}`,
+          host: "example.com",
+          method: "POST",
+          path: "/transform",
+          headers: { "content-type": ["application/json"] },
+          body,
+        });
+        const response = createMockResponse({
+          id: `${callCount + 1}`,
+          code: 200,
+          body: transformedValue,
+        });
+
+        return Promise.resolve({ request, response });
+      },
+      config: { aggressivity: ScanAggressivity.HIGH },
+    });
+
+    expect(findings.map((finding) => finding.name)).toEqual([
+      "Suspicious input transformation: legacy url decoding (single-byte)",
+      "Suspicious input transformation: surrogate character replacement",
+      "Suspicious input transformation: unicode bitwise overflow",
+      "Suspicious input transformation: unicode space conversion",
+    ]);
+  });
+
+  it("should continue query probes when a probe cannot be encoded", async () => {
+    const target = mockTarget({
+      request: {
+        id: "1",
+        host: "example.com",
+        method: "GET",
+        path: "/transform",
+        query: "param=value",
+      },
+      response: {
+        id: "1",
+        code: 200,
+        body: "Original response",
+      },
+    });
+
+    let callCount = 0;
+    const { findings } = await testCheck(suspectTransformCheck, target, {
+      sendHandler: (spec) => {
+        callCount++;
+
+        const query = spec.getQuery();
+        const injectedValue = new URLSearchParams(query).get("param") ?? "";
+        const request = createMockRequest({
+          id: `${callCount + 1}`,
+          host: "example.com",
+          method: "GET",
+          path: "/transform",
+          query,
+        });
+        const response = createMockResponse({
+          id: `${callCount + 1}`,
+          code: 200,
+          body: injectedValue.replace("\u2000", " "),
+        });
+
+        return Promise.resolve({ request, response });
+      },
+      config: { aggressivity: ScanAggressivity.HIGH },
+    });
+
+    expect(findings.map((finding) => finding.name)).toEqual([
+      "Suspicious input transformation: unicode space conversion",
+    ]);
+  });
+
   it("should not run when request has no parameters", async () => {
     const target = mockTarget({
       request: {
