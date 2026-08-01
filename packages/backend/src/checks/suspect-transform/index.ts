@@ -49,6 +49,29 @@ function buildProbes(): TransformProbe[] {
       expectedValues: [`\u226F${rightAnchor}`],
     },
     {
+      name: "legacy url decoding (single-byte)",
+      probe: `${leftAnchor}%ff${rightAnchor}`,
+      expectedValues: [`${leftAnchor}\u00ff${rightAnchor}`],
+    },
+    {
+      name: "surrogate character replacement",
+      probe: `${leftAnchor}\udc2a${rightAnchor}`,
+      expectedValues: [`${leftAnchor}?${rightAnchor}`],
+    },
+    {
+      name: "unicode bitwise overflow",
+      probe: `${leftAnchor}\u8336${rightAnchor}`,
+      expectedValues: [`${leftAnchor}6${rightAnchor}`],
+    },
+    {
+      name: "unicode space conversion",
+      probe: `${leftAnchor}\u2000${rightAnchor}`,
+      expectedValues: [
+        `${leftAnchor} ${rightAnchor}`,
+        `${leftAnchor}${rightAnchor}`,
+      ],
+    },
+    {
       name: "quote consumption",
       probe: `${leftAnchor}''${rightAnchor}`,
       expectedValues: [`${leftAnchor}'${rightAnchor}`],
@@ -110,7 +133,7 @@ export default defineCheckV2({
     if (initialResponseBody === undefined) return;
 
     const allProbes = buildProbes();
-    const probes = ctx.limit(allProbes, { low: 3, medium: 6, high: 10 });
+    const probes = ctx.limit(allProbes, { low: 3, medium: 6, high: 14 });
 
     for (const param of params) {
       for (const probe of probes) {
@@ -122,8 +145,12 @@ export default defineCheckV2({
         let confirmations = 0;
 
         for (let attempt = 0; attempt < CONFIRMATION_COUNT; attempt++) {
-          const spec = param.inject(probe.probe);
-          const result = await ctx.send(spec);
+          let result;
+          try {
+            result = await ctx.send(param.inject(probe.probe));
+          } catch {
+            break;
+          }
           if (Result.isErr(result)) break;
 
           const responseBody = result.value.response.getBody()?.toText();
