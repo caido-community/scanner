@@ -73,18 +73,24 @@ export const init = (sdk: FrontendSDK) => {
         });
       } else if (context.type === "RequestContext") {
         const request = context.request;
-        if (request.type === "RequestFull") {
-          requests.push({
-            id: request.id.toString(),
-            host: request.host,
-            port: request.port,
-            path: request.path,
-            query: request.query,
+        const id =
+          request.type === "RequestFull"
+            ? request.id
+            : sdk.replay.getCurrentEntry()?.requestId;
+        if (id === undefined) {
+          sdk.window.showToast("Send the request before scanning it", {
+            variant: "warning",
           });
-        } else {
-          sdk.window.showToast("No requests selected", { variant: "warning" });
           return;
         }
+
+        requests.push({
+          id: id.toString(),
+          host: request.host,
+          port: request.port,
+          path: request.path,
+          query: request.query,
+        });
       } else if (context.type === "BaseContext") {
         const request = getSelectedRequestFromDOM();
         if (request !== undefined) {
@@ -144,18 +150,7 @@ export const init = (sdk: FrontendSDK) => {
       launcherStore.setDialog(dialog);
     },
     group: "Scanner",
-    when: (context) => {
-      if (context.type === "RequestRowContext") {
-        return true;
-      }
-      if (context.type === "RequestContext") {
-        return context.request.type === "RequestFull";
-      }
-      if (context.type === "BaseContext") {
-        return true;
-      }
-      return false;
-    },
+    when: (context) => context.type !== "ResponseContext",
   });
 
   sdk.shortcuts.register("run-active-scanner", ["Control", "Shift", "S"]);
