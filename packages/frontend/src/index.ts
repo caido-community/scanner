@@ -1,7 +1,7 @@
 import { Classic } from "@caido/primevue";
 import { createPinia } from "pinia";
 import PrimeVue from "primevue/config";
-import { createApp } from "vue";
+import { createApp, h } from "vue";
 
 import { SDKPlugin } from "./plugins/sdk";
 import "./styles/index.css";
@@ -132,13 +132,7 @@ export const init = (sdk: FrontendSDK) => {
       launcherStore.form.targets = targets;
 
       const dialog = sdk.window.showDialog(
-        {
-          component: ScanLauncher,
-          props: {
-            sdk,
-            incrementCount: () => incrementCount, // we can't just do incrementCount because it auto-executes it when creating dialog
-          },
-        },
+        { component: () => h(ScanLauncher, { sdk, incrementCount }) },
         {
           title: "Scan Launcher",
           draggable: false,
