@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@caido/primevue": "0.3.3",
-    "@caido/sdk-frontend": "0.56.1-beta.1",
+    "@caido/sdk-frontend": "0.58.3",
     "@vueuse/core": "14.2.0",
     "pinia": "3.0.4",
     "pretty-ms": "9.3.0",

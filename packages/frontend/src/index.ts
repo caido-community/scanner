@@ -1,7 +1,7 @@
 import { Classic } from "@caido/primevue";
 import { createPinia } from "pinia";
 import PrimeVue from "primevue/config";
-import { createApp } from "vue";
+import { createApp, h } from "vue";
 
 import { SDKPlugin } from "./plugins/sdk";
 import "./styles/index.css";
@@ -73,18 +73,24 @@ export const init = (sdk: FrontendSDK) => {
         });
       } else if (context.type === "RequestContext") {
         const request = context.request;
-        if (request.type === "RequestFull") {
-          requests.push({
-            id: request.id.toString(),
-            host: request.host,
-            port: request.port,
-            path: request.path,
-            query: request.query,
+        const id =
+          request.type === "RequestFull"
+            ? request.id
+            : sdk.replay.getCurrentEntry()?.requestId;
+        if (id === undefined) {
+          sdk.window.showToast("Send the request before scanning it", {
+            variant: "warning",
           });
-        } else {
-          sdk.window.showToast("No requests selected", { variant: "warning" });
           return;
         }
+
+        requests.push({
+          id: id.toString(),
+          host: request.host,
+          port: request.port,
+          path: request.path,
+          query: request.query,
+        });
       } else if (context.type === "BaseContext") {
         const request = getSelectedRequestFromDOM();
         if (request !== undefined) {
@@ -126,13 +132,7 @@ export const init = (sdk: FrontendSDK) => {
       launcherStore.form.targets = targets;
 
       const dialog = sdk.window.showDialog(
-        {
-          component: ScanLauncher,
-          props: {
-            sdk,
-            incrementCount: () => incrementCount, // we can't just do incrementCount because it auto-executes it when creating dialog
-          },
-        },
+        { component: () => h(ScanLauncher, { sdk, incrementCount }) },
         {
           title: "Scan Launcher",
           draggable: false,
@@ -144,18 +144,7 @@ export const init = (sdk: FrontendSDK) => {
       launcherStore.setDialog(dialog);
     },
     group: "Scanner",
-    when: (context) => {
-      if (context.type === "RequestRowContext") {
-        return true;
-      }
-      if (context.type === "RequestContext") {
-        return context.request.type === "RequestFull";
-      }
-      if (context.type === "BaseContext") {
-        return true;
-      }
-      return false;
-    },
+    when: (context) => context.type !== "ResponseContext",
   });
 
   sdk.shortcuts.register("run-active-scanner", ["Control", "Shift", "S"]);
