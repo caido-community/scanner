@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="1000" alt="image" src="https://github.com/caido-community/.github/blob/main/content/banner.png?raw=true">
+  <img width="1000" alt="image" src="docs/banner.png">
 
   <br />
   <br />
